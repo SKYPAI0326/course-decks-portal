@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>講師簡報集 · 總入口｜弄一下工作室</title>
+<meta name="description" content="弄一下工作室所有課程的講師簡報集總入口。橫向翻頁網頁簡報、電子雜誌風格、單檔 HTML、跨課程一致設計基準。">
+<meta property="og:title" content="講師簡報集 · 總入口｜弄一下工作室">
+<meta property="og:description" content="所有課程的講師簡報集，橫向翻頁網頁簡報。">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0a0b;
+    --ink-rgb:10,10,11;
+    --paper:#f1efea;
+    --paper-rgb:241,239,234;
+    --paper-tint:#e8e5de;
+    --ink-tint:#18181a;
+    --serif-zh:"Noto Serif SC",serif;
+    --sans-zh:"Noto Sans SC",sans-serif;
+    --serif-en:"Playfair Display",Georgia,serif;
+    --mono:"IBM Plex Mono",monospace;
+    /* 主題色標識（card 用） */
+    --kraft:#b5703a;
+    --indigo:#0a1f3d;
+    --forest:#1a2e1f;
+    --dune:#1f1a14;
+    --ink-classic:#0a0a0b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;line-height:1.65}
+  a{color:inherit;text-decoration:none}
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;background:rgba(var(--ink-rgb),.13);border-radius:1px}
+
+  .topbar{position:sticky;top:0;z-index:50;height:56px;background:rgba(var(--paper-rgb),.94);backdrop-filter:blur(10px);border-bottom:1px solid rgba(var(--ink-rgb),.12);display:flex;align-items:center;padding:0 6vw;gap:18px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+  .topbar .logo{font-family:var(--serif-zh);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:none}
+  .topbar .sep{width:1px;height:14px;background:rgba(var(--ink-rgb),.25)}
+  .topbar .spacer{flex:1}
+  .topbar .ver{opacity:.55;font-size:11px}
+
+  .hero{padding:14vh 6vw 10vh}
+  .hero .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.55;margin-bottom:3vh}
+  .hero h1{font-family:var(--serif-zh);font-weight:900;font-size:min(8.4vw,124px);line-height:.96;letter-spacing:-.02em;margin-bottom:3vh}
+  .hero .sub{font-family:var(--serif-zh);font-weight:500;font-size:min(3vw,38px);line-height:1.25;opacity:.72;margin-bottom:4vh;max-width:36em}
+  .hero .lead{font-family:var(--serif-zh);font-weight:400;font-size:min(1.4vw,21px);line-height:1.6;opacity:.86;max-width:38em;margin-bottom:5vh}
+  .hero .meta{display:flex;gap:1.6em;flex-wrap:wrap;font-family:var(--mono);font-size:max(11px,.9vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:3vw;padding:0 6vw 8vh;border-bottom:1px solid rgba(var(--ink-rgb),.12)}
+  .stat{padding-top:2vh;border-top:1px solid var(--ink)}
+  .stat .l{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55;margin-bottom:1vh}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:min(5.4vw,80px);line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .u{font-family:var(--serif-zh);font-weight:500;font-size:.4em;letter-spacing:0;opacity:.7;margin-left:.16em}
+
+  .section-head{padding:10vh 6vw 4vh;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:2vh}
+  .section-head h2{font-family:var(--serif-zh);font-weight:700;font-size:min(4vw,56px);line-height:1.1;letter-spacing:-.01em}
+  .section-head .right{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
+
+  .grid{padding:0 6vw 8vh;display:grid;grid-template-columns:repeat(2,1fr);gap:3vh 3vw}
+
+  .card{display:block;padding:4vh 2.4vw;background:rgba(var(--ink-rgb),.04);border:1px solid rgba(var(--ink-rgb),.12);border-radius:6px;transition:background .25s ease,border-color .25s ease,transform .25s ease;position:relative;overflow:hidden;border-left:4px solid var(--theme-color, var(--ink))}
+  .card.live{cursor:pointer}
+  .card.live:hover{background:rgba(var(--ink-rgb),.07);border-color:rgba(var(--ink-rgb),.32);transform:translateY(-2px)}
+  .card.coming{opacity:.55;cursor:default}
+  .card .meta{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.65}
+  .card .status{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
+  .card .status.live{color:#1a8a3a;border-color:rgba(26,138,58,.5);background:rgba(26,138,58,.08)}
+  .card .status.soon{color:#888;border-color:rgba(127,127,127,.4)}
+  .card h3{font-family:var(--serif-zh);font-weight:700;font-size:min(2.2vw,30px);line-height:1.2;letter-spacing:-.005em;margin-bottom:1vh}
+  .card .sub{font-family:var(--serif-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.55;opacity:.74;margin-bottom:2vh}
+  .card .stats-row{display:flex;gap:1.4em;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6;margin-bottom:1.6vh;flex-wrap:wrap}
+  .card .stats-row .theme-tag{display:inline-flex;align-items:center;gap:.4em}
+  .card .stats-row .theme-dot{width:8px;height:8px;border-radius:50%;background:var(--theme-color, var(--ink))}
+  .card .open{display:inline-flex;align-items:center;gap:.6em;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;border-bottom:1px solid currentColor;padding-bottom:.4em;opacity:.85}
+
+  .about{padding:8vh 6vw;background:var(--paper-tint);border-top:1px solid rgba(var(--ink-rgb),.12)}
+  .about-grid{display:grid;grid-template-columns:1.2fr 2fr;gap:4vw 6vh}
+  .about-grid .label{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .about-grid p{font-family:var(--serif-zh);font-size:max(14px,1.1vw);line-height:1.7;opacity:.86}
+  .about-grid p + p{margin-top:1.4vh}
+
+  footer{padding:6vh 6vw;display:flex;justify-content:space-between;align-items:baseline;gap:2vh;flex-wrap:wrap;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.55}
+  footer .logo{font-family:var(--serif-zh);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:none;opacity:1}
+
+  @media(max-width:900px){
+    .stats{grid-template-columns:repeat(2,1fr);gap:4vh 4vw}
+    .grid{grid-template-columns:1fr}
+    .about-grid{grid-template-columns:1fr}
+    .hero h1{font-size:13vw}
+    .hero .sub{font-size:5.5vw}
+    .card h3{font-size:5vw}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="./">弄一下工作室 · 講師簡報集</a>
+  <div class="sep"></div>
+  <span>Lecturer Decks Hub</span>
+  <div class="spacer"></div>
+  <span class="ver">2026 · v1</span>
+</header>
+
+<section class="hero">
+  <div class="kicker">A Hub of Magazine-style Lecture Decks · 2026</div>
+  <h1>講師簡報集<br><em>總入口</em></h1>
+  <div class="sub">所有課程的橫向翻頁網頁簡報<br>跨課程一致的設計基準</div>
+  <p class="lead">
+    這個入口串起弄一下工作室所有課程的「講師講課用」簡報。
+    每門課對應一個獨立 GitHub repo + GitHub Pages，
+    視覺基調採電子雜誌 × 電子墨水（5 套主題色預設），
+    衬線標題、無圖片、純文字結構，講師當天打開即用、可全螢幕投影。
+  </p>
+  <div class="meta">
+    <span>Magazine × E-ink</span>
+    <span>·</span>
+    <span>Horizontal Swipe Decks</span>
+    <span>·</span>
+    <span>One Repo Per Course</span>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stat"><div class="l">已完成 Repo</div><div class="n">4</div></div>
+  <div class="stat"><div class="l">已完成 Decks</div><div class="n">23</div></div>
+  <div class="stat"><div class="l">已完成 Pages</div><div class="n">626</div></div>
+  <div class="stat"><div class="l">課程涵蓋</div><div class="n">118<span class="u">hr</span></div></div>
+</section>
+
+<div class="section-head">
+  <h2>已上線 <em>· 4 課程 · 23 deck</em></h2>
+  <div class="right">Click to Open · Full-screen Ready</div>
+</div>
+<div class="grid">
+
+  <a class="card live" href="https://skypai0326.github.io/dm70h-decks/" target="_blank" rel="noopener" style="--theme-color:#b5703a">
+    <div class="meta"><span>數位行銷課程</span><span class="status live">Live</span></div>
+    <h3>數位行銷人才培訓 <em>70hr</em></h3>
+    <div class="sub">10 模組完整體系：消費者心理學 / 生成式 AI / 市場洞察 / 社群 / SEO / GA4 / GTM / 廣告 / Email / 整合實戰。</div>
+    <div class="stats-row"><span>70 hr</span><span>10 deck</span><span>328 頁</span><span class="theme-tag"><span class="theme-dot"></span>牛皮紙</span></div>
+    <span class="open">開啟 dm70h-decks →</span>
+  </a>
+
+  <a class="card live" href="https://skypai0326.github.io/prompt-basic-decks/" target="_blank" rel="noopener" style="--theme-color:#0a1f3d">
+    <div class="meta"><span>公部門課程</span><span class="status live">Live</span></div>
+    <h3>從「問 AI」到「<em>交辦 AI</em>」</h3>
+    <div class="sub">公部門行政人員的 AI 交辦方法課，全程零英文術語。四欄框架 + 資安紅線 + 三招加強 + 格式控制 + 借力改造。</div>
+    <div class="stats-row"><span>6 hr</span><span>1 deck</span><span>32 頁</span><span class="theme-tag"><span class="theme-dot"></span>靛藍瓷</span></div>
+    <span class="open">開啟 prompt-basic-decks →</span>
+  </a>
+
+  <a class="card live" href="https://skypai0326.github.io/ntub-seo-ga4-decks/" target="_blank" rel="noopener" style="--theme-color:#0a1f3d">
+    <div class="meta"><span>NTUB · 大學課程</span><span class="status live">Live</span></div>
+    <h3>數位行銷實務｜<em>SEO × GA4</em></h3>
+    <div class="sub">台北商業大學 30hr 課程：搜尋意圖 → 關鍵字 → On-Page → 技術 SEO → GA4 → GTM → Looker Studio。每週 3hr × 10 週。</div>
+    <div class="stats-row"><span>30 hr</span><span>10 deck</span><span>200 頁</span><span class="theme-tag"><span class="theme-dot"></span>靛藍瓷</span></div>
+    <span class="open">開啟 ntub-seo-ga4-decks →</span>
+  </a>
+
+  <a class="card live" href="https://skypai0326.github.io/line-stickers-decks/" target="_blank" rel="noopener" style="--theme-color:#b5703a">
+    <div class="meta"><span>個人創作課程</span><span class="status live">Live</span></div>
+    <h3>AI 自製 LINE <em>貼圖</em></h3>
+    <div class="sub">兩階段連續課程：Part 1 用一個下午做出 8 張靜態貼圖並送審 / Part 2 用一整天升級到 24 張動態 + 訊息貼圖。全免費工具、自用導向。</div>
+    <div class="stats-row"><span>12 hr</span><span>2 deck</span><span>66 頁</span><span class="theme-tag"><span class="theme-dot"></span>牛皮紙</span></div>
+    <span class="open">開啟 line-stickers-decks →</span>
+  </a>
+
+</div>
+
+<div class="section-head">
+  <h2>製作中 <em>· 12 課程</em></h2>
+  <div class="right">Coming Soon · 按優先順序產出</div>
+</div>
+<div class="grid">
+
+  <div class="card coming" style="--theme-color:#5a7a5a">
+    <div class="meta"><span>創業 · 第一波</span><span class="status soon">Soon</span></div>
+    <h3>創業 AI 實戰 <em>3hr</em></h3>
+    <div class="sub">手機免費版的三小時入門體驗。一人創業者、小型團隊用 AI 省下每週 2-3 小時。</div>
+    <div class="stats-row"><span>3 hr</span><span>1 deck</span><span>~22 頁</span><span class="theme-tag"><span class="theme-dot"></span>森林墨</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#c9963a">
+    <div class="meta"><span>辦公室 · 第一波</span><span class="status soon">Soon</span></div>
+    <h3>辦公室 AI 工具 <em>實務應用</em></h3>
+    <div class="sub">職場上班族的 AI 工具實戰課，6 小時學會 ChatGPT / Gemini / Copilot / NotebookLM。</div>
+    <div class="stats-row"><span>6 hr</span><span>1 deck</span><span>~28 頁</span><span class="theme-tag"><span class="theme-dot"></span>牛皮紙</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#b5703a">
+    <div class="meta"><span>圖片生成 · 第一波</span><span class="status soon">Soon</span></div>
+    <h3>商業用<em>圖片生成</em></h3>
+    <div class="sub">小公司行銷 / 老闆 / 自媒體用的 AI 設計流水線，5 Modules / 13 單元。</div>
+    <div class="stats-row"><span>8 hr</span><span>1 deck</span><span>~32 頁</span><span class="theme-tag"><span class="theme-dot"></span>牛皮紙</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#5a7a5a">
+    <div class="meta"><span>自動化 · 第一波</span><span class="status soon">Soon</span></div>
+    <h3>n8n <em>自動化實戰</em></h3>
+    <div class="sub">AI 資料工廠、大規模文件處理、突破 Make 1000 ops/月限制。</div>
+    <div class="stats-row"><span>9.5 hr</span><span>1 deck</span><span>~36 頁</span><span class="theme-tag"><span class="theme-dot"></span>森林墨</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#0a1f3d">
+    <div class="meta"><span>AI 入門 · 第二波</span><span class="status soon">Queue</span></div>
+    <h3>AI 實務全攻略 <em>18hr</em></h3>
+    <div class="sub">非技術職場工作者的 AI 系統性入門，6 Sessions × 3hr，含 12hr 濃縮版。</div>
+    <div class="stats-row"><span>18 hr</span><span>~6 deck</span><span>~145 頁</span><span class="theme-tag"><span class="theme-dot"></span>靛藍瓷</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#0a1f3d">
+    <div class="meta"><span>淡江 · 第二波</span><span class="status soon">Queue</span></div>
+    <h3>CCS 認證 <em>研習</em></h3>
+    <div class="sub">淡江大學 CCS GenAI Foundations 認證考前複習，含 80 題模擬測驗與 prompt 範本庫。</div>
+    <div class="stats-row"><span>自學</span><span>1 deck</span><span>~28 頁</span><span class="theme-tag"><span class="theme-dot"></span>靛藍瓷</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#0a1f3d">
+    <div class="meta"><span>Gemini · 第二波</span><span class="status soon">Queue</span></div>
+    <h3>Gemini 零代碼 <em>AI 實戰</em></h3>
+    <div class="sub">用 Gemini 打造專屬高效辦公神器，5 Parts。</div>
+    <div class="stats-row"><span>~12 hr</span><span>~5 deck</span><span>~125 頁</span><span class="theme-tag"><span class="theme-dot"></span>靛藍瓷</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#0a1f3d">
+    <div class="meta"><span>追蹤 · 第二波</span><span class="status soon">Queue</span></div>
+    <h3>GTM <em>實務演練</em></h3>
+    <div class="sub">行銷人員的 Tag Manager 完整實戰，7 Parts。</div>
+    <div class="stats-row"><span>~15 hr</span><span>~7 deck</span><span>~165 頁</span><span class="theme-tag"><span class="theme-dot"></span>靛藍瓷</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#b5703a">
+    <div class="meta"><span>iPAS · 第三波</span><span class="status soon">Queue</span></div>
+    <h3>iPAS AI 應用規劃師 <em>初級研習</em></h3>
+    <div class="sub">經濟部產發署 iPAS 認證研習，30hr / 10 章扁平結構。</div>
+    <div class="stats-row"><span>30 hr</span><span>~5 deck</span><span>~145 頁</span><span class="theme-tag"><span class="theme-dot"></span>牛皮紙</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#0a1f3d">
+    <div class="meta"><span>職訓濃縮 · 第三波</span><span class="status soon">Queue</span></div>
+    <h3>生成式 AI <em>工作應用班 36h</em></h3>
+    <div class="sub">零基礎上班族的 AI 直接套進日常工作流，6 Parts × 6hr。</div>
+    <div class="stats-row"><span>36 hr</span><span>~6 deck</span><span>~195 頁</span><span class="theme-tag"><span class="theme-dot"></span>靛藍瓷</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#0a1f3d">
+    <div class="meta"><span>NTUB · 第三波</span><span class="status soon">Queue</span></div>
+    <h3>NTUB <em>GTM × 廣告科技</em></h3>
+    <div class="sub">台北商業大學數位行銷實務 II，10 Modules / 30 單元。</div>
+    <div class="stats-row"><span>~30 hr</span><span>~10 deck</span><span>~200 頁</span><span class="theme-tag"><span class="theme-dot"></span>靛藍瓷</span></div>
+  </div>
+
+  <div class="card coming" style="--theme-color:#b5703a">
+    <div class="meta"><span>職訓全套 · 第三波</span><span class="status soon">Queue</span></div>
+    <h3>生成式 AI <em>職訓 140hr</em></h3>
+    <div class="sub">最大課程：5 Parts × 56+12 單元，系統化提升 + 開發部署能力。需先盤點拆分結構（Codex 建議 18-22 deck）。</div>
+    <div class="stats-row"><span>140 hr</span><span>~18 deck</span><span>~600 頁</span><span class="theme-tag"><span class="theme-dot"></span>牛皮紙</span></div>
+  </div>
+
+</div>
+
+<section class="about">
+  <div class="about-grid">
+    <div>
+      <div class="label">About · 設計基準</div>
+      <h3 style="font-family:var(--serif-zh);font-weight:700;font-size:min(3vw,40px);margin-top:1vh;line-height:1.2">所有 deck 共用</h3>
+    </div>
+    <div>
+      <p>每份 deck 都基於同一份 <em>guizang-ppt-skill</em> 樣板：橫向翻頁、單檔 HTML、WebGL 雙背景、Motion One 動效、Lucide 圖示、Google Fonts（Noto Serif SC + Noto Sans SC + Playfair Display + IBM Plex Mono）。</p>
+      <p>跨課程一致的改良：<em>em</em> 中文友善螢光筆樣式、mobile-fix 響應式（豎屏提示 + 字型補強）、chrome-link 講義對應連結（含 ★ starred 變體標示「值得開講義輔助」的頁面）、cover Duration / Contact email meta-row。</p>
+      <p>主題色從 5 套預設挑一：<em>墨水經典 / 靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘</em>。每門課依主色與調性配對，跨 deck 一致。</p>
+      <p>跟學員自學講義不同：自學講義是給學員下課後讀的、需要密集圖文與步驟細節；本簡報集是給<em>講師</em>用的、追求現場節奏感、視覺密度與互動 pipeline。兩者互補。</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="logo">弄一下工作室</span>
+  <span>Lecturer Decks Hub · 16 課程 · 持續產出</span>
+  <span>2026 · MIT-Style Open</span>
+</footer>
+
+</body>
+</html>
