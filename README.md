@@ -69,6 +69,46 @@
 
 ---
 
+## 排版檢查機制（兩段式）
+
+跨 95 deck × 2,389 頁規模下，靠人眼很難抓出「內容被切」「callout 太擠」這類問題。
+本 repo 提供兩個工具：
+
+### Stage A · 靜態啟發式 lint（秒級）
+
+```bash
+python3 lint-deck.py /path/to/deck.html        # 單份
+python3 lint-deck.py /path/to/repo/            # 整個 repo
+python3 lint-deck.py --all                     # 所有 -decks repos
+python3 lint-deck.py --all --quiet --json out.json
+```
+
+- 無需依賴，純 Python
+- 估算每頁元素垂直高度，>100vh 標 BLOCKER、>92vh 標 WARN
+- 偽陽性率約 30-50%（estimator 有限），用於「快速濾大塊」
+
+### Stage B · Headless 渲染驗證（分鐘級·準確）
+
+```bash
+pip install playwright && playwright install chromium
+python3 verify-deck.py /path/to/deck.html
+python3 verify-deck.py --all --quiet --json overflow.json
+python3 verify-deck.py --all --shot ./shots/   # OVERFLOW 頁自動截圖
+```
+
+- 用 Playwright 在 1920×1080 渲染每頁
+- 量測 `.frame.scrollHeight - .frame.clientHeight`
+- ≥50px = OVERFLOW（內容真的被切），5-50px = TIGHT，<5px = OK
+- 全 95 deck × 2,400 頁 ≈ 5 分鐘
+
+### 推薦工作流
+
+1. 寫完／修完 deck → `lint-deck.py <file>` 看是否有 BLOCKER
+2. 整批生產後 → `verify-deck.py --all --quiet` 抓真正 overflow 的頁
+3. 修頁 → 重跑 verify 確認 0 OVERFLOW
+
+---
+
 **聯繫**：sky8697@gmail.com
 
 弄一下工作室 · 2026
