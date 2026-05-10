@@ -1,12 +1,14 @@
 # 弄一下工作室 · 講師簡報集總入口
 
-> 所有課程的橫向翻頁網頁簡報集合 · 跨課程一致設計基準 · 持續產出中
+> 所有課程的橫向翻頁網頁簡報集合 · 跨課程一致設計基準 · **三波全部上線**
 
 線上：https://skypai0326.github.io/course-decks-portal/
 
 ---
 
-## 已上線（4 repo · 23 deck · 626 頁）
+## 全部上線（16 repo · 95 deck · 2389 頁 · 434.5 hr）
+
+### 第一批 · 已驗收
 
 | Repo | 課程 | 時數 | Deck | 頁數 | 主題色 |
 |---|---|---:|---:|---:|---|
@@ -15,27 +17,32 @@
 | [ntub-seo-ga4-decks](https://github.com/SKYPAI0326/ntub-seo-ga4-decks) · [Pages](https://skypai0326.github.io/ntub-seo-ga4-decks/) | 數位行銷實務 SEO × GA4 | 30hr | 10 | 200 | 靛藍瓷 |
 | [line-stickers-decks](https://github.com/SKYPAI0326/line-stickers-decks) · [Pages](https://skypai0326.github.io/line-stickers-decks/) | AI 自製 LINE 貼圖 | 12hr | 2 | 66 | 牛皮紙 |
 
-## 製作中（12 課程，按優先順序）
-
 ### 第一波 · 小型驗證
-- simple-ai · 3hr · 1 deck · ~22 頁 · 森林墨
-- office-ai · 6hr · 1 deck · ~28 頁 · 牛皮紙
-- gen-image · 8hr · 1 deck · ~32 頁 · 牛皮紙
-- n8n · 9.5hr · 1 deck · ~36 頁 · 森林墨
+
+| Repo | 課程 | 時數 | Deck | 頁數 | 主題色 |
+|---|---|---:|---:|---:|---|
+| [simple-ai-decks](https://github.com/SKYPAI0326/simple-ai-decks) · [Pages](https://skypai0326.github.io/simple-ai-decks/) | 創業 AI 實戰 | 3hr | 1 | 22 | 森林墨 |
+| [office-ai-decks](https://github.com/SKYPAI0326/office-ai-decks) · [Pages](https://skypai0326.github.io/office-ai-decks/) | 辦公室 AI 工具實務 | 6hr | 1 | 28 | 牛皮紙 |
+| [gen-image-decks](https://github.com/SKYPAI0326/gen-image-decks) · [Pages](https://skypai0326.github.io/gen-image-decks/) | 商業用圖片生成 | 8hr | 1 | 32 | 牛皮紙 |
+| [n8n-decks](https://github.com/SKYPAI0326/n8n-decks) · [Pages](https://skypai0326.github.io/n8n-decks/) | n8n 自動化實戰 | 9.5hr | 1 | 36 | 森林墨 |
 
 ### 第二波 · 中型課程
-- ai-workshop · 18hr · ~6 deck · ~145 頁 · 靛藍瓷
-- ccs-foundations · 自學 · 1 deck · ~28 頁 · 靛藍瓷
-- gemini-ai · ~12hr · ~5 deck · ~125 頁 · 靛藍瓷
-- gtm · ~15hr · ~7 deck · ~165 頁 · 靛藍瓷
 
-### 第三波 · 大型課程
-- ipas-ai-beginner · 30hr · ~5 deck · ~145 頁 · 牛皮紙
-- gen-ai-36h · 36hr · ~6 deck · ~195 頁 · 靛藍瓷
-- ntub-gtm-adtech · ~30hr · ~10 deck · ~200 頁 · 靛藍瓷
-- gen-ai-140h · 140hr · ~18 deck · ~600 頁 · 牛皮紙
+| Repo | 課程 | 時數 | Deck | 頁數 | 主題色 |
+|---|---|---:|---:|---:|---|
+| [ai-workshop-decks](https://github.com/SKYPAI0326/ai-workshop-decks) · [Pages](https://skypai0326.github.io/ai-workshop-decks/) | AI 實務全攻略 | 18hr | 6 | 134 | 靛藍瓷 |
+| [ccs-foundations-decks](https://github.com/SKYPAI0326/ccs-foundations-decks) · [Pages](https://skypai0326.github.io/ccs-foundations-decks/) | CCS GenAI Foundations 認證 | 自學 | 1 | 28 | 靛藍瓷 |
+| [gemini-ai-decks](https://github.com/SKYPAI0326/gemini-ai-decks) · [Pages](https://skypai0326.github.io/gemini-ai-decks/) | Gemini 零代碼 AI 實戰 | 15hr | 5 | 112 | 靛藍瓷 |
+| [gtm-decks](https://github.com/SKYPAI0326/gtm-decks) · [Pages](https://skypai0326.github.io/gtm-decks/) | GTM 實務演練 | 21hr | 7 | 156 | 靛藍瓷 |
 
-合計新製：約 60-70 deck / 1700-2000 頁
+### 第三波 · 大型 / 旗艦
+
+| Repo | 課程 | 時數 | Deck | 頁數 | 主題色 |
+|---|---|---:|---:|---:|---|
+| [ipas-ai-beginner-decks](https://github.com/SKYPAI0326/ipas-ai-beginner-decks) · [Pages](https://skypai0326.github.io/ipas-ai-beginner-decks/) | iPAS AI 應用規劃師初級研習 | 30hr | 5 | 132 | 牛皮紙 |
+| [gen-ai-36h-decks](https://github.com/SKYPAI0326/gen-ai-36h-decks) · [Pages](https://skypai0326.github.io/gen-ai-36h-decks/) | 生成式 AI 工作應用班 | 36hr | 7 | 184 | 靛藍瓷 |
+| [ntub-gtm-adtech-decks](https://github.com/SKYPAI0326/ntub-gtm-adtech-decks) · [Pages](https://skypai0326.github.io/ntub-gtm-adtech-decks/) | NTUB GTM × 廣告科技 | 30hr | 10 | 202 | 靛藍瓷 |
+| [gen-ai-140h-decks](https://github.com/SKYPAI0326/gen-ai-140h-decks) · [Pages](https://skypai0326.github.io/gen-ai-140h-decks/) | **生成式 AI 職訓 140hr（旗艦）** | **140hr** | **20** | **697** | 牛皮紙 |
 
 ---
 
