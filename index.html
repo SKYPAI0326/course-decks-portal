@@ -94,6 +94,43 @@
     .hero .sub{font-size:5.5vw}
     .card h3{font-size:5vw}
   }
+
+/* landscape-mobile-fix v1 */
+@media (max-height:500px) and (orientation:landscape) {
+  .slide { padding: 1.4vh 4vw 2vh 4vw }
+  .frame { gap: .8vh }
+  .chrome, .foot { font-size: max(9px, 1.6vh); letter-spacing: .14em }
+  .kicker { font-size: max(9px, 1.5vh); margin-bottom: .8vh; letter-spacing: .22em }
+  .h-hero, .h1-zh { font-size: max(28px, 8vh) !important; line-height: 1.05 }
+  .h-xl { font-size: max(22px, 5.6vh) !important; line-height: 1.06 }
+  .h-sub, .h2-zh { font-size: max(18px, 3.8vh) !important; line-height: 1.18 }
+  .h-md, .h3-zh { font-size: max(15px, 2.8vh) !important; line-height: 1.22 }
+  .h-lg { font-size: max(20px, 4.2vh) !important; line-height: 1.1 }
+  .lead { font-size: max(13px, 2.2vh) !important; line-height: 1.4 }
+  .body-zh, .body-serif { font-size: max(11px, 1.9vh) !important; line-height: 1.45 }
+  .callout { padding: .8vh 2vw; font-size: max(11px, 1.9vh); line-height: 1.4 }
+  .rowline { padding: .5vh 0; gap: 1.4vw }
+  .rowline .k { font-size: max(11px, 1.9vh) }
+  .rowline .v { font-size: max(10px, 1.7vh); line-height: 1.35 }
+  .rowline .m { font-size: max(9px, 1.5vh) }
+  .stat-card { padding: 1vh 1.6vw }
+  .stat-nb, .stat-n { font-size: max(20px, 4.4vh) !important; line-height: 1 }
+  .stat-label, .stat-l { font-size: max(9px, 1.5vh); letter-spacing: .18em }
+  .stat-unit, .stat-u { font-size: .42em }
+  .stat-note { font-size: max(9px, 1.5vh); line-height: 1.4 }
+  .step { padding: .6vh 1vw }
+  .step-nb { font-size: max(11px, 2vh) }
+  .step-title { font-size: max(13px, 2.4vh); line-height: 1.2 }
+  .step-desc { font-size: max(10px, 1.7vh); line-height: 1.4 }
+  .meta-row { gap: .6em 1.2em; margin-top: .4vh; font-size: max(10px, 1.6vh) }
+  .grid-2, .grid-3, .grid-4, .grid-6, .grid-2-7-5, .grid-2-6-6, .grid-2-8-4, .grid-3-3 { gap: 1vh 2vw !important }
+  .pillar { padding: .8vh 1.4vw }
+  .level-row { padding: .8vh 0 }
+  .frame > * + * { margin-top: 0 }
+  /* 取消 portrait overlay 在 landscape：明確不顯示 */
+  #portrait-hint { display: none !important }
+}
+
 </style>
 </head>
 <body>
