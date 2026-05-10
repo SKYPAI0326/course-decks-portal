@@ -4,3 +4,7 @@
 .idea/
 *.bak
 *.tmp
+
+# 排版檢查暫存（每次 verify 重新生成，不入版控）
+_overflow-report-*.json
+shots/
