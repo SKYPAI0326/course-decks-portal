@@ -28,7 +28,7 @@ except ImportError:
     print("ERR: playwright 未安裝。pip install playwright && playwright install chromium")
     sys.exit(2)
 
-DECKS_PARENT = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/01-PROJECTS"
+DECKS_PARENT = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/01-PROJECTS/課程簡報"
 OVERFLOW_TOLERANCE_PX = 5     # < 5px 視為 rounding noise
 WARN_TOLERANCE_PX = 50        # 5-50px = 邊界擦邊
 

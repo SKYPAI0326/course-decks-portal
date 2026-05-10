@@ -3,7 +3,7 @@
 import asyncio, argparse, json, sys
 from pathlib import Path
 
-DECKS_PARENT = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/01-PROJECTS"
+DECKS_PARENT = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/01-PROJECTS/課程簡報"
 
 # Replaces inline opacity:0 / 0.15 by force-triggering all animations
 TRIGGER_THEN_MEASURE = r"""
