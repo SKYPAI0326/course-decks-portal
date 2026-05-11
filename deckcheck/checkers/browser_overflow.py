@@ -18,8 +18,24 @@ SCAN_SCRIPT = """
     const frame = s.querySelector('.frame') || s;
     const titleEl = s.querySelector('.h-hero, .h-xl, .h1-zh, .display-zh, .display, h1, h2, h3');
     const title = titleEl ? (titleEl.innerText || '').trim().slice(0, 60) : '';
+    // 1. Frame-level overflow（原邏輯）
     const ch = frame.scrollHeight, vh = frame.clientHeight;
-    out.push({page: i+1, content_h: ch, visible_h: vh, overflow_px: ch - vh, title});
+    let max_overflow = ch - vh;
+    let max_source = 'frame';
+    // 2. ALSO check grid cells / 任何 overflow:hidden 的子元素
+    //   抓出 .frame 內所有 overflow:hidden 的 element 看是否內容超出
+    const candidates = frame.querySelectorAll('div, section');
+    candidates.forEach(el => {
+      const cs = getComputedStyle(el);
+      if (cs.overflow === 'hidden' || cs.overflowY === 'hidden') {
+        const ov = el.scrollHeight - el.clientHeight;
+        if (ov > max_overflow) {
+          max_overflow = ov;
+          max_source = el.className || el.tagName.toLowerCase();
+        }
+      }
+    });
+    out.push({page: i+1, content_h: ch, visible_h: vh, overflow_px: max_overflow, title, source: max_source});
   });
   return out;
 }
@@ -61,24 +77,26 @@ async def run(files: list[Path], *, decks_parent: Path, thresholds: dict) -> lis
                 continue
             for s in slides:
                 ov = s["overflow_px"]
+                src = s.get("source", "frame")
                 if ov >= blocker_px:
                     findings.append(Finding(
                         deck_id=deck_id, repo=repo, file=str(file),
                         slide=s["page"], checker="browser_overflow",
                         severity="BLOCKER", code="OVERFLOW",
-                        message=f"+{ov}px @ {vp[0]}x{vp[1]} ({s['title']})",
+                        message=f"+{ov}px @ {vp[0]}x{vp[1]} (in {src}) ({s['title']})",
                         actual=ov, expected=f"<{blocker_px}",
                         evidence={"viewport": f"{vp[0]}x{vp[1]}",
                                   "content_h": s["content_h"],
-                                  "visible_h": s["visible_h"]},
+                                  "visible_h": s["visible_h"],
+                                  "source": src},
                     ))
                 elif ov >= tight_px:
                     findings.append(Finding(
                         deck_id=deck_id, repo=repo, file=str(file),
                         slide=s["page"], checker="browser_overflow",
                         severity="WARN", code="TIGHT",
-                        message=f"+{ov}px @ {vp[0]}x{vp[1]} ({s['title']})",
+                        message=f"+{ov}px @ {vp[0]}x{vp[1]} (in {src}) ({s['title']})",
                         actual=ov, expected=f"<{tight_px}",
-                        evidence={"viewport": f"{vp[0]}x{vp[1]}"},
+                        evidence={"viewport": f"{vp[0]}x{vp[1]}", "source": src},
                     ))
     return findings

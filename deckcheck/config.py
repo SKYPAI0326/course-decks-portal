@@ -35,7 +35,9 @@ THRESHOLDS = {
     "token_deviation_warn_pct": 3,
     "token_deviation_error_pct": 8,
     "viewports": [
-        (1920, 1080),  # 投影預設
+        (1920, 1080),   # 投影預設（Full HD）
+        (1470, 800),    # MacBook 14" Safari 含 chrome 實際 viewport
+        (1280, 720),    # Stress: 較舊筆電 / Safari 開側邊欄
     ],
 }
 
