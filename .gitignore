@@ -12,3 +12,6 @@ __pycache__/
 *.pyc
 _multi-viewport-scan*
 reports/
+
+# Visual regression baselines（per-environment，不入 repo）
+deckcheck/baselines/visual/

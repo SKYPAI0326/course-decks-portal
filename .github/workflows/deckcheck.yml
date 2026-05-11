@@ -1,0 +1,72 @@
+name: Deckcheck
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.html"
+      - "deckcheck/**"
+      - "deckcheck.yml"
+      - ".github/workflows/deckcheck.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Profile to run (fast / normal / full / visual / mobile)"
+        required: true
+        default: "fast"
+        type: choice
+        options: [fast, normal, full, visual, mobile]
+
+jobs:
+  fast-static:
+    name: Fast static checks (秒級)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install minimal deps
+        run: |
+          pip install pyyaml
+      - name: Run fast profile (changed files only)
+        run: |
+          # 注意：在 portal repo CI 內無法看到其他 deck repo（它們是獨立 repo）
+          # 此 workflow 主要驗 portal repo 內的 SPEC / canonical / checkers 是否有 syntax error
+          python3 check-deck.py --all --profile fast --quiet --reporter markdown --reporter json --out reports || true
+          ls -la reports/
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deckcheck-fast-${{ github.sha }}
+          path: reports/
+          retention-days: 30
+
+  normal-on-dispatch:
+    name: Normal/Full profile (manual trigger)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps with Playwright
+        run: |
+          pip install pyyaml playwright Pillow
+          playwright install chromium --with-deps
+      - name: Run profile=${{ github.event.inputs.profile }}
+        run: |
+          python3 check-deck.py --all --profile ${{ github.event.inputs.profile }} \
+            --quiet --reporter html --reporter json --out reports || true
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deckcheck-${{ github.event.inputs.profile }}-${{ github.sha }}
+          path: reports/
+          retention-days: 30

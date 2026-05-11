@@ -91,13 +91,24 @@ python3 check-deck.py --all --threshold contrast_blocker=2.5
 
 未來會逐步 deprecate，但 MVP 階段保留。
 
-## Phase 2（待做）
+## Phase 2（已完成 a / b / c）
 
-按 SPEC：
-- visual regression gallery（screenshot diff）
-- mobile gesture / touch conflict checker
-- RAF/GPU drain checker
-- WebGL fallback checker
-- token autofix
+✅ **2a · Visual regression**：`visual_regression` checker — Playwright 截 5 個 golden slide × 2 viewport，存 baseline 後續 diff（pixel diff > 0.5% WARN, > 2% ERROR）。第一次跑自動建 baseline。
+- 觸發：`--profile visual` 或 `--profile full`
+- baseline 位置：`deckcheck/baselines/visual/<deck_id>__<filename>/<viewport>/p<NN>.png`
+
+✅ **2b · Mobile checkers**：
+- `mobile_gesture` — 393×852 模擬手機 viewport，驗 `mobile-reader` 觸發 + scroll 不被攔
+- `raf_drain` — instrument requestAnimationFrame，3 秒內 > 60 = ERROR (GPU 浪費)
+- 觸發：`--profile mobile` 或 `--profile full`
+
+✅ **2c · GitHub Actions workflow**：`.github/workflows/deckcheck.yml`
+- push/PR 自動跑 fast profile（artifact 30 天）
+- workflow_dispatch 可手動跑 normal/full/visual/mobile
+
+### Phase 2 待做
+
+- WebGL fallback checker（Safari 14- 偵測）
+- token autofix（自動把 deviation 推回 canonical）
 - cross-repo inventory dashboard
-- GitHub Actions artifact 報表
+- 整合 visual diff gallery（HTML report 嵌入 baseline vs current 並列圖）

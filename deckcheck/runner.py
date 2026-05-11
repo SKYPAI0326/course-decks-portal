@@ -13,6 +13,9 @@ CHECKER_REGISTRY = {
     "static_tokens":            "deckcheck.checkers.static_tokens",
     "browser_overflow":         "deckcheck.checkers.browser_overflow",
     "browser_contrast":         "deckcheck.checkers.browser_contrast",
+    "visual_regression":        "deckcheck.checkers.visual_regression",
+    "mobile_gesture":           "deckcheck.checkers.mobile_gesture",
+    "raf_drain":                "deckcheck.checkers.raf_drain",
 }
 
 

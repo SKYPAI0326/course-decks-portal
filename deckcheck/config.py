@@ -14,8 +14,10 @@ PROFILES = {
     "normal": ["static_lint", "static_pipeline_contract", "static_tokens",
                "browser_overflow", "browser_contrast"],
     "full":   ["static_lint", "static_pipeline_contract", "static_tokens",
-               "browser_overflow", "browser_contrast"],
-    "visual": [],  # MVP 留白，Phase 2 加 visual_regression
+               "browser_overflow", "browser_contrast",
+               "visual_regression", "mobile_gesture", "raf_drain"],
+    "visual": ["visual_regression"],
+    "mobile": ["mobile_gesture", "raf_drain"],
 }
 
 # 預設 threshold
