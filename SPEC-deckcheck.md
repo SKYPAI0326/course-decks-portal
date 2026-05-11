@@ -470,3 +470,4 @@ Phase 2：
 | 日期 | 版本 | 變更 |
 |---|---|---|
 | 2026-05-10 | v1.0 | 初版（採納 Codex 3f4115a3 完整設計） |
+| 2026-05-11 | v1.1 | **MVP 6 項全部完成**：`deckcheck/` package 骨架 + Finding schema + 5 checker（封裝 3 + 新 2）+ 3 reporter（md/html/json）+ canonical/tokens.json 14 selector baseline。第一次全站跑出 **1668 finding**（0 BLOCKER / 94 ERROR / 1356 WARN / 218 INFO），94 ERROR **全為跨 deck `TOKEN_DEVIATION`** 證實 Codex 預測的長尾漂移問題。詳見 [`deckcheck/README.md`](deckcheck/README.md)。 |

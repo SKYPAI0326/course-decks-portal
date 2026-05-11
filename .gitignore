@@ -11,3 +11,4 @@ shots/
 __pycache__/
 *.pyc
 _multi-viewport-scan*
+reports/
