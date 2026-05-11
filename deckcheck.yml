@@ -1,0 +1,87 @@
+# Deckcheck 配置 · 例外清單與 threshold override
+#
+# 採用日：2026-05-11
+# 對應 SPEC: SPEC-deckcheck.md → "Threshold 管理 · 三層覆寫" 章節
+#
+# 設計原則（C 步驟）：
+# - 所有例外必須有 expires（避免變永久債）
+# - 例外 reason 必須說明「為什麼這個偏離合理」
+# - 課程級 fork（整課刻意偏離）→ 用 deck_pattern 整批例外
+# - 單頁特例 → 用具體 deck_id
+
+allowed_findings:
+
+  # ============ 課程級 typography fork ============
+
+  - deck_pattern: "dm70h-decks/*"
+    code: TOKEN_DEVIATION
+    selector_in: [".h-hero", ".h-xl", ".body-zh"]
+    expires: 2026-08-01
+    reason: "70hr 大課內容密集（10 模組 × 30+ 頁）→ 整課刻意縮字（h-hero 8.6vw / h-xl 5.4vw / body lh 1.6）。投影時 1920×1080 仍清晰。"
+
+  - deck_pattern: "ntub-gtm-adtech-decks/*"
+    code: TOKEN_DEVIATION
+    selector: ".h-xl"
+    actual_value: "4.8vw"
+    expires: 2026-08-01
+    reason: "NTUB 30hr 大學課程（10 modules × 多單元）→ 整課用 4.8vw 配合多 column 對比結構。"
+
+  - deck_pattern: "gen-ai-140h-decks/*"
+    code: TOKEN_DEVIATION
+    selector: ".h-xl"
+    actual_in: ["5vw", "5.2vw", "5.4vw"]
+    expires: 2026-08-01
+    reason: "140hr 旗艦課（20 deck × 30-42 頁）→ 整課縮字配合超高內容密度。h-xl 5-5.4vw 是 D00-D19 統一規範。"
+
+  - deck_pattern: "gen-ai-140h-decks/*"
+    code: TOKEN_DEVIATION
+    selector: ".body-zh"
+    actual_value: "1.6"
+    property: "line-height"
+    expires: 2026-08-01
+    reason: "同 140hr 縮排策略，body lh 1.6 配合密集內容。"
+
+  - deck_pattern: "gen-ai-36h-decks/*"
+    code: TOKEN_DEVIATION
+    selector_in: [".h-xl", ".body-zh"]
+    expires: 2026-08-01
+    reason: "36hr 工作應用班（7 part × 7 deck）內容密集 → h-xl 5.4vw / body lh 1.6 整課統一。"
+
+  - deck_pattern: "gtm-decks/*"
+    code: TOKEN_DEVIATION
+    selector_in: [".h-xl", ".body-zh", ".kicker"]
+    expires: 2026-08-01
+    reason: "GTM 實務 21hr（7 part）含大量 step / pipeline 高密度 → 整課縮字 + kicker margin 收緊。"
+
+  - deck_pattern: "ai-workshop-decks/*"
+    code: TOKEN_DEVIATION
+    selector_in: [".h-hero", ".h-xl", ".kicker", ".lead"]
+    expires: 2026-08-01
+    reason: "AI 實務 18hr（6 session × 多 part）為較新生成 deck，agent 採 typography fork v2（11px kicker + 1.55vw lead 等）。整課內一致。"
+
+  - deck_pattern: "gemini-ai-decks/*"
+    code: TOKEN_DEVIATION
+    selector_in: [".h-hero", ".h-xl", ".kicker", ".lead"]
+    expires: 2026-08-01
+    reason: "Gemini 15hr 同 typography fork v2 批次生成。"
+
+  - deck_pattern: "line-stickers-decks/*"
+    code: TOKEN_DEVIATION
+    selector_in: [".h-hero", ".h-xl", ".kicker", ".lead"]
+    expires: 2026-08-01
+    reason: "LINE 貼圖 12hr 同 typography fork v2 批次生成。"
+
+  - deck_pattern: "ipas-ai-beginner-decks/*"
+    code: TOKEN_DEVIATION
+    selector: ".h-xl"
+    actual_value: "5.4vw"
+    expires: 2026-08-01
+    reason: "iPAS 初級研習 30hr 部分 deck（s2/s4）配合認證題庫密度縮 h-xl。"
+
+# ============ Threshold override ============
+# Phase 2 才用，留範例
+
+# thresholds:
+#   by_deck:
+#     "ntub-gtm-adtech-decks/m10":
+#       overflow_px_blocker: 60   # 該 deck 結業頁邊界 case 容許到 60px

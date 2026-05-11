@@ -67,6 +67,10 @@ async def amain():
                                  thresholds=th,
                                  quiet=args.quiet)
 
+    # 套用 deckcheck.yml allowed_findings
+    from .exceptions import apply_exceptions
+    findings, allowed_n = apply_exceptions(findings, quiet=args.quiet)
+
     # 預設 stdout reporter
     reporters = args.reporter or ["stdout"]
     out_dir = Path(args.out)
