@@ -27,9 +27,11 @@ PROFILES = {
 THRESHOLDS = {
     "overflow_px_blocker": 50,    # frame.scrollHeight - clientHeight > 50px
     "overflow_px_tight": 5,       # 5-50px = TIGHT (WARN)
-    "contrast_blocker": 2.0,      # WCAG contrast < 2.0 = BLOCKER (真的看不見)
-    "contrast_error": 4.5,        # < 4.5 (WCAG AA body) = ERROR
-    "contrast_warn": 7.0,         # < 7.0 (WCAG AAA) = WARN
+    # Contrast 對「電子雜誌 × e-ink」設計偽陽性極多（callout opacity .92 + body opacity .82 等）
+    # 預設只抓「真的看不見」< 2.0；想嚴格用 --threshold 自訂
+    "contrast_blocker": 2.0,      # WCAG contrast < 2.0 = BLOCKER
+    "contrast_error": 2.0,        # 同 blocker（不額外報 ERROR 級）
+    "contrast_warn": 2.0,         # 同（不報 WARN）
     "token_deviation_warn_pct": 3,
     "token_deviation_error_pct": 8,
     "viewports": [
