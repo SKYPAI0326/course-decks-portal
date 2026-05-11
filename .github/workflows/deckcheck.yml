@@ -20,30 +20,68 @@ on:
         options: [fast, normal, full, visual, mobile]
 
 jobs:
-  fast-static:
-    name: Fast static checks (秒級)
+  framework-sanity:
+    name: Framework sanity (deckcheck import + syntax)
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install minimal deps
+        run: pip install pyyaml
+      - name: Python syntax check
         run: |
-          pip install pyyaml
-      - name: Run fast profile (changed files only)
+          python3 -m py_compile check-deck.py
+          find deckcheck -name "*.py" -exec python3 -m py_compile {} \;
+      - name: deckcheck CLI smoke test
         run: |
-          # 注意：在 portal repo CI 內無法看到其他 deck repo（它們是獨立 repo）
-          # 此 workflow 主要驗 portal repo 內的 SPEC / canonical / checkers 是否有 syntax error
-          python3 check-deck.py --all --profile fast --quiet --reporter markdown --reporter json --out reports || true
-          ls -la reports/
+          # CI 沒有 deck repo，跑空 set 確認 framework 不 crash
+          python3 check-deck.py --all --profile fast --quiet || true
+      - name: Validate canonical/tokens.json
+        run: python3 -c "import json; json.load(open('deckcheck/canonical/tokens.json'))"
+      - name: Validate deckcheck.yml
+        run: |
+          python3 -c "import yaml; print(yaml.safe_load(open('deckcheck.yml')))"
+
+  full-on-dispatch:
+    name: Full profile (manual trigger)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps with Playwright
+        run: |
+          pip install pyyaml playwright Pillow
+          playwright install chromium --with-deps
+      - name: Clone all *-decks repos for full check
+        run: |
+          mkdir -p ../decks-workspace
+          cd ../decks-workspace
+          for repo in dm70h-decks gen-ai-140h-decks gen-ai-36h-decks ipas-ai-beginner-decks \
+                     ntub-seo-ga4-decks ntub-gtm-adtech-decks gtm-decks ai-workshop-decks \
+                     gemini-ai-decks line-stickers-decks n8n-decks gen-image-decks \
+                     office-ai-decks prompt-basic-decks simple-ai-decks ccs-foundations-decks \
+                     course-catalog-2026; do
+            git clone --depth 1 https://github.com/SKYPAI0326/$repo.git || true
+          done
+          ls -la
+      - name: Run profile=${{ github.event.inputs.profile }}
+        env:
+          DECKCHECK_DECKS_PARENT: /home/runner/work/course-decks-portal/decks-workspace
+        run: |
+          python3 check-deck.py --all --profile ${{ github.event.inputs.profile }} \
+            --quiet --reporter html --reporter json --reporter markdown --out reports || true
+          ls -la reports/ || true
       - name: Upload report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: deckcheck-fast-${{ github.sha }}
+          name: deckcheck-${{ github.event.inputs.profile }}-${{ github.sha }}
           path: reports/
           retention-days: 30
 

@@ -1,9 +1,12 @@
 """配置：threshold / profile / repo discovery。"""
 from __future__ import annotations
+import os
 from pathlib import Path
 from dataclasses import dataclass
 
-DECKS_PARENT = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/01-PROJECTS/課程簡報"
+# 預設位置，可用 DECKCHECK_DECKS_PARENT 環境變數覆蓋（CI / 不同環境）
+_DEFAULT_PARENT = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/01-PROJECTS/課程簡報"
+DECKS_PARENT = Path(os.environ.get("DECKCHECK_DECKS_PARENT", str(_DEFAULT_PARENT)))
 
 # 不在 audit 範圍的 repo（接洽 / 入口頁等）
 EXCLUDED_REPOS = {"course-decks-portal"}  # portal 自己不掃；catalog 由 user 決定獨立規則
@@ -36,8 +39,11 @@ THRESHOLDS = {
 
 
 def discover_deck_files(parent: Path = None, *, only_repos: list[str] = None) -> list[Path]:
-    """掃所有 *-decks repo 的 deck HTML 檔（排除 catalog/portal/index.html/_base/assets）。"""
+    """掃所有 *-decks repo 的 deck HTML 檔（排除 catalog/portal/index.html/_base/assets）。
+    路徑不存在（CI 等情境）→ return [] 不 crash。"""
     parent = parent or DECKS_PARENT
+    if not parent.exists() or not parent.is_dir():
+        return []
     out: list[Path] = []
     for repo in sorted(parent.iterdir()):
         if not repo.is_dir(): continue

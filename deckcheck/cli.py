@@ -58,7 +58,9 @@ async def amain():
         sys.exit(2)
 
     if not files:
-        print("[runner] 沒有 deck 可掃")
+        print(f"[runner] 沒有 deck 可掃 (DECKS_PARENT={DECKS_PARENT})")
+        if not DECKS_PARENT.exists():
+            print(f"[runner] 注意：DECKS_PARENT 路徑不存在；CI 環境請設 DECKCHECK_DECKS_PARENT 環境變數")
         sys.exit(0)
 
     # 跑 profile
