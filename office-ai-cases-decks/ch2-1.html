@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH 2-1 · 電商銷售商品分析｜辦公室 AI 工具案例應用</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* 墨水經典 */
+    --ink:#0a0a0b;
+    --ink-rgb:10,10,11;
+    --paper:#f1efea;
+    --paper-rgb:241,239,234;
+    --paper-tint:#e8e5de;
+    --ink-tint:#18181a;
+
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(15px,1.22vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.75vw;line-height:1.5;opacity:.86}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  em{font-style:italic;font-family:var(--serif-en)}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .frame.grid-2-7-5,.frame.grid-2-6-6,.frame.grid-2-8-4,.frame.grid-3-3,.frame.grid-6{display:grid}
+
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:10vw;line-height:.96;letter-spacing:-.02em}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:6.2vw;line-height:1.08;letter-spacing:-.01em}
+  .h-sub{font-family:var(--serif-zh);font-weight:500;font-size:3.1vw;line-height:1.25;letter-spacing:0;opacity:.7}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:2.3vw;line-height:1.3}
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  .meta-row{display:flex;gap:1.2em;align-items:baseline;flex-wrap:wrap;font-family:var(--mono);font-size:max(12px,.92vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+
+  .stat-card{display:flex;flex-direction:column;gap:.8vh;align-items:flex-start;padding-top:1.6vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.3)}
+  .stat-card .stat-label{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .stat-card .stat-nb{font-family:var(--serif-en);font-weight:800;font-size:5.8vw;line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum";margin-top:.4vh}
+  .stat-card .stat-nb .stat-unit{font-family:var(--serif-zh);font-weight:500;font-size:.38em;letter-spacing:0;opacity:.72;margin-left:.14em}
+  .stat-card .stat-note{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.5;opacity:.72;margin-top:.6vh}
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  .pipeline-section{margin-top:4.4vh;padding-top:2.8vh;border-top:1px dashed rgba(127,127,127,.32)}
+  .pipeline-section:first-of-type{border-top:0;padding-top:0;margin-top:3vh}
+  .pipeline-label{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.24em;text-transform:uppercase;opacity:.62;margin-bottom:2.2vh}
+  .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw}
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .pipeline[data-cols="7"]{grid-template-columns:repeat(7,1fr)}
+  .step{display:flex;flex-direction:column;gap:.8vh;padding-top:1.4vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .step-nb{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:1.15vw;opacity:.45}
+  .step-title{font-family:var(--sans-zh);font-weight:700;font-size:1.35vw;letter-spacing:.01em;line-height:1.2}
+  .step-desc{font-family:var(--sans-zh);font-weight:400;font-size:max(11px,.88vw);line-height:1.45;opacity:.72}
+
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(0,1fr);gap:2.4vh 2vw}
+
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{display:block;margin-top:.8vh;font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.6}
+  .callout-src{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+
+  /* 驗證卡 checkbox 風格 */
+  .verify-item{display:flex;align-items:flex-start;gap:1.4vw;padding:1.8vh 0;border-bottom:1px solid rgba(127,127,127,.18)}
+  .verify-item:last-child{border-bottom:0}
+  .verify-box{flex-shrink:0;width:1.4vw;height:1.4vw;min-width:14px;min-height:14px;border:1.5px solid currentColor;border-radius:3px;opacity:.5;margin-top:.15em}
+  .verify-text{font-family:var(--sans-zh);font-size:max(13px,1.1vw);line-height:1.6;opacity:.88}
+  .verify-text strong{font-weight:700;opacity:1}
+
+  /* 演練導引頁左欄資訊塊 */
+  .info-block{display:flex;flex-direction:column;gap:.8vh;padding:1.6vh 1.6vw;border-left:2px solid currentColor;border-color:rgba(127,127,127,.4);margin-bottom:2vh}
+  .info-block:last-child{margin-bottom:0}
+  .info-block .ib-label{font-family:var(--mono);font-size:max(10px,.76vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55;margin-bottom:.4vh}
+  .info-block .ib-val{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.55;opacity:.88}
+  .info-block .ib-url{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.04em;opacity:.72;word-break:break-all;line-height:1.4}
+  .info-block ol{margin-left:1.2em;margin-top:.4vh}
+  .info-block ol li{font-family:var(--sans-zh);font-size:max(12px,1vw);line-height:1.6;opacity:.85;margin-bottom:.3vh}
+  .time-pill{display:inline-block;font-family:var(--mono);font-size:max(10px,.76vw);letter-spacing:.18em;text-transform:uppercase;padding:4px 12px;border:1px solid currentColor;border-radius:99px;opacity:.7}
+
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻頁 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ===== 01 · 封面 · hero dark ===== -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div class="left">
+      <span>案例三 · 銷售分析</span>
+      <span class="sep"></span>
+      <span>CH 2-1</span>
+    </div>
+    <div class="right">01 / 17</div>
+  </header>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;padding:4vh 0">
+    <div class="kicker" data-anim>CASE 03 · SALES ANALYTICS</div>
+    <div class="h-hero" data-anim style="margin-bottom:3vh">電商銷售<br>商品分析</div>
+    <div class="lead" data-anim style="max-width:40vw">怡君的 500 筆訂單<br>15 分鐘跑出三個發現</div>
+  </div>
+
+  <div class="meta-row" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span>·</span>
+    <span>Block 3 · 75 min</span>
+    <span>·</span>
+    <span>ecom-orders-500.csv / sku-50.csv</span>
+  </div>
+  <div class="foot" style="margin-top:1.6vh">
+    <span class="title">弄一下工作室</span>
+    <span>2026 · Spring</span>
+  </div>
+</section>
+
+<!-- ===== 02 · 場景設定 · light ===== -->
+<section class="slide light">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">02 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>SCENE SETUP · 場景設定</div>
+  <div class="h-xl" data-anim style="margin-bottom:3vh">怡君的麻煩</div>
+
+  <div class="frame grid-2-6-6" style="margin-top:2vh">
+    <div data-anim>
+      <div class="h-md" style="margin-bottom:2vh">每月月底的 3 小時 Excel</div>
+      <div class="body-zh" style="margin-bottom:2.4vh">
+        怡君，29 歲，電商營運經理（蝦皮 + 自架網店）。<br>
+        每月月底要產商品分析報告給主管，500 筆訂單資料用 Excel 手動拉樞紐至少 3 小時。<br><br>
+        她最想要的是：<strong>一份可以直接傳給主管的分析摘要，不需要再花時間美化格式。</strong>
+      </div>
+      <div class="callout" data-anim>
+        今天要用的素材：兩份 CSV + 7 套 Prompt
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2.4vh" data-anim>
+      <div class="rowline">
+        <div class="k">CSV 1</div>
+        <div class="v">ecom-orders-500.csv<br><span style="opacity:.6;font-size:.9em">2026 年 4–5 月，500 筆訂單，含 SKU / 商品名稱 / 數量 / 金額 / 下單日期</span></div>
+        <div class="m">500 rows</div>
+      </div>
+      <div class="rowline">
+        <div class="k">CSV 2</div>
+        <div class="v">sku-50.csv<br><span style="opacity:.6;font-size:.9em">50 個 SKU 主檔，含類別 / 成本 / 售價 / 上架日 / 庫存</span></div>
+        <div class="m">50 SKU</div>
+      </div>
+      <div class="rowline">
+        <div class="k">Prompt</div>
+        <div class="v">P2-1-1 ～ P2-1-7，共 7 套<br><span style="opacity:.6;font-size:.9em">基礎版 / 進階版 / 三變奏版 / 風險檢查 / 投影片素材</span></div>
+        <div class="m">7 P</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">場景設定</span>
+    <span>500 × AI 三刀流</span>
+  </div>
+</section>
+
+<!-- ===== 03 · Truth check 三錨點 · dark ===== -->
+<section class="slide dark">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">03 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>TRUTH CHECK · 結果驗證三錨點</div>
+  <div class="h-xl" data-anim style="margin-bottom:4vh">AI 算完，先對這三個數字</div>
+
+  <div class="grid-3" style="flex:1;align-content:center">
+    <div class="stat-card" data-anim>
+      <div class="stat-label">錨點 1 · 總筆數</div>
+      <div class="stat-nb">500<span class="stat-unit">筆</span></div>
+      <div class="stat-note">ecom-orders-500.csv 的實際列數。AI 說「450 筆」就是被跳過了——問 P2-1-6 查原因。</div>
+    </div>
+    <div class="stat-card" data-anim>
+      <div class="stat-label">錨點 2 · 總銷售額</div>
+      <div class="stat-nb" style="font-size:4.2vw">NT$2,227,470</div>
+      <div class="stat-note">SUM(金額欄)的精確值。差距超過 1% 就要問 AI 是否漏算退貨或空值列。</div>
+    </div>
+    <div class="stat-card" data-anim>
+      <div class="stat-label">錨點 3 · Top 1 SKU</div>
+      <div class="stat-nb" style="font-size:3.8vw">SKU-1003</div>
+      <div class="stat-note">Sony WH-1000XM5，佔總銷售額 72.1%。Top 1 對不上 = AI 排序邏輯有問題。</div>
+    </div>
+  </div>
+
+  <div class="callout" data-anim style="margin-top:3vh">
+    三個數字都對上，才代表 AI 真的讀懂了你的資料。數字錯就是結論錯。
+  </div>
+
+  <div class="foot">
+    <span class="title">Truth Check</span>
+    <span>總筆數 / 總額 / Top 1</span>
+  </div>
+</section>
+
+<!-- ===== 04 · 示範導入幕封 · hero light ===== -->
+<section class="slide hero light">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">04 / 17</div>
+  </header>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>ACT I · DEMO</div>
+    <div class="h-hero" data-anim style="margin-bottom:3vh">三刀流</div>
+    <div class="lead" data-anim>ABC 分類 / Top SKU / 長尾偵測<br>一份 CSV，15 分鐘跑出三個發現</div>
+  </div>
+
+  <div class="meta-row" data-anim>
+    <span>講師示範</span>
+    <span>·</span>
+    <span>15 min</span>
+  </div>
+  <div class="foot" style="margin-top:1.6vh">
+    <span class="title">示範導入</span>
+    <span>Act I · Demo</span>
+  </div>
+</section>
+
+<!-- ===== 05 · 三刀流邏輯 · light ===== -->
+<section class="slide light">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">05 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>THREE-BLADE LOGIC · 三刀邏輯</div>
+  <div class="h-xl" data-anim style="margin-bottom:3vh">三把刀，各解一個問題</div>
+
+  <div class="frame grid-3-3" style="margin-top:1vh">
+    <div class="pillar" data-anim>
+      <div class="ic"><i data-lucide="bar-chart-2" class="ico-lg"></i></div>
+      <div class="t">ABC 分類</div>
+      <div class="d">
+        依銷售額累計佔比分三類：<br>
+        A 類 = 前 80%（核心） / B 類 = 80–95%（次要） / C 類 = 後 5%（長尾）。<br>
+        讓你知道：把資源押在哪裡最划算。
+      </div>
+    </div>
+    <div class="pillar" data-anim>
+      <div class="ic"><i data-lucide="crown" class="ico-lg"></i></div>
+      <div class="t">Top SKU 分析</div>
+      <div class="d">
+        列出銷售額前 10 名的 SKU，含銷售額 / 數量 / 平均單價。<br>
+        重點：確認「撐場的 SKU 是哪幾個」以及它們的集中程度。
+      </div>
+    </div>
+    <div class="pillar" data-anim>
+      <div class="ic"><i data-lucide="search-x" class="ico-lg"></i></div>
+      <div class="t">長尾偵測</div>
+      <div class="d">
+        找出 C 類 SKU 中的「零銷售」與「極低頻」商品。<br>
+        決策分四類：清倉 / 保留觀察 / 補曝光 / 停止採購。<br>
+        不要只說「清/不清」。
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" data-anim style="margin-top:2vh">
+    三把刀對應 P2-1-1（ABC）/ P2-1-2（三合一進階版）/ P2-1-2 的長尾段。一次跑完，一份可交主管的 Markdown 報告。
+  </div>
+
+  <div class="foot">
+    <span class="title">三刀流邏輯</span>
+    <span>ABC · Top · 長尾</span>
+  </div>
+</section>
+
+<!-- ===== 06 · 預期輸出 · dark ===== -->
+<section class="slide dark">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">06 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>EXPECTED OUTPUT · 預期輸出長相</div>
+  <div class="h-xl" data-anim style="margin-bottom:3vh">AI 跑完，應該長這樣</div>
+
+  <div style="display:flex;flex-direction:column;gap:0;flex:1;justify-content:center">
+    <div class="rowline" data-anim>
+      <div class="k">ABC 表 1a</div>
+      <div class="v">A / B 類逐 SKU 完整表格（SKU / 商品名稱 / 銷售額 / 累計佔比 / 分類），依銷售額由高到低排列</div>
+      <div class="m">Markdown Table</div>
+    </div>
+    <div class="rowline" data-anim>
+      <div class="k">ABC 表 1b</div>
+      <div class="v">C 類摘要（總數 / 有銷售數 / 零銷售數 / C 類總銷售額佔比）+ C 類前 10 + 零銷售 SKU 完整清單</div>
+      <div class="m">Markdown Table</div>
+    </div>
+    <div class="rowline" data-anim>
+      <div class="k">Top 10</div>
+      <div class="v">含銷售額 / 數量 / 平均單價（銷售額 ÷ 數量，非 SKU 主檔售價）</div>
+      <div class="m">Markdown Table</div>
+    </div>
+    <div class="rowline" data-anim>
+      <div class="k">長尾決策</div>
+      <div class="v">8 個零銷售 SKU 各別給 1 個建議分類（清倉 / 保留觀察 / 補曝光 / 停止採購）+ 一句理由</div>
+      <div class="m">4 類建議</div>
+    </div>
+    <div class="rowline" data-anim>
+      <div class="k">驗證聲明</div>
+      <div class="v">AI 自動列出：總筆數 / 總銷售額 / 涵蓋 SKU 數 / ABC 各類 SKU 數 / 計算公式</div>
+      <div class="m">Truth Check</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">預期輸出</span>
+    <span>三表格 + 驗證聲明</span>
+  </div>
+</section>
+
+<!-- ===== 07 · 7套prompt骨架 · light (pipeline) ===== -->
+<section class="slide light" data-animate="pipeline">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">07 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>PROMPT STRUCTURE · P2-1 七套骨架解析</div>
+  <div class="h-xl" data-anim style="margin-bottom:1.5vh">每套 Prompt 都能拆成五骨架</div>
+  <div class="body-zh" data-anim style="margin-bottom:2vh">角色 / 資料 / 任務 / 輸出格式 / 驗證要求——找到五個部分在哪裡，就知道怎麼改成自己公司版本</div>
+
+  <div class="pipeline" data-cols="7" style="flex:1;align-content:center">
+    <div class="step" data-anim="step">
+      <div class="step-nb">P2-1-1</div>
+      <div class="step-title">基礎版<br>ABC 分類</div>
+      <div class="step-desc">上傳訂單 CSV，取得 A / B / C 三類數量與排序表格。最快入門路徑。</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">P2-1-2</div>
+      <div class="step-title">進階版<br>三合一</div>
+      <div class="step-desc">五骨架完整版：ABC + Top 10 + 長尾決策。含 Truth Check 三錨點防幻覺。</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">P2-1-3</div>
+      <div class="step-title">變奏<br>商品矩陣</div>
+      <div class="step-desc">明星 / 現金牛 / 問題兒 / 瘦狗四象限（毛利率 × 銷量）。框架直接寫進 Prompt。</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">P2-1-4</div>
+      <div class="step-title">變奏<br>季節性</div>
+      <div class="step-desc">母親節週前 / 中 / 後三時段比較。指定具體日期，避免 AI 猜錯。</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">P2-1-5</div>
+      <div class="step-title">變奏<br>補貨建議</div>
+      <div class="step-desc">依 A 類優先 + 母親節加乘 + C 類暫緩，輸出最多 10 個 SKU 的補貨優先序。</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">P2-1-6</div>
+      <div class="step-title">風險<br>透明度報告</div>
+      <div class="step-desc">問 AI 用哪個欄位計算、是否漏行、做了哪些隱含假設。「不要說沒有假設」是關鍵句。</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">P2-1-7</div>
+      <div class="step-title">投影片<br>素材整理</div>
+      <div class="step-desc">把 P2-1-2 輸出整理成「數字摘要 + 建議圖表」內容包，CH2-2 直接拿來用。</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">七套 Prompt 骨架</span>
+    <span>→ 逐步推進</span>
+  </div>
+</section>
+
+<!-- ===== 08 · 教學埋點預告 · dark ===== -->
+<section class="slide dark">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">08 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>TEACHING HOOKS · 教學埋點預告</div>
+  <div class="h-xl" data-anim style="margin-bottom:3vh">資料裡藏了三個驚喜</div>
+
+  <div style="display:flex;flex-direction:column;gap:0;flex:1;justify-content:center">
+    <div class="rowline" data-anim>
+      <div class="k" style="font-size:1.5vw">極端集中</div>
+      <div class="v">Top 5 SKU 撐走 96.5% 銷售額——不是普通 80/20，是極端集中。單品依賴風險。</div>
+      <div class="m">ABC 段落</div>
+    </div>
+    <div class="rowline" data-anim>
+      <div class="k" style="font-size:1.5vw">旺季暴增</div>
+      <div class="v">母親節週（5/8–5/14）訂單密度刻意拉高。AI 跑 P2-1-4 時應自動發現這個季節性信號。</div>
+      <div class="m">季節性段落</div>
+    </div>
+    <div class="rowline" data-anim>
+      <div class="k" style="font-size:1.5vw">零銷售長尾</div>
+      <div class="v">8 個 SKU 整月零銷售（待清倉）。多個 C 類 SKU 只有 1–3 筆。清倉決策分四類，不要只說「清/不清」。</div>
+      <div class="m">長尾段落</div>
+    </div>
+  </div>
+
+  <div class="callout" data-anim style="margin-top:2vh">
+    這三個發現都是真實電商日常會碰到的。跑完 AI 後，請學員說說：「你的公司資料裡有沒有類似的情況？」
+  </div>
+
+  <div class="foot">
+    <span class="title">三個埋點</span>
+    <span>極端集中 · 旺季 · 長尾</span>
+  </div>
+</section>
+
+<!-- ===== 09 · 換你動手幕封 · hero dark ===== -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">09 / 17</div>
+  </header>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>ACT II · HANDS-ON</div>
+    <div class="h-hero" data-anim style="margin-bottom:3vh">上機<br>40 分鐘</div>
+    <div class="lead" data-anim>先套課程素材（必做）<br>時間夠再試自己工作的資料</div>
+  </div>
+
+  <div class="meta-row" data-anim>
+    <span>學員上機演練</span>
+    <span>·</span>
+    <span>40 min</span>
+    <span>·</span>
+    <span>講師走場答疑</span>
+  </div>
+  <div class="foot" style="margin-top:1.6vh">
+    <span class="title">換你動手</span>
+    <span>Act II · Hands-On</span>
+  </div>
+</section>
+
+<!-- ===== 10 · 演練導引① · light ===== -->
+<section class="slide light">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">10 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>HANDS-ON · 換你動手 · 演練①</div>
+  <div class="h-xl" data-anim style="margin-bottom:2.4vh">跑 7 套 P2-1 三刀流</div>
+
+  <div class="frame grid-2-6-6" style="margin-top:1vh">
+    <!-- 左欄 -->
+    <div style="display:flex;flex-direction:column;gap:2vh" data-anim>
+      <div class="info-block">
+        <div class="ib-label">講義網址</div>
+        <div class="ib-url">https://skypai0326.github.io/courses/<br>courses/office-ai-cases/CH2-1.html</div>
+      </div>
+      <div class="info-block">
+        <div class="ib-label">Prompt 編號</div>
+        <div class="ib-val">P2-1-1（基礎 ABC）→ P2-1-2（三合一進階版）→ 選做 P2-1-3 / P2-1-4</div>
+      </div>
+      <div class="info-block">
+        <div class="ib-label">操作步驟</div>
+        <ol>
+          <li>上傳 ecom-orders-500.csv，貼 P2-1-1，確認 A / B / C 數量</li>
+          <li>加入 sku-50.csv，換 P2-1-2，跑三合一進階報告</li>
+          <li>跑完後記下 AI 說的「總筆數」和「總銷售額」</li>
+          <li>選做：跑 P2-1-4 母親節季節性分析</li>
+          <li>整理投影片素材：跑 P2-1-7</li>
+        </ol>
+      </div>
+      <div class="info-block">
+        <div class="ib-label">時間盒</div>
+        <div class="ib-val"><span class="time-pill">基礎 P2-1-1 · 10 min</span>&nbsp;<span class="time-pill">進階 P2-1-2 · 15 min</span>&nbsp;<span class="time-pill">選做 · 10 min</span></div>
+      </div>
+    </div>
+    <!-- 右欄：驗證卡 -->
+    <div data-anim>
+      <div class="h-md" style="margin-bottom:2vh">CH2-1 結果驗證卡</div>
+      <div class="verify-item">
+        <div class="verify-box"></div>
+        <div class="verify-text"><strong>總筆數：</strong>AI 說分析了幾筆 vs 你的 CSV 實際幾行（= 500 筆）——一致嗎？</div>
+      </div>
+      <div class="verify-item">
+        <div class="verify-box"></div>
+        <div class="verify-text"><strong>加總金額：</strong>AI 給的總銷售額 vs 用 SUM 算出來的（= NT$2,227,470）——差距在合理範圍嗎？</div>
+      </div>
+      <div class="verify-item">
+        <div class="verify-box"></div>
+        <div class="verify-text"><strong>前三大 SKU：</strong>AI 列的 Top 3 vs 快速掃一下 CSV 排序後的 Top 3——對得起來嗎？</div>
+      </div>
+      <div class="verify-item">
+        <div class="verify-box"></div>
+        <div class="verify-text"><strong>ABC 分類門檻：</strong>AI 是用「銷售額佔比」還是「訂單數量」來分 A 類？這個標準你認可嗎？（用 P2-1-6 問清楚）</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">演練導引①</span>
+    <span>三刀流 · P2-1-1 → P2-1-2</span>
+  </div>
+</section>
+
+<!-- ===== 11 · 演練導引② · light ===== -->
+<section class="slide light">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">11 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>HANDS-ON · 換你動手 · 演練②</div>
+  <div class="h-xl" data-anim style="margin-bottom:1.2vh">用 Truth Check 核對 AI 算對沒有</div>
+
+  <div class="frame grid-2-6-6" style="margin-top:0">
+    <!-- 左欄 -->
+    <div style="display:flex;flex-direction:column;gap:0" data-anim>
+      <div class="info-block" style="padding:1vh 1.6vw;margin-bottom:1vh">
+        <div class="ib-label">講義網址</div>
+        <div class="ib-url">https://skypai0326.github.io/courses/<br>courses/office-ai-cases/CH2-1.html</div>
+      </div>
+      <div class="info-block" style="padding:1vh 1.6vw;margin-bottom:1vh">
+        <div class="ib-label">Prompt 編號</div>
+        <div class="ib-val">P2-1-6（透明度報告 / 風險檢查）</div>
+      </div>
+      <div class="info-block" style="padding:1vh 1.6vw;margin-bottom:1vh">
+        <div class="ib-label">操作步驟</div>
+        <ol style="gap:.9vh">
+          <li>對照 Truth Check 三錨點（500 / NT$2,227,470 / SKU-1003）</li>
+          <li>數字不一致 → 貼 P2-1-6，問 AI「你用哪個欄位計算、是否漏行」</li>
+          <li>AI 說「沒有假設」→ 再問一次：「所有分析都有隱含假設，請詳細說明」</li>
+          <li>記下 AI 承認的假設，判斷是否接受</li>
+          <li>確認 A 類 SKU 是用「銷售額佔比」而非「訂單數量」計算</li>
+        </ol>
+      </div>
+      <div class="info-block" style="padding:1vh 1.6vw;margin-bottom:0">
+        <div class="ib-label">時間盒</div>
+        <div class="ib-val"><span class="time-pill">核對三錨點 · 5 min</span>&nbsp;<span class="time-pill">P2-1-6 透明度 · 5 min</span></div>
+      </div>
+    </div>
+    <!-- 右欄：常見問題 -->
+    <div data-anim>
+      <div class="h-md" style="margin-bottom:1.2vh">跑不出來？先看這裡</div>
+      <div class="rowline" style="grid-template-columns:auto 1fr;gap:1.2vw;padding:1.4vh 0">
+        <div class="k" style="font-size:1.3vw">500 筆超限</div>
+        <div class="v" style="font-size:max(12px,1vw)">CSV 約 35,000 字元，超過免費版安全上限。直接上傳 CSV 檔案（Gemini free 支援）；或先貼前 50 筆確認邏輯</div>
+      </div>
+      <div class="rowline" style="grid-template-columns:auto 1fr;gap:1.2vw;padding:1.4vh 0">
+        <div class="k" style="font-size:1.3vw">ABC 不一致</div>
+        <div class="v" style="font-size:max(12px,1vw)">AI 用「數量」做 ABC，你的 Excel 用「金額」——跑 P2-1-6 確認欄位，再在 Prompt 明確指定「金額欄」</div>
+      </div>
+      <div class="rowline" style="grid-template-columns:auto 1fr;gap:1.2vw;padding:1.4vh 0">
+        <div class="k" style="font-size:1.3vw">欄位對不上</div>
+        <div class="v" style="font-size:max(12px,1vw)">兩份 CSV 合併時混淆——在 Prompt 開頭加「兩份 CSV 欄位對應如下：訂單 SKU 欄 = 主檔 SKU 欄」</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">演練導引②</span>
+    <span>Truth Check · P2-1-6</span>
+  </div>
+</section>
+
+<!-- ===== 12 · 演練中段金句 · dark · quote ===== -->
+<section class="slide dark" data-animate="quote">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">12 / 17</div>
+  </header>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;max-width:70vw">
+    <div class="kicker" data-anim>KEY INSIGHT · 核心洞察</div>
+    <div style="font-family:var(--serif-zh);font-weight:600;font-size:3.6vw;line-height:1.35;margin-bottom:3vh">
+      <span data-anim="line" style="display:block">AI 算的總額對不上，</span>
+      <span data-anim="line" style="display:block">等於結論全錯。</span>
+    </div>
+    <div class="callout" data-anim>
+      不是挑剔 AI，是保護自己：把算錯的報告交給主管，後果是自己的。先花 30 秒對三個錨點，這份報告才值得信任。
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">核心洞察</span>
+    <span>驗證 ≠ 懷疑 · 驗證 = 負責</span>
+  </div>
+</section>
+
+<!-- ===== 13 · 結果驗證卡 · light ===== -->
+<section class="slide light">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">13 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>VERIFY CARD · 結果驗證卡</div>
+  <div class="h-xl" data-anim style="margin-bottom:1.4vh">離場前 30 秒打勾</div>
+  <div class="body-zh" data-anim style="margin-bottom:2.4vh">每次電商分析結束，走過這四個問題。這四個地方是 AI 在電商資料分析時最容易出錯的位置。</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div class="verify-item" data-anim>
+      <div class="verify-box"></div>
+      <div class="verify-text"><strong>總筆數：</strong>AI 說分析了幾筆 vs 你的 CSV 實際幾行（ecom-orders-500.csv = 500 筆）——一致嗎？</div>
+    </div>
+    <div class="verify-item" data-anim>
+      <div class="verify-box"></div>
+      <div class="verify-text"><strong>加總金額：</strong>AI 給的總銷售額 vs 你在 Excel / Google Sheets 用 SUM 算出來的——差距在合理範圍嗎？</div>
+    </div>
+    <div class="verify-item" data-anim>
+      <div class="verify-box"></div>
+      <div class="verify-text"><strong>前三大 SKU：</strong>AI 列的 Top 3 vs 你眼睛快速掃一下 CSV 排序後的 Top 3——對得起來嗎？</div>
+    </div>
+    <div class="verify-item" data-anim>
+      <div class="verify-box"></div>
+      <div class="verify-text"><strong>ABC 分類門檻：</strong>AI 是用「銷售額佔比」還是「訂單數量」來分 A 類？這個標準你認可嗎？（用 P2-1-6 問清楚）</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">結果驗證卡</span>
+    <span>30 sec · 4 checks</span>
+  </div>
+</section>
+
+<!-- ===== 14 · 埋點點破：極端集中 · light ===== -->
+<section class="slide light">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">14 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>REVEAL 01 · 埋點點破一</div>
+  <div class="h-xl" data-anim style="margin-bottom:3vh">Top 5 撐走 96.5%</div>
+
+  <div class="frame grid-2-7-5" style="margin-top:1vh">
+    <div data-anim>
+      <div class="h-md" style="margin-bottom:2vh">這不是普通的 80/20</div>
+      <div class="body-zh" style="margin-bottom:2vh">
+        設計這份資料時，刻意把集中度拉到極端：5 個 SKU 撐走 96.5% 的銷售額，剩下 45 個 SKU 加起來只有 3.5%。<br><br>
+        這在真實電商很常見，但很多人平時不敢直視這個數字——因為它代表：<strong>你的生意幾乎壓在少數幾個商品上。</strong>
+      </div>
+      <div class="callout" data-anim>
+        <strong>商業意義：</strong>SKU-1003 Sony WH-1000XM5 佔 72.1%。這個 SKU 如果斷貨，整月業績腰斬。補貨優先序必須從這裡算起，不是從「看起來有潛力的商品」算起。
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:3vh" data-anim>
+      <div class="stat-card">
+        <div class="stat-label">Top 5 SKU 合計</div>
+        <div class="stat-nb">96.5<span class="stat-unit">%</span></div>
+        <div class="stat-note">極端集中。單品依賴風險極高。</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Top 1 · SKU-1003</div>
+        <div class="stat-nb">72.1<span class="stat-unit">%</span></div>
+        <div class="stat-note">Sony WH-1000XM5。一個 SKU 撐走七成業績。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">埋點點破一</span>
+    <span>極端集中 · 單品依賴</span>
+  </div>
+</section>
+
+<!-- ===== 15 · 埋點點破：長尾與旺季 · dark ===== -->
+<section class="slide dark">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">15 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>REVEAL 02 & 03 · 埋點點破二三</div>
+  <div class="h-xl" data-anim style="margin-bottom:3vh">長尾與旺季：兩個不能忽略的信號</div>
+
+  <div class="frame grid-2-6-6" style="margin-top:1vh">
+    <div data-anim="left">
+      <div class="h-md" style="margin-bottom:2vh;white-space:nowrap">8 個零銷售 SKU</div>
+      <div class="body-zh" style="margin-bottom:2vh">整月零銷售的 8 個 SKU 是最直接的清倉候選，但不要一刀切：</div>
+      <div style="display:flex;flex-direction:column;gap:1.2vh">
+        <div class="rowline" style="grid-template-columns:auto 1fr">
+          <div class="k" style="font-size:1.4vw;white-space:nowrap">清倉</div>
+          <div class="v" style="font-size:max(12px,1vw)">庫存高、成本低、上架久——最優先</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:auto 1fr">
+          <div class="k" style="font-size:1.4vw;white-space:nowrap">觀察</div>
+          <div class="v" style="font-size:max(12px,1vw)">上架未滿 30 天——給機會</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:auto 1fr">
+          <div class="k" style="font-size:1.4vw;white-space:nowrap">補曝光</div>
+          <div class="v" style="font-size:max(12px,1vw)">高毛利但無流量——試推廣</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:auto 1fr">
+          <div class="k" style="font-size:1.4vw;white-space:nowrap">停採購</div>
+          <div class="v" style="font-size:max(12px,1vw)">長尾 + 低毛利——停止補貨</div>
+        </div>
+      </div>
+    </div>
+    <div data-anim="right">
+      <div class="h-md" style="margin-bottom:2vh">母親節週 5/8–5/14</div>
+      <div class="body-zh" style="margin-bottom:2.4vh">
+        訂單密度在 5/8 之後明顯拉高，5/14 截止。這是刻意預埋的季節性信號。<br><br>
+        AI 跑 P2-1-4 時應自動識別這個窗口。重點不是「母親節有多少筆」，而是：<strong>哪些 SKU 在這個週期的銷量差異最大？</strong>
+      </div>
+      <div class="callout" data-anim>
+        漲幅最大的 Top 3 SKU = 下一個母親節的備貨清單。這就是從分析到行動的完整鏈路。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="title">埋點點破二三</span>
+    <span>長尾 · 旺季</span>
+  </div>
+</section>
+
+<!-- ===== 16 · 帶走物 · light ===== -->
+<section class="slide light">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">16 / 17</div>
+  </header>
+
+  <div class="kicker" data-anim>TAKEAWAYS · 帶走物</div>
+  <div class="h-xl" data-anim style="margin-bottom:3vh">今天帶走三樣東西</div>
+
+  <div class="grid-3" style="flex:1;align-content:center">
+    <div class="pillar" data-anim>
+      <div class="ic"><i data-lucide="file-text" class="ico-lg"></i></div>
+      <div class="t">3 張投影片素材</div>
+      <div class="d">
+        用 P2-1-7 整理好的內容包：<br>
+        ① 商品四象限矩陣<br>
+        ② 銷售額 Top 10 商品<br>
+        ③ 補貨優先序 + 清倉建議<br>
+        CH2-2 壓軸案例直接使用。
+      </div>
+    </div>
+    <div class="pillar" data-anim>
+      <div class="ic"><i data-lucide="layers" class="ico-lg"></i></div>
+      <div class="t">7 套可複用 Prompt</div>
+      <div class="d">
+        P2-1-1 到 P2-1-7，骨架通用。<br>
+        換「電商訂單」成「門市銷售記錄」或「B2B 採購單」——ABC 分析的五骨架完全不變。
+      </div>
+    </div>
+    <div class="pillar" data-anim>
+      <div class="ic"><i data-lucide="check-circle" class="ico-lg"></i></div>
+      <div class="t">Truth Check 習慣</div>
+      <div class="d">
+        總筆數 / 總金額 / Top 1 SKU。<br>
+        三個錨點，30 秒，每次 AI 分析都對。<br>
+        這不是挑剔 AI——這是保護自己的分析信譽。
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" data-anim style="margin-top:2vh">
+    <strong>一句金句帶走：</strong>AI 算的總額對不上，等於結論全錯。先對三個錨點，才值得交給主管。
+  </div>
+
+  <div class="foot">
+    <span class="title">帶走物</span>
+    <span>素材 · Prompt · 習慣</span>
+  </div>
+</section>
+
+<!-- ===== 17 · 銜接CH2-2 · hero dark ===== -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div class="left"><span>案例三 · 銷售分析</span></div>
+    <div class="right">17 / 17</div>
+  </header>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>NEXT · 接下來</div>
+    <div class="h-hero" data-anim style="margin-bottom:3vh">四案例<br>素材都齊了</div>
+    <div class="lead" data-anim style="max-width:48vw">怎麼把這些分析變成一份<br>可以上台報告的簡報？<br>CH2-2 · AI 數據簡報組裝，現在開始。</div>
+  </div>
+
+  <div class="meta-row" data-anim>
+    <span>CH 2-2</span>
+    <span>·</span>
+    <span>AI 數據簡報組裝</span>
+    <span>·</span>
+    <span>把分析變成簡報</span>
+  </div>
+  <div class="foot" style="margin-top:1.6vh">
+    <span class="title">弄一下工作室</span>
+    <span>辦公室 AI 工具案例應用 · 2026</span>
+  </div>
+</section>
+
+</div><!-- #deck -->
+
+<div id="nav"></div>
+
+<script>
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity='0.15';
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  playSlide(0);
+}
+</script>
+</body>
+</html>

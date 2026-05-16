@@ -14,7 +14,7 @@ from pathlib import Path
 from collections import Counter
 
 PORTAL = Path(__file__).parent.parent.parent
-DECKS = PORTAL.parent  # 課程簡報/
+DECKS = PORTAL  # decks 為本 repo 子資料夾
 
 sys.path.insert(0, str(PORTAL))
 from deckcheck.checkers.static_tokens import _extract_property

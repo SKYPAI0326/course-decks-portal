@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>數位行銷人才培訓 70hr · 講師簡報集｜弄一下工作室</title>
+<meta name="description" content="弄一下工作室 70 小時數位行銷課程的講師講課用簡報集。10 個模組、52 個單元、328 頁橫向翻頁網頁簡報。電子雜誌 × 電子墨水視覺風格。">
+<meta property="og:title" content="數位行銷人才培訓 70hr · 講師簡報集">
+<meta property="og:description" content="10 模組 · 52 單元 · 328 頁。打開即用的講師簡報。">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#eedfc7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2a1e13;
+    --ink-rgb:42,30,19;
+    --paper:#eedfc7;
+    --paper-rgb:238,223,199;
+    --paper-tint:#e0d0b6;
+    --ink-tint:#3a2a1d;
+    --serif-zh:"Noto Serif SC",serif;
+    --sans-zh:"Noto Sans SC",sans-serif;
+    --serif-en:"Playfair Display",Georgia,serif;
+    --mono:"IBM Plex Mono",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;line-height:1.65}
+  a{color:inherit;text-decoration:none}
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;background:rgba(var(--ink-rgb),.13);border-radius:1px}
+
+  /* ===== Top chrome ===== */
+  .topbar{position:sticky;top:0;z-index:50;height:56px;background:rgba(var(--paper-rgb),.94);backdrop-filter:blur(10px);border-bottom:1px solid rgba(var(--ink-rgb),.12);display:flex;align-items:center;padding:0 6vw;gap:18px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+  .topbar .logo{font-family:var(--serif-zh);font-weight:700;font-size:14px;letter-spacing:.05em;text-transform:none}
+  .topbar .sep{width:1px;height:14px;background:rgba(var(--ink-rgb),.25)}
+  .topbar .spacer{flex:1}
+  .topbar .ver{opacity:.55;font-size:11px}
+
+  /* ===== Hero ===== */
+  .hero{padding:14vh 6vw 10vh}
+  .hero .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.55;margin-bottom:3vh}
+  .hero h1{font-family:var(--serif-zh);font-weight:900;font-size:min(8.4vw,124px);line-height:.96;letter-spacing:-.02em;margin-bottom:3vh}
+  .hero .sub{font-family:var(--serif-zh);font-weight:500;font-size:min(3vw,38px);line-height:1.25;opacity:.72;margin-bottom:4vh;max-width:36em}
+  .hero .lead{font-family:var(--serif-zh);font-weight:400;font-size:min(1.4vw,21px);line-height:1.6;opacity:.86;max-width:38em;margin-bottom:5vh}
+  .hero .meta{display:flex;gap:1.6em;flex-wrap:wrap;font-family:var(--mono);font-size:max(11px,.9vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+
+  /* ===== Stats strip ===== */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:3vw;padding:0 6vw 8vh;border-bottom:1px solid rgba(var(--ink-rgb),.12)}
+  .stat{padding-top:2vh;border-top:1px solid var(--ink)}
+  .stat .l{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55;margin-bottom:1vh}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:min(5.4vw,80px);line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .u{font-family:var(--serif-zh);font-weight:500;font-size:.4em;letter-spacing:0;opacity:.7;margin-left:.16em}
+
+  /* ===== Module grid ===== */
+  .modules{padding:10vh 6vw 6vh}
+  .modules-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6vh;flex-wrap:wrap;gap:2vh}
+  .modules-head h2{font-family:var(--serif-zh);font-weight:700;font-size:min(4vw,56px);line-height:1.1;letter-spacing:-.01em}
+  .modules-head .right{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4vh 3vw}
+  @media(min-width:1280px){.grid{grid-template-columns:repeat(2,1fr)}}
+
+  .card{display:block;padding:5vh 3vw;background:rgba(var(--ink-rgb),.04);border:1px solid rgba(var(--ink-rgb),.12);border-radius:6px;transition:background .25s ease,border-color .25s ease,transform .25s ease;position:relative;overflow:hidden}
+  .card:hover{background:rgba(var(--ink-rgb),.07);border-color:rgba(var(--ink-rgb),.32);transform:translateY(-2px)}
+  .card .meta{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2.4vh;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;opacity:.6}
+  .card .nb{font-family:var(--serif-en);font-weight:800;font-size:min(7vw,108px);line-height:.85;letter-spacing:-.04em;font-feature-settings:"tnum";margin-bottom:1.2vh;opacity:.84}
+  .card h3{font-family:var(--serif-zh);font-weight:700;font-size:min(2.4vw,32px);line-height:1.2;letter-spacing:-.005em;margin-bottom:1.4vh}
+  .card .sub{font-family:var(--serif-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.55;opacity:.74;margin-bottom:2.6vh}
+  .card .stats-row{display:flex;gap:2em;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-bottom:2vh}
+  .card .open{display:inline-flex;align-items:center;gap:.6em;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;border-bottom:1px solid currentColor;padding-bottom:.4em}
+  .card.featured{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .card.featured .open{opacity:1}
+  .card.featured em::after{background:rgba(var(--paper-rgb),.16)}
+
+  /* ===== Operating instructions ===== */
+  .ops{padding:8vh 6vw 6vh;border-top:1px solid rgba(var(--ink-rgb),.12)}
+  .ops h3{font-family:var(--serif-zh);font-weight:700;font-size:min(3vw,42px);margin-bottom:4vh}
+  .ops-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3vw 4vh}
+  .op-card{padding-top:1.6vh;border-top:1px solid rgba(var(--ink-rgb),.32)}
+  .op-card .l{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55;margin-bottom:1vh}
+  .op-card h4{font-family:var(--serif-zh);font-weight:700;font-size:min(1.7vw,22px);margin-bottom:1vh}
+  .op-card p{font-family:var(--sans-zh);font-size:max(13px,1vw);line-height:1.65;opacity:.78}
+  .op-card kbd{display:inline-block;padding:.2em .55em;background:rgba(var(--ink-rgb),.08);border:1px solid rgba(var(--ink-rgb),.2);border-radius:3px;font-family:var(--mono);font-size:.86em}
+
+  /* ===== About / Footer ===== */
+  .about{padding:8vh 6vw;background:var(--paper-tint);border-top:1px solid rgba(var(--ink-rgb),.12)}
+  .about-grid{display:grid;grid-template-columns:1.2fr 2fr;gap:4vw 6vh}
+  .about-grid .label{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .about-grid p{font-family:var(--serif-zh);font-size:max(14px,1.1vw);line-height:1.7;opacity:.86}
+  .about-grid p + p{margin-top:1.4vh}
+
+  footer{padding:6vh 6vw;display:flex;justify-content:space-between;align-items:baseline;gap:2vh;flex-wrap:wrap;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.55}
+  footer .logo{font-family:var(--serif-zh);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:none;opacity:1}
+
+  @media(max-width:900px){
+    .stats{grid-template-columns:repeat(2,1fr);gap:4vh 4vw}
+    .grid{grid-template-columns:1fr}
+    .ops-grid{grid-template-columns:1fr}
+    .about-grid{grid-template-columns:1fr}
+    .hero h1{font-size:13vw}
+    .hero .sub{font-size:5.5vw}
+  }
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="./">弄一下工作室</a>
+  <div class="sep"></div>
+  <span>Lecturer Decks · 70hr</span>
+  <div class="spacer"></div>
+  <span class="ver">Vol.01 · 2026</span>
+</header>
+
+<section class="hero">
+  <div class="kicker">A Magazine of Lectures · Vol.01 · 2026</div>
+  <h1>數位行銷<br>人才培訓 <em>70hr</em></h1>
+  <div class="sub">10 個模組 · 52 個單元 · 328 頁<br>講師講課用橫向翻頁簡報集</div>
+  <p class="lead">
+    這是「弄一下工作室」70 小時數位行銷課程的講師簡報。每一份都對應一個模組、可獨立打開即用，
+    從消費者心理學起步，一路走到 AI、SEO、GA4、GTM、廣告、Email，最後收束在整合實戰專案。
+    視覺基調採電子雜誌 × 電子墨水（牛皮紙主題），衬線大標題、無圖、純文字結構，
+    在大螢幕上投影也能保持閱讀層次。
+  </p>
+  <div class="meta">
+    <span>Magazine × E-ink</span>
+    <span>·</span>
+    <span>Horizontal Swipe</span>
+    <span>·</span>
+    <span>Image-less Editorial</span>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stat"><div class="l">Total Hours</div><div class="n">70<span class="u">hr</span></div></div>
+  <div class="stat"><div class="l">Modules</div><div class="n">10</div></div>
+  <div class="stat"><div class="l">Units</div><div class="n">52</div></div>
+  <div class="stat"><div class="l">Total Slides</div><div class="n">328</div></div>
+</section>
+
+<section class="modules">
+  <div class="modules-head">
+    <h2>十個模組 <em>· 一份一份打開</em></h2>
+    <div class="right">Open Any Deck → Lecture Ready</div>
+  </div>
+  <div class="grid">
+
+    <a class="card featured" href="m1-consumer-psychology.html">
+      <div class="meta"><span>Module 01 · Foundation</span><span>32 / 32</span></div>
+      <div class="nb">01</div>
+      <h3>消費者心理學<br>行銷的<em>作業系統</em></h3>
+      <div class="sub">快思慢想 · Cialdini 影響力六原則 · 行為偏誤 · Jobs-to-be-Done。後續所有模組會反覆回扣此處的人性洞察。</div>
+      <div class="stats-row"><span>6 hr</span><span>4 units</span><span>32 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m2-genai-foundation.html">
+      <div class="meta"><span>Module 02 · AI Toolbox</span><span>50 / 50</span></div>
+      <div class="nb">02</div>
+      <h3>生成式 AI 完整體系<br>行銷人的 <em>AI 工具箱</em></h3>
+      <div class="sub">M2A 基礎素養 · M2B Prompt Engineering · M2C 內容產製 · M2D 自動化策略。最大的一份模組，學完即解鎖後續所有模組的 AI 接口。</div>
+      <div class="stats-row"><span>12 hr</span><span>12 units</span><span>50 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m3-market-insight.html">
+      <div class="meta"><span>Module 03 · Strategy</span><span>30 / 30</span></div>
+      <div class="nb">03</div>
+      <h3>市場洞察與策略定位<br>從 3C 到 <em>USP</em></h3>
+      <div class="sub">3C / SWOT 不只做一半，把分析轉成策略；STP × 世代 × Persona；旅程缺口；4P+4C 與 USP 提煉。</div>
+      <div class="stats-row"><span>6 hr</span><span>4 units</span><span>30 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m4-social-marketing.html">
+      <div class="meta"><span>Module 04 · Social</span><span>32 / 32</span></div>
+      <div class="nb">04</div>
+      <h3>社群行銷<br><em>注意力</em>爭奪戰</h3>
+      <div class="sub">黃金 3 秒 Hook 心理學；五大平台演算法人格；短影音 60 秒四段；社群管理與內容曆；KOL/KOC 評估五維度。</div>
+      <div class="stats-row"><span>7 hr</span><span>5 units</span><span>32 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m5-seo-2.html">
+      <div class="meta"><span>Module 05 · Search</span><span>42 / 42</span></div>
+      <div class="nb">05</div>
+      <h3>SEO 2.0<br>AI 時代的<em>搜尋策略</em></h3>
+      <div class="sub">SERP 解剖 · AI Overview 衝擊 · 搜尋意圖四分類 · GSC 實戰 · On-Page / 技術 SEO / Off-Page 完整地圖。</div>
+      <div class="stats-row"><span>10 hr</span><span>6 units</span><span>42 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m6-ga4-analytics.html">
+      <div class="meta"><span>Module 06 · Data</span><span>36 / 36</span></div>
+      <div class="nb">06</div>
+      <h3>GA4 數據分析<br>從報表到<em>決策</em></h3>
+      <div class="sub">建置 / 流量 / 受眾 / 探索分析五型 / A3 報告書框架。把 GA4 從工具學成決策語言。</div>
+      <div class="stats-row"><span>8 hr</span><span>5 units</span><span>36 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m7-gtm-tracking.html">
+      <div class="meta"><span>Module 07 · Tagging</span><span>26 / 26</span></div>
+      <div class="nb">07</div>
+      <h3>GTM<br>數據<em>追蹤工程</em></h3>
+      <div class="sub">容器 / 代碼 / 觸發 / 變數四元素；GA4 整合；自訂事件追蹤；Meta Pixel 與電商 Data Layer 進階。</div>
+      <div class="stats-row"><span>5 hr</span><span>4 units</span><span>26 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m8-digital-ads.html">
+      <div class="meta"><span>Module 08 · Paid</span><span>26 / 26</span></div>
+      <div class="nb">08</div>
+      <h3>數位廣告<br>與<em>流量心理學</em></h3>
+      <div class="sub">付費 vs 自然 · AIDA / PAS / BAB 文案公式 · Google Ads 結構 · Meta Ads 受眾。M1 影響力與損失趨避反覆呼應。</div>
+      <div class="stats-row"><span>5 hr</span><span>4 units</span><span>26 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m9-email-marketing.html">
+      <div class="meta"><span>Module 09 · Owned</span><span>22 / 22</span></div>
+      <div class="nb">09</div>
+      <h3>Email 行銷<br>與<em>第一方數據</em></h3>
+      <div class="sub">Cookie 後時代的受眾護城河 · 主旨行心理學 · Lead Magnet × Landing Page · 自動化序列（歡迎 / 棄購挽回）。</div>
+      <div class="stats-row"><span>4 hr</span><span>4 units</span><span>22 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+    <a class="card" href="m10-capstone-project.html">
+      <div class="meta"><span>Module 10 · Capstone</span><span>32 / 32</span></div>
+      <div class="nb">10</div>
+      <h3>整合實戰專案<br>把 70hr 變成<em>一份提案</em></h3>
+      <div class="sub">分組品牌 · 策略規劃 · 內容 / SEO / GTM 執行模擬 · A3 報告與成果發表。內含整套 70 小時的畢業收束。</div>
+      <div class="stats-row"><span>7 hr</span><span>4 units</span><span>32 slides</span></div>
+      <span class="open">開啟簡報 →</span>
+    </a>
+
+  </div>
+</section>
+
+<section class="ops">
+  <h3>操作方式 <em>· How to lecture</em></h3>
+  <div class="ops-grid">
+    <div class="op-card">
+      <div class="l">Navigation · 翻頁</div>
+      <h4>四種方式都行</h4>
+      <p><kbd>←</kbd> <kbd>→</kbd> 鍵盤翻頁、滑鼠滾輪、觸控板左右滑動、底部圓點直接跳。</p>
+    </div>
+    <div class="op-card">
+      <div class="l">Overview · 索引</div>
+      <h4>ESC 看全貌</h4>
+      <p>按 <kbd>Esc</kbd> 進入縮圖總覽，看清整份簡報的章節節奏，再點任一頁跳到該頁。再按 <kbd>Esc</kbd> 退出。</p>
+    </div>
+    <div class="op-card">
+      <div class="l">Pipeline · 互動</div>
+      <h4>逐步點亮</h4>
+      <p>有些頁面是 pipeline 流程（如 GTM 七步、JTBD 五問）。按 <kbd>→</kbd> 會逐個點亮 step，全亮才翻下一頁。可控制講課節奏。</p>
+    </div>
+    <div class="op-card">
+      <div class="l">Aspect · 比例</div>
+      <h4>16:9 全螢幕投影</h4>
+      <p>所有 deck 設計給 16:9 全螢幕投影。投影前按 <kbd>F11</kbd>（Mac 用 Safari/Chrome 全螢幕鍵）達到最佳效果。</p>
+    </div>
+    <div class="op-card">
+      <div class="l">Theme · 主題色</div>
+      <h4>牛皮紙底</h4>
+      <p>暖米黃底 + 深棕字（<em>Kraft Paper</em>）。長時間講課對眼睛友善，比白底投影更耐看。</p>
+    </div>
+    <div class="op-card">
+      <div class="l">Browser · 相容</div>
+      <h4>現代瀏覽器</h4>
+      <p>Chrome / Edge / Safari / Firefox 最新版皆可。不依賴後端，<em>單檔離線</em>也能跑（含 WebGL 背景與動效）。</p>
+    </div>
+  </div>
+</section>
+
+<section class="about">
+  <div class="about-grid">
+    <div>
+      <div class="label">About · 關於本簡報集</div>
+      <h3 style="font-family:var(--serif-zh);font-weight:700;font-size:min(3vw,40px);margin-top:1vh;line-height:1.2">一張完整的數位行銷地圖</h3>
+    </div>
+    <div>
+      <p>翻開這套簡報，你會看到 70 小時數位行銷課程的全部教學內容：從消費者心理學打底，一路走過生成式 AI、市場洞察、社群、SEO、GA4、GTM、廣告、Email，最後收束在整合實戰專案。</p>
+      <p>十個模組互相回扣——M1 的人性洞察會在 M4 注意力心理學、M8 廣告文案再次出現；M2 的 AI 工具箱解鎖後續所有模組的 AI 接口。可以順著走完整 70 小時，也可以單獨打開某一份補強單一主題；每份簡報都用「概念 → 案例 → 練習」三段式編排，幕間留 hero 頁讓<em>眼睛呼吸</em>。</p>
+      <p>視覺基調借自 <em>Monocle</em> 雜誌——牛皮紙底、衬線大標題、極簡留白，把注意力留給內容本身。長時間讀比白底耐看。</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="logo">弄一下工作室</span>
+  <span>Digital Marketing 70hr · Lecturer Decks</span>
+  <span>Vol.01 · 2026 · MIT-Style Open</span>
+</footer>
+
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>

@@ -4,8 +4,9 @@ import os
 from pathlib import Path
 from dataclasses import dataclass
 
-# 預設位置，可用 DECKCHECK_DECKS_PARENT 環境變數覆蓋（CI / 不同環境）
-_DEFAULT_PARENT = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/01-PROJECTS/課程簡報"
+# 預設位置 = 本 repo 根目錄（17 個 *-decks 子資料夾就在這層）
+# 可用 DECKCHECK_DECKS_PARENT 環境變數覆蓋（CI / 不同環境）
+_DEFAULT_PARENT = Path(__file__).resolve().parent.parent
 DECKS_PARENT = Path(os.environ.get("DECKCHECK_DECKS_PARENT", str(_DEFAULT_PARENT)))
 
 # 不在 audit 範圍的 repo（接洽 / 入口頁等）

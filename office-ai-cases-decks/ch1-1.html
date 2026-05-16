@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH 1-1 · 週報生成｜辦公室 AI 工具案例應用</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0a0b;
+    --ink-rgb:10,10,11;
+    --paper:#f1efea;
+    --paper-rgb:241,239,234;
+    --paper-tint:#e8e5de;
+    --ink-tint:#18181a;
+
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  .kicker{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(15px,1.22vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.75vw;line-height:1.5;opacity:.86}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  em{font-style:italic;font-family:var(--serif-en)}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ---- Layouts API ---- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .frame.grid-2-7-5,.frame.grid-2-6-6,.frame.grid-2-8-4,.frame.grid-3-3,.frame.grid-6{display:grid}
+
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:10vw;line-height:.96;letter-spacing:-.02em}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:6.2vw;line-height:1.08;letter-spacing:-.01em}
+  .h-sub{font-family:var(--serif-zh);font-weight:500;font-size:3.1vw;line-height:1.25;letter-spacing:0;opacity:.7}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:2.3vw;line-height:1.3}
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  .meta-row{display:flex;gap:1.2em;align-items:baseline;flex-wrap:wrap;font-family:var(--mono);font-size:max(12px,.92vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+
+  .stat-card{display:flex;flex-direction:column;gap:.8vh;align-items:flex-start;padding-top:1.6vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.3)}
+  .stat-card .stat-label{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .stat-card .stat-nb{font-family:var(--serif-en);font-weight:800;font-size:5.8vw;line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum";margin-top:.4vh}
+  .stat-card .stat-nb .stat-unit{font-family:var(--serif-zh);font-weight:500;font-size:.38em;letter-spacing:0;opacity:.72;margin-left:.14em}
+  .stat-card .stat-note{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.5;opacity:.72;margin-top:.6vh}
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  .pipeline-section{margin-top:4.4vh;padding-top:2.8vh;border-top:1px dashed rgba(127,127,127,.32)}
+  .pipeline-section:first-of-type{border-top:0;padding-top:0;margin-top:3vh}
+  .pipeline-label{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.24em;text-transform:uppercase;opacity:.62;margin-bottom:2.2vh}
+  .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw}
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{display:flex;flex-direction:column;gap:.8vh;padding-top:1.4vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .step-nb{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:1.15vw;opacity:.45}
+  .step-title{font-family:var(--sans-zh);font-weight:700;font-size:1.55vw;letter-spacing:.01em;line-height:1.2}
+  .step-desc{font-family:var(--sans-zh);font-weight:400;font-size:max(12px,.95vw);line-height:1.45;opacity:.72}
+
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(0,1fr);gap:2.4vh 2vw}
+
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{display:block;margin-top:.8vh;font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.6}
+  .callout-src{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+
+  /* ---- Hands-on 左欄資訊塊 ---- */
+  .info-block{padding:2vh 1.8vw;border-left:2px solid currentColor;border-color:rgba(127,127,127,.35);margin-bottom:2vh}
+  .info-block .ib-label{font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:.8vh}
+  .info-block .ib-body{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.65;opacity:.85}
+  .info-block .ib-code{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.04em;opacity:.75;word-break:break-all}
+  .info-block .ib-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:.5vh}
+  .info-block .ib-list li{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.6;opacity:.85;padding-left:1.2em;position:relative}
+  .info-block .ib-list li::before{content:"→";position:absolute;left:0;opacity:.45;font-family:var(--mono)}
+
+  /* ---- 驗證卡 checkbox 行 ---- */
+  .verify-row{display:flex;align-items:flex-start;gap:1vw;padding:1.8vh 0;border-bottom:1px solid rgba(127,127,127,.2)}
+  .verify-row:last-child{border-bottom:none}
+  .verify-box{flex-shrink:0;width:1.4vw;height:1.4vw;min-width:16px;min-height:16px;border:1.5px solid currentColor;border-radius:2px;opacity:.55;margin-top:.2em}
+  .verify-row .vr-body{font-family:var(--sans-zh);font-size:max(13px,1.1vw);line-height:1.6;opacity:.86}
+  .verify-row .vr-key{font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.15vw)}
+
+  /* ---- 7 prompt 地圖卡 ---- */
+  .prompt-map-card{padding:1.6vh 1.4vw;border:1px solid rgba(127,127,127,.28);border-radius:3px;display:flex;flex-direction:column;gap:.5vh}
+  .prompt-map-card.highlight{border-color:rgba(127,127,127,.6);border-width:2px}
+  .pmc-id{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.22em;text-transform:uppercase;opacity:.5}
+  .pmc-name{font-family:var(--serif-zh);font-weight:700;font-size:max(13px,1.1vw);line-height:1.25}
+  .pmc-bone{font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.1em;opacity:.55}
+  .pmc-badge{display:inline-block;font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.18em;text-transform:uppercase;padding:2px 8px;border:1px solid currentColor;opacity:.7;margin-top:.3vh}
+
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+</style>
+</head>
+<body>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻頁 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ============================================================
+     P.01  COVER  hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>CH 1-1 · 01 / 16</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>OFFICE AI · CASE 01 · 75 MIN</div>
+    <div class="h-hero" data-anim style="white-space:nowrap">週報生成</div>
+    <div class="h-sub" data-anim style="margin-top:2.4vh;max-width:38vw">50 條日誌 → 3 段週報<br>用任一主流 AI 工具跑通</div>
+    <div class="rule" data-anim style="max-width:36vw;margin-top:4vh"></div>
+    <div class="lead" data-anim style="max-width:40vw;margin-top:2vh">
+      小李：「光是整理就花掉 45 分鐘，<br>今天用 AI 做完。」
+    </div>
+  </div>
+
+  <div class="meta-row" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span>·</span>
+    <span>Block 1</span>
+    <span>·</span>
+    <span>2026 Spring</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.02  場景設定  light  (Layout 4 左文)
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>02 / 16</div>
+  </div>
+
+  <div class="frame" style="display:grid;grid-template-columns:7fr 5fr;gap:0 5vw;align-items:start;margin-top:3vh">
+    <div data-anim>
+      <div class="kicker">SCENE SETUP · 場景設定</div>
+      <div class="h-xl" style="white-space:nowrap">小李的困境</div>
+      <div class="rule" style="max-width:28vw;margin:3vh 0"></div>
+      <div class="body-zh" style="margin-bottom:2vh">
+        小李，32 歲，中部某傳產電商部門的<strong>業務副理兼財務代理</strong>。
+        每週五下午要交一份週報給主管。
+      </div>
+      <div class="body-zh" style="margin-bottom:2vh">
+        問題：一週 50 條工作日誌——客訴、跨部門協作、臨時插隊事件——
+        <strong>光是整理就花掉 45 分鐘</strong>。
+      </div>
+      <div class="callout" data-anim style="margin-top:2vh">
+        <div class="q-big">素材：<code style="font-family:var(--mono);font-size:.85em">work-log-5day.txt</code></div>
+        5 天 × 10 條 = 50 條<br>
+        含主管交辦 / 跨部門協作 / 客訴處理 / 自我學習 / 臨時插隊事件
+      </div>
+    </div>
+    <div data-anim style="padding-top:1.6vh">
+      <div class="stat-card" style="margin-bottom:3vh">
+        <div class="stat-label">今天目標</div>
+        <div class="stat-nb" style="font-size:4.2vw">45<span class="stat-unit">分鐘</span></div>
+        <div class="stat-note">整理時間 → <strong>幾乎清零</strong></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">帶走清單</div>
+        <div class="stat-nb" style="font-size:3.8vw">7<span class="stat-unit">套</span></div>
+        <div class="stat-note">Prompt + 驗證卡 + 投影片素材</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">場景設定 · 5 min</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.03  Dataset 規模  dark  (stat 數字板)
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>03 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:3.5vh">DATASET · WORK-LOG-5DAY.TXT</div>
+
+  <div class="grid-3" style="flex:1;gap:5vw;padding:0;align-content:center" data-anim>
+    <div class="stat-card">
+      <div class="stat-label">原始日誌</div>
+      <div class="stat-nb">50<span class="stat-unit">條</span></div>
+      <div class="stat-note">週一至週五，全程貼文字即可跑，不需上傳檔案</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">涵蓋天數</div>
+      <div class="stat-nb">5<span class="stat-unit">天</span></div>
+      <div class="stat-note">2026-05-04（一）至 2026-05-08（五）</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">週報目標格式</div>
+      <div class="stat-nb">3<span class="stat-unit">段</span></div>
+      <div class="stat-note">主要成果 · 例行雜事 · 下週計畫</div>
+    </div>
+  </div>
+
+  <div class="body-zh" data-anim style="opacity:.55;margin-top:2vh">
+    約 1,500 字 — 所有主流免費版 AI context 均放得下（ChatGPT free / Gemini free / Copilot Edge free / Claude.ai free）
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">Dataset 規模</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.04  示範導入幕封  hero light
+     ============================================================ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>04 / 16</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>ACT I · DEMO · 講師示範 · 15 MIN</div>
+    <div class="h-xl" data-anim style="white-space:nowrap">先看老師跑一次</div>
+    <div class="lead" data-anim style="margin-top:3vh;max-width:44vw">
+      把 work-log-5day.txt 貼進任一主流 AI，<br>用 P1-1-2 跑通，讓你看到<strong>預期輸出長什麼樣子</strong>。
+    </div>
+    <div class="rule" data-anim style="max-width:42vw;margin-top:4vh"></div>
+    <div class="meta-row" data-anim style="margin-top:2vh">
+      <span>重點</span><span>·</span><span>P1-1-2 是 5 骨架完整版（主版）</span>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">示範段落開始</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.05  P1-1-2 骨架解剖  light  (Layout 10 左文右結構)
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>05 / 16</div>
+  </div>
+
+  <div class="frame" style="display:grid;grid-template-columns:5fr 7fr;gap:0 4vw;align-items:start;margin-top:3vh">
+    <div>
+      <div class="kicker" data-anim>P1-1-2 · 主版骨架解剖</div>
+      <div class="h-md" data-anim style="font-size:2.8vw;white-space:nowrap">5 骨架完整版</div>
+      <div class="body-zh" data-anim style="margin-top:2vh">
+        同樣的 50 條日誌，不同骨架跑出<br>
+        <strong>完全不同</strong>的週報。
+      </div>
+      <div class="body-zh" data-anim style="margin-top:1.5vh">
+        P1-1-2 是最常用的主版——<br>
+        角色設定 + 驗證行是核心差異。
+      </div>
+      <div class="callout" data-anim style="margin-top:3vh">
+        <strong>驗證行</strong>讓 AI 自報引用了幾條日誌，<br>
+        是快速揪出「漏看」的最有效方法
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1.6vh" data-anim>
+      <div class="rowline" style="display:grid;grid-template-columns:6em 1fr;gap:1.5vw;align-items:start">
+        <div class="rowline-k" style="font-family:var(--serif-zh);font-weight:700;font-size:1.6vw;opacity:.9">
+          <i data-lucide="user" class="ico-sm" style="opacity:.6"></i> 角色
+        </div>
+        <div class="body-zh" style="opacity:.85">你是一位擅長整理職場成果的商業寫作助理</div>
+      </div>
+      <div class="rowline" style="display:grid;grid-template-columns:6em 1fr;gap:1.5vw;align-items:start">
+        <div class="rowline-k" style="font-family:var(--serif-zh);font-weight:700;font-size:1.6vw;opacity:.9">
+          <i data-lucide="database" class="ico-sm" style="opacity:.6"></i> 資料
+        </div>
+        <div class="body-zh" style="opacity:.85">小李（業務副理兼財務代理）的一週工作日誌，共 50 條</div>
+      </div>
+      <div class="rowline" style="display:grid;grid-template-columns:6em 1fr;gap:1.5vw;align-items:start">
+        <div class="rowline-k" style="font-family:var(--serif-zh);font-weight:700;font-size:1.6vw;opacity:.9">
+          <i data-lucide="list-todo" class="ico-sm" style="opacity:.6"></i> 任務
+        </div>
+        <div class="body-zh" style="opacity:.85">整理成可直接寄給主管的週報：主要成果（3-5 條）+ 例行雜事（1-2 句）+ 下週計畫（3 條含時間）</div>
+      </div>
+      <div class="rowline" style="display:grid;grid-template-columns:6em 1fr;gap:1.5vw;align-items:start">
+        <div class="rowline-k" style="font-family:var(--serif-zh);font-weight:700;font-size:1.6vw;opacity:.9">
+          <i data-lucide="file-text" class="ico-sm" style="opacity:.6"></i> 輸出
+        </div>
+        <div class="body-zh" style="opacity:.85">純文字，明確標題，整份不超過 200 字，語氣客觀專業</div>
+      </div>
+      <div class="rowline" style="display:grid;grid-template-columns:6em 1fr;gap:1.5vw;align-items:start;border-bottom:1px solid rgba(127,127,127,.25)">
+        <div class="rowline-k" style="font-family:var(--serif-zh);font-weight:700;font-size:1.6vw;opacity:.9;color:inherit">
+          <i data-lucide="shield-check" class="ico-sm" style="opacity:.6"></i> 驗證
+        </div>
+        <div class="body-zh" style="opacity:.85">最後一行：「本週報引用日誌 X 條，覆蓋日期 YYYY-MM-DD 至 YYYY-MM-DD」</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">骨架拆解</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.06  預期輸出長相  dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>06 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:3vh">P1-1-2 · AI 輸出範例（以 work-log-5day.txt 為例）</div>
+  <div class="h-md" data-anim style="white-space:nowrap;margin-bottom:3vh">預期輸出長什麼樣</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;gap:1.2vh" data-anim>
+    <div class="body-zh" style="font-family:var(--mono);font-size:max(12px,.9vw);letter-spacing:.04em;opacity:.7;margin-bottom:.5vh">主要成果（5 條）</div>
+    <div class="rowline" style="display:grid;grid-template-columns:2em 1fr;gap:1vw;border-top:1px solid rgba(127,127,127,.25);padding:1.2vh 0">
+      <span style="font-family:var(--mono);opacity:.45;font-size:.9vw">01</span>
+      <div class="body-zh">SKU ABC 分類報告完成（A 類 15 / B 類 35 / C 類 200），已報主管並獲接受</div>
+    </div>
+    <div class="rowline" style="display:grid;grid-template-columns:2em 1fr;gap:1vw;border-top:1px solid rgba(127,127,127,.25);padding:1.2vh 0">
+      <span style="font-family:var(--mono);opacity:.45;font-size:.9vw">02</span>
+      <div class="body-zh">毛利分析完成並與主管確認，要求下次加 SKU 分組比較</div>
+    </div>
+    <div class="rowline" style="display:grid;grid-template-columns:2em 1fr;gap:1vw;border-top:1px solid rgba(127,127,127,.25);padding:1.2vh 0">
+      <span style="font-family:var(--mono);opacity:.45;font-size:.9vw">03</span>
+      <div class="body-zh">協調 D 客戶換貨流程（倉儲 + 物流 + 客服），已完成</div>
+    </div>
+    <div class="rowline" style="display:grid;grid-template-columns:2em 1fr;gap:1vw;border-top:1px solid rgba(127,127,127,.25);padding:1.2vh 0">
+      <span style="font-family:var(--mono);opacity:.45;font-size:.9vw">04</span>
+      <div class="body-zh">客製化包裝可行性評估 memo 完成（含成本 / 時程 / 風險）</div>
+    </div>
+    <div class="rowline" style="display:grid;grid-template-columns:2em 1fr;gap:1vw;border-top:1px solid rgba(127,127,127,.25);padding:1.2vh 0">
+      <span style="font-family:var(--mono);opacity:.45;font-size:.9vw">05</span>
+      <div class="body-zh">發現並通報 F 客戶運費標示系統 bug，已交 IT 處理</div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1.5vh;border-left-color:rgba(241,239,234,.4)">
+      <span style="font-family:var(--mono);font-size:max(11px,.85vw);opacity:.7">驗證行</span><br>
+      本週報引用日誌 <strong>50 條</strong>，覆蓋日期 2026-05-04 至 2026-05-08
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">預期輸出示範</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.07  5 骨架 pipeline  light  data-animate="pipeline"
+     ============================================================ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>07 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:3vh">PROMPT ANATOMY · 按 → 逐步展開</div>
+  <div class="h-md" data-anim style="white-space:nowrap;margin-bottom:3.5vh">P1-1-2 的 5 個骨架元素</div>
+
+  <div class="pipeline" style="flex:1;align-content:center">
+    <div class="step" data-anim="step">
+      <div class="step-nb">01</div>
+      <div class="step-title">
+        <i data-lucide="user" class="ico-sm"></i> 角色
+      </div>
+      <div class="step-desc">設定 AI 的身份視角<br>→ 「擅長整理職場成果的商業寫作助理」<br>不是讓 AI 隨意回答，而是進入寫作模式</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">02</div>
+      <div class="step-title">
+        <i data-lucide="database" class="ico-sm"></i> 資料
+      </div>
+      <div class="step-desc">明確告知資料範圍與身份<br>→ 50 條、日期範圍、誰的日誌<br>AI 才能正確理解「什麼算完整」</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">03</div>
+      <div class="step-title">
+        <i data-lucide="list-todo" class="ico-sm"></i> 任務
+      </div>
+      <div class="step-desc">三段式結構指令<br>→ 主要成果 / 雜事歸納 / 下週計畫<br>含各段字數與內容要求</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">04</div>
+      <div class="step-title">
+        <i data-lucide="file-text" class="ico-sm"></i> 輸出格式
+      </div>
+      <div class="step-desc">限制格式與字數<br>→ 純文字、明確標題、≤ 200 字、語氣客觀<br>防止 AI 自由發揮成長文章</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">05</div>
+      <div class="step-title">
+        <i data-lucide="shield-check" class="ico-sm"></i> 驗證要求
+      </div>
+      <div class="step-desc">讓 AI 自報引用數<br>→「本週報引用日誌 X 條，覆蓋日期…」<br>是最快揪出漏看問題的方法</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">骨架 Pipeline · 按空白鍵逐步展開</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.08  7 套 Prompt 地圖  light  data-animate="directional"
+     ============================================================ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>08 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:3vh">PROMPT MAP · 7 套全貌</div>
+  <div class="h-md" data-anim style="margin-bottom:3vh;white-space:nowrap">主版 3 套 + 變奏 3 套 + 風險 1 套</div>
+
+  <div style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:1.8vh 1.4vw;align-content:center">
+    <!-- 主版 -->
+    <div class="prompt-map-card" data-anim="left">
+      <div class="pmc-id">P1-1-1</div>
+      <div class="pmc-name">基礎版週報</div>
+      <div class="pmc-bone">骨架：任務 + 輸出</div>
+      <div class="pmc-badge">建立信心用</div>
+    </div>
+    <div class="prompt-map-card highlight" data-anim="left" style="grid-row:span 1">
+      <div class="pmc-id">P1-1-2 ★</div>
+      <div class="pmc-name">5 骨架完整版</div>
+      <div class="pmc-bone">角色+資料+任務<br>+輸出+驗證</div>
+      <div class="pmc-badge">主版 · 最常用</div>
+    </div>
+    <!-- 變奏 -->
+    <div class="prompt-map-card highlight" data-anim="right">
+      <div class="pmc-id">P1-1-3 ★</div>
+      <div class="pmc-name">給主管精簡版</div>
+      <div class="pmc-bone">強約束字數 ≤100</div>
+      <div class="pmc-badge">主管 · 1 分鐘閱</div>
+    </div>
+    <div class="prompt-map-card" data-anim="right">
+      <div class="pmc-id">P1-1-4</div>
+      <div class="pmc-name">跨部門協作版</div>
+      <div class="pmc-bone">含協作請求結構</div>
+      <div class="pmc-badge">給財務 / 行政部</div>
+    </div>
+    <!-- 第二列 -->
+    <div class="prompt-map-card" data-anim="left">
+      <div class="pmc-id">P1-1-5</div>
+      <div class="pmc-name">自我備忘版</div>
+      <div class="pmc-bone">含反思 + 判斷要求</div>
+      <div class="pmc-badge">個人週復盤</div>
+    </div>
+    <div class="prompt-map-card highlight" data-anim="left">
+      <div class="pmc-id">P1-1-6 ★</div>
+      <div class="pmc-name">風險檢查</div>
+      <div class="pmc-bone">先做不確定性盤點</div>
+      <div class="pmc-badge">建議第一步跑</div>
+    </div>
+    <div class="prompt-map-card highlight" data-anim="right">
+      <div class="pmc-id">P1-1-7 ★</div>
+      <div class="pmc-name">投影片素材版</div>
+      <div class="pmc-bone">嚴格禁空話</div>
+      <div class="pmc-badge">CH2-2 組裝用</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center" data-anim="right">
+      <div class="body-zh" style="text-align:center;opacity:.5;font-size:max(12px,.95vw)">
+        ★ 標記 = 上機<br>必跑 4 套
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">Prompt 地圖</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.09  換你動手幕封  hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>09 / 16</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>ACT II · HANDS-ON · 上機演練</div>
+    <div class="h-hero" data-anim style="white-space:nowrap">上機</div>
+    <div class="h-sub" data-anim style="margin-top:2vh">40 分鐘</div>
+    <div class="rule" data-anim style="max-width:32vw;margin-top:4vh"></div>
+    <div class="lead" data-anim style="margin-top:2.5vh;max-width:42vw">
+      打開任一主流 AI 工具<br>（ChatGPT / Gemini / Copilot / Claude.ai，免費版即可）
+    </div>
+  </div>
+
+  <div class="meta-row" data-anim>
+    <span>目標</span><span>·</span><span>40 分鐘後手上有 3 份不同版本週報 + 1 份投影片素材</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.10  演練導引①  light  Layout 9 左右對比
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>10 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:1vh">HANDS-ON · 換你動手 · 核心 4 套</div>
+
+  <div class="frame" style="display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;flex:1;align-items:start;margin-top:1vh">
+    <!-- 左欄 -->
+    <div style="display:flex;flex-direction:column;gap:0" data-anim="left">
+      <div class="info-block">
+        <div class="ib-label">講義完整連結</div>
+        <div class="ib-code">https://skypai0326.github.io/<br>courses/courses/office-ai-cases/CH1-1.html</div>
+      </div>
+
+      <div class="info-block">
+        <div class="ib-label">依序跑這 4 套</div>
+        <div class="ib-body">
+          <strong>P1-1-6</strong> 風險檢查（建議第一步）<br>
+          <strong>P1-1-2</strong> 5 骨架完整版（主版 · 最重要）<br>
+          <strong>P1-1-3</strong> 給主管精簡版（對比用）<br>
+          <strong>P1-1-7</strong> 投影片素材版（存下來）
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="ib-label">操作步驟</div>
+        <ul class="ib-list">
+          <li>取得 work-log-5day.txt，全選複製</li>
+          <li>貼上 P1-1-6，把日誌填入，送出，看不確定清單</li>
+          <li>貼上 P1-1-2，填入日誌，確認最後有驗證行</li>
+          <li>用 P1-1-3 跑精簡版，比較資訊取捨差異</li>
+          <li>用 P1-1-7 跑投影片素材版，確認有具體數字</li>
+        </ul>
+      </div>
+
+      <div class="info-block">
+        <div class="ib-label">時間盒</div>
+        <div class="ib-body"><strong>40 分鐘</strong>（建議：每套約 8-10 分鐘，最後 5 分鐘用自己的日誌試跑）</div>
+      </div>
+    </div>
+
+    <!-- 右欄：驗證卡 -->
+    <div data-anim="right">
+      <div class="kicker" style="margin-bottom:1.6vh">結果驗證卡（離場前 30 秒打勾）</div>
+
+      <div class="verify-row">
+        <div class="verify-box"></div>
+        <div class="vr-body">
+          <span class="vr-key">總筆數：</span>AI 說「引用日誌 X 條」——你的 work-log-5day.txt 有 50 條，數字對得起來？
+        </div>
+      </div>
+
+      <div class="verify-row">
+        <div class="verify-box"></div>
+        <div class="vr-body">
+          <span class="vr-key">內容吻合：</span>AI 列出的成果件數是否與你眼睛掃描的重要事項大致吻合？
+        </div>
+      </div>
+
+      <div class="verify-row">
+        <div class="verify-box"></div>
+        <div class="vr-body">
+          <span class="vr-key">前三大：</span>AI 列的「本週主要成果」前三條——你最重視的事有沒有在裡面？有沒有遺漏？
+        </div>
+      </div>
+
+      <div class="verify-row">
+        <div class="verify-box"></div>
+        <div class="vr-body">
+          <span class="vr-key">分類認可：</span>AI 把什麼歸類成「雜事」——你同意這個分類嗎？重要的事有沒有被降級？
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">演練導引① · P1-1-6 → P1-1-2 → P1-1-3 → P1-1-7</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.11  演練導引②  light  (多平台對比)
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>11 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2vh">HANDS-ON · 換你動手 · 進階觀察</div>
+  <div class="h-md" data-anim style="white-space:nowrap;margin-bottom:3vh">同一套 Prompt，在 2-3 個平台跑，觀察差異</div>
+
+  <div class="frame" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2vh 3vw;flex:1;align-content:start">
+    <div class="stat-card" data-anim>
+      <div class="stat-label">ChatGPT free</div>
+      <div class="stat-nb" style="font-size:3.2vw">GPT-5.5</div>
+      <div class="stat-note">每 5 小時約 10 則限制<br>建議 40 分鐘內完成</div>
+    </div>
+    <div class="stat-card" data-anim>
+      <div class="stat-label">Gemini free</div>
+      <div class="stat-nb" style="font-size:3.2vw">32K</div>
+      <div class="stat-note">Context 最長，需登入 Google 帳號（台灣部分功能）</div>
+    </div>
+    <div class="stat-card" data-anim>
+      <div class="stat-label">Copilot Edge free</div>
+      <div class="stat-nb" style="font-size:3.2vw">0</div>
+      <div class="stat-note">帳號免登、對話歷史不保存<br>跑完截圖存檔</div>
+    </div>
+
+    <div class="callout" style="grid-column:span 3" data-anim>
+      <div class="q-big">觀察這 3 件事</div>
+      <div class="body-zh" style="margin-top:1.2vh;opacity:.85">
+        1. 驗證行的「引用日誌 X 條」——各平台填的數字一樣嗎？<br>
+        2. 主要成果的排序——哪一條被放在第一位？各家相同嗎？<br>
+        3. 例行雜事的歸納——AI 把什麼事「降級」成雜事？你同意嗎？
+      </div>
+    </div>
+
+    <div class="info-block" style="grid-column:span 3" data-anim>
+      <div class="ib-label">跑不出時的排錯步驟</div>
+      <ul class="ib-list">
+        <li>先跑 P1-1-1 基礎版確認資料可讀</li>
+        <li>在 prompt 末尾加「請嚴格依照上方格式輸出，不要增加多餘說明」</li>
+        <li>換另一個免費平台試跑同一套，比較品質再選</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">演練導引② · 多平台對比觀察</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.12  演練中段金句  dark  data-animate="quote"
+     ============================================================ -->
+<section class="slide dark" data-animate="quote">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>12 / 16</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;max-width:60vw">
+    <div class="kicker" data-anim style="margin-bottom:4vh">MIDPOINT REMINDER · 演練中段提醒</div>
+    <div class="callout" style="border-left:none;padding-left:0;background:none">
+      <span data-anim="line" style="display:block;font-family:var(--serif-zh);font-weight:700;font-size:3.8vw;line-height:1.15;letter-spacing:-.01em">
+        AI 不會自己驗證。
+      </span>
+      <span data-anim="line" style="display:block;font-family:var(--serif-zh);font-weight:700;font-size:3.8vw;line-height:1.15;letter-spacing:-.01em;margin-top:1.6vh">
+        你要驗證它。
+      </span>
+      <span data-anim="line" style="display:block;font-family:var(--sans-zh);font-size:1.6vw;line-height:1.55;opacity:.65;margin-top:3.5vh">
+        驗證行是起點，不是終點——<br>
+        「引用 50 條」不代表每條都被正確解讀。
+      </span>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">核心心法</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.13  結果驗證卡  light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>13 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.5vh">VERIFY · 結果驗證卡</div>
+  <div class="h-md" data-anim style="white-space:nowrap;margin-bottom:3.5vh">離場前 30 秒 · 打 4 個勾</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div class="verify-row" data-anim>
+      <div class="verify-box"></div>
+      <div class="vr-body" style="font-size:max(14px,1.2vw)">
+        <span class="vr-key">總筆數：</span>AI 說「引用日誌 X 條」——你的 work-log-5day.txt 有 50 條，數字對得起來？
+      </div>
+    </div>
+    <div class="verify-row" data-anim>
+      <div class="verify-box"></div>
+      <div class="vr-body" style="font-size:max(14px,1.2vw)">
+        <span class="vr-key">內容吻合：</span>本案例日誌無金額欄位，改確認：AI 列出的成果件數是否與你眼睛掃描的重要事項大致吻合？
+      </div>
+    </div>
+    <div class="verify-row" data-anim>
+      <div class="verify-box"></div>
+      <div class="vr-body" style="font-size:max(14px,1.2vw)">
+        <span class="vr-key">前三大：</span>AI 列的「本週主要成果」前三條——你覺得最重要的事有沒有在裡面？有沒有遺漏？
+      </div>
+    </div>
+    <div class="verify-row" data-anim>
+      <div class="verify-box"></div>
+      <div class="vr-body" style="font-size:max(14px,1.2vw)">
+        <span class="vr-key">分類認可：</span>AI 把什麼歸類成「雜事」——你同意這個分類嗎？有沒有重要的事被降級成雜事？
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">結果驗證卡 · 固定收尾動作</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.14  驗證點破  light  (常見錯誤)
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>14 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.5vh">TROUBLE-SHOOTING · 常見問題</div>
+  <div class="h-md" data-anim style="white-space:nowrap;margin-bottom:3vh">驗證時最常看到的兩個問題</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;gap:2.2vh;justify-content:center">
+    <div class="callout" data-anim>
+      <div class="q-big">
+        <i data-lucide="alert-triangle" class="ico-md"></i>
+        重要事項被歸進「雜事」？
+      </div>
+      <div class="body-zh" style="margin-top:1.2vh;opacity:.86">
+        AI 判斷「主要成果 vs 雜事」靠文字描述——日誌只寫「處理客訴」而非「完成 D 客戶換貨，協調倉儲+物流+客服」，AI 就會把它降級。
+      </div>
+      <div class="body-zh" style="margin-top:.8vh;opacity:.72">
+        <strong>修法：</strong>先跑 P1-1-6 看哪些條目「資訊不完整」，在原始日誌補充結果後重跑；或追問「請把第 N 條重新分類為主要成果，因為…」
+      </div>
+    </div>
+
+    <div class="callout" data-anim>
+      <div class="q-big">
+        <i data-lucide="x-circle" class="ico-md"></i>
+        AI 輸出混入日誌裡沒有的事？
+      </div>
+      <div class="body-zh" style="margin-top:1.2vh;opacity:.86">
+        幻覺在週報場景最常見型態是「補充成果」——AI 看你本週很忙，自作主張加上「完成 Q2 預算初稿」（日誌只有「主管交辦」的記錄，沒有「完成」）。
+      </div>
+      <div class="body-zh" style="margin-top:.8vh;opacity:.72">
+        <strong>修法：</strong>用 P1-1-2 驗證行比對引用條數；遇到可疑成果，追問「這條是從日誌哪一條推斷的？請引用原文」；習慣性先跑 P1-1-6。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">常見問題排錯</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.15  帶走物  dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>15 / 16</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:3vh">TAKEAWAY · 今天帶走什麼</div>
+  <div class="h-md" data-anim style="white-space:nowrap;margin-bottom:4vh">帶走 1 份週報範本 + 1 個習慣</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;gap:2vh;justify-content:center">
+    <div class="rowline" style="display:grid;grid-template-columns:auto 1fr;gap:2vw;align-items:start;border-top:1px solid rgba(241,239,234,.2);padding:2vh 0" data-anim>
+      <i data-lucide="file-check" class="ico-lg"></i>
+      <div>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh">週報範本 1 份</div>
+        <div class="body-zh">P1-1-2（5 骨架完整版）回辦公室直接套自己的工作日誌</div>
+      </div>
+    </div>
+    <div class="rowline" style="display:grid;grid-template-columns:auto 1fr;gap:2vw;align-items:start;border-top:1px solid rgba(241,239,234,.2);padding:2vh 0" data-anim>
+      <i data-lucide="layers" class="ico-lg"></i>
+      <div>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh">7 套 Prompt 完整組</div>
+        <div class="body-zh">主版 3 套 + 變奏 3 套 + 風險 1 套，依場景換用</div>
+      </div>
+    </div>
+    <div class="rowline" style="display:grid;grid-template-columns:auto 1fr;gap:2vw;align-items:start;border-top:1px solid rgba(241,239,234,.2);border-bottom:1px solid rgba(241,239,234,.2);padding:2vh 0" data-anim>
+      <i data-lucide="shield-check" class="ico-lg"></i>
+      <div>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh">驗證卡 + 心法</div>
+        <div class="body-zh">離場前打 4 個勾；<em>AI 不會自己驗證，你要驗證它。</em></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">帶走物清單</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     P.16  銜接 CH1-2  hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>案例一 · 週報生成</div>
+    <div>16 / 16</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>NEXT · CH 1-2 · 業務財務</div>
+    <div class="h-xl" data-anim style="white-space:nowrap">週報只是開始</div>
+    <div class="lead" data-anim style="margin-top:3vh;max-width:46vw">
+      下一案例：<strong>CH 1-2 業務財務</strong><br>
+      3 個子場景，同一份 AI 工具<br>用在報表整理、對帳、跨部門交辦追蹤
+    </div>
+    <div class="rule" data-anim style="max-width:38vw;margin-top:5vh"></div>
+    <div class="meta-row" data-anim style="margin-top:2.5vh">
+      <span>帶著你的週報範本繼續</span>
+      <span>·</span>
+      <span>CH 1-2 即將開始</span>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>辦公室 AI 工具案例應用</span>
+    <span class="title">To Be Continued</span>
+  </div>
+</section>
+
+</div><!-- /#deck -->
+
+<div id="nav"></div>
+
+<script>
+const VS=`attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+const FS_DARK=`precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+const FS_LIGHT=`precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId,fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl)return()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return(tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const el=slides[idx];
+  const th=el.dataset.theme||(el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  if(window.__playSlide)setTimeout(()=>window.__playSlide(idx),450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance&&window.__pipeAdvance())return;
+    go(idx+1);return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0&&window.__pipeAdvance&&window.__pipeAdvance()){wheelAcc=0;}
+    else{go(idx+(wheelAcc>0?1:-1));wheelAcc=0;}
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0&&window.__pipeAdvance&&window.__pipeAdvance())return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity='0.15';
+        el.style.transform='none';
+      });
+      // Show non-step elements immediately
+      slide.querySelectorAll('[data-anim]:not([data-anim="step"])').forEach(el=>{
+        el.style.opacity='1';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+  playSlide(0);
+}
+</script>
+</body>
+</html>

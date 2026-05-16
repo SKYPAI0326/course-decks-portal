@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 7 · 廣告平台串接：Ads × LINE × TikTok｜NTUB GTM × 廣告科技｜台北商業大學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#0a1f3d;
+    --ink-rgb:10,31,61;
+    --paper:#f1f3f5;
+    --paper-rgb:241,243,245;
+    --paper-tint:#e4e8ec;
+    --ink-tint:#152a4a;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.08vw);line-height:1.7;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:1.4vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(14px,1.06vw);line-height:1.5;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:0.8vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:4.8vw;
+    line-height:1.08;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2.3vw;
+    line-height:1.3;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ============ 1. Cover (hero dark) ============ -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div>Vol.07 · Module Seven</div>
+    <div>01 / 20</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:2.2vh">
+    <div class="kicker" data-anim>NTUB · GTM × 廣告科技</div>
+    <h1 class="h-hero" data-anim style="font-size:8.4vw">廣告平台串接<br><em>Ads × LINE × TikTok</em></h1>
+    <p class="lead" style="max-width:48em;margin:0 auto" data-anim>台灣三大主場全部要串——<em>Google Ads Conversion + Enhanced Conversions</em>、<br><em>LINE LAP Tag + Cross Tag</em>、<em>TikTok Pixel + Events API</em>，<br>三套 SDK、三條後端路徑、一份 dataLayer。</p>
+    <div class="meta-row" style="justify-content:center" data-anim>
+      <span>Keyword</span><span>·</span><span>Google Ads</span>
+      <span>·</span><span>LINE LAP</span>
+      <span>·</span><span>TikTok EAPI</span>
+    </div>
+    <div class="meta-row" style="justify-content:center;margin-top:0.6vh" data-anim>
+      <span>Duration</span><span>·</span><span>3 小時授課</span>
+      <span>·</span><span>3 單元</span>
+    </div>
+    <div class="meta-row" style="justify-content:center;margin-top:0.6vh;opacity:.74" data-anim>
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>National Taipei University of Business</span>
+    <span class="title">數位行銷實務 II｜GTM × 廣告科技</span>
+    <span>2026 Autumn</span>
+  </footer>
+</section>
+
+<!-- ============ 2. 大引用 quote (light) ============ -->
+<section class="slide light" data-animate="quote">
+  <header class="chrome">
+    <div>Opening · Manifesto</div>
+    <div>02 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/module7.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7</a></div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Why this module opens here</div>
+    <div class="callout" style="border-left:0;text-align:center;padding:2vh 4vw">
+      <div class="q-big" style="font-size:max(22px,2.4vw);line-height:1.5">
+        <span data-anim="line">一個電商客戶常常<em>同時投四條線</em>——</span><br>
+        <span data-anim="line">Google、Meta、LINE、TikTok，</span><br>
+        <span data-anim="line">每條後端路徑都得<em>自己接一次</em>。</span>
+      </div>
+      <div class="cite" data-anim>—— Module 7 · 三平台不是三件事，是三套 SDK + 三條後端</div>
+    </div>
+    <p class="body-zh" style="max-width:46em;margin:0 auto" data-anim>Module 6 把 Meta（Pixel + CAPI）這條跑通；本週把<em>剩下三條</em>同樣的邏輯複製過去：<br>前端 Tag 收 + 後端 API 補 + Advanced Matching 提匹配。</p>
+  </div>
+  <footer class="foot">
+    <span>Module 7 · Opening</span>
+    <span>同樣的觀念 · 三套指令</span>
+  </footer>
+</section>
+
+<!-- ============ 3. 學習目標 grid-3 (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>This Module · Outcomes</div>
+    <div>03 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/module7.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7</a></div>
+  </header>
+  <div class="frame" style="gap:3vh">
+    <div class="kicker" data-anim>Learning Outcomes · 三平台一輪打通</div>
+    <h2 class="h-xl" data-anim>三小時，<em>三平台串到底</em></h2>
+    <p class="lead" style="max-width:44em" data-anim>不求各平台精通——求能<em>佈署、驗證、解釋差異</em>。</p>
+    <div class="grid-3" style="margin-top:2vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 01</div>
+        <div class="stat-nb">01</div>
+        <div class="stat-note">串 Google Ads <em>Conversion Action</em>，並開啟 <em>Enhanced Conversions</em> 把 first-party email 回拋給 Smart Bidding。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 02</div>
+        <div class="stat-nb">02</div>
+        <div class="stat-note">佈署 LINE LAP <em>Pixel + Cross Tag</em>，做 LAP 再行銷受眾與官方帳號好友召回。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 03</div>
+        <div class="stat-nb">03</div>
+        <div class="stat-note">佈署 TikTok Pixel 九大事件，並用 <em>Events API</em> 補後端、把 Match Quality 拉到 ≥ 7。</div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>NTUB · Week 7</span>
+    <span>3hr · 3 Units · Three Platforms, One DataLayer</span>
+  </footer>
+</section>
+
+<!-- ============ 4. Act I 幕封 · 7-1 Google Ads (hero light) ============ -->
+<section class="slide hero light">
+  <header class="chrome">
+    <div>Act I · Unit 7-1</div>
+    <div>04 / 20</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Section 7.1 · Google Ads Conversion + Enhanced</div>
+    <h2 class="h-hero" style="font-size:8vw" data-anim>Google Ads <em>Conversion</em><br>＋ <em>Enhanced Conversions</em></h2>
+    <p class="lead" style="max-width:48em;margin:0 auto" data-anim>讓 Google Ads 看到 GA4 看到的<em>那筆轉換</em>——<br>Conversion Action、GTM Tag、Enhanced、離線 OCI 一輪講完。</p>
+    <div class="meta-row" style="justify-content:center;margin-top:2vh" data-anim>
+      <span>5 Slides</span><span>·</span><span>Concept + Hands-on</span>
+      <span>·</span><span>~60 min</span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Act I · Google Ads</span>
+    <span>Unit 7-1</span>
+  </footer>
+</section>
+
+<!-- ============ 5. Conversion Action 5 步 pipeline (light) ============ -->
+<section class="slide light" data-animate="pipeline">
+  <header class="chrome">
+    <div>7-1 · Conversion Action</div>
+    <div>05 / 20 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-1-google-ads.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-1</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Hands-on · 五步建出第一個 Conversion Action</div>
+    <h2 class="h-xl" data-anim>從 <em>New Conversion</em> 到 <em>GTM Tag Fire</em></h2>
+    <p class="lead" style="max-width:46em" data-anim>按 → 逐步點亮，邊講邊跟著做。<em>Count 與 Value 設錯一次就漏一週的回購</em>。</p>
+    <div class="pipeline-section" style="margin-top:1.2vh">
+      <div class="pipeline-label" data-anim>Pipeline · Google Ads → GTM</div>
+      <div class="pipeline" data-cols="5">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01</div>
+          <div class="step-title">Conversion Action</div>
+          <div class="step-desc">Tools → Conversions → New → <em>Website</em>，name=<code>Purchase</code>。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02</div>
+          <div class="step-title">Category & Value</div>
+          <div class="step-desc">Category=<em>Purchase</em>；Value=『Use different values』<em>電商必選</em>。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03</div>
+          <div class="step-title">Count = Every</div>
+          <div class="step-desc">電商選 <em>Every</em>（每次都算）；Lead 選 One。<em>錯設 One 漏回購</em>。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">04</div>
+          <div class="step-title">GTM Conversion Tag</div>
+          <div class="step-desc">Conversion ID（AW-XXX）+ Label，Value 綁 <code>{{DLV - value}}</code>。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">05</div>
+          <div class="step-title">Trigger 綁 purchase</div>
+          <div class="step-desc">Trigger = Custom Event <code>purchase</code>（Module 5 那條 dataLayer.push）。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-1 · Conversion Action Pipeline</span>
+    <span>教室同步操作 · 講師走每一步</span>
+  </footer>
+</section>
+
+<!-- ============ 6. GTM Tag 設定細節 + Google Tag (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>7-1 · GTM Tag Setup</div>
+    <div>06 / 20 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-1-google-ads.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-1</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Setup · 三件事一次填到位</div>
+    <h2 class="h-xl" data-anim>Conversion Tag 與 <em>Google Tag</em> 怎麼分</h2>
+    <div style="margin-top:2vh">
+      <div class="rowline" data-anim>
+        <div class="k">Conversion Tag</div>
+        <div class="v">GTM → Tags → New → <em>Google Ads Conversion Tracking</em>。Conversion ID + Label 從 Ads 後台『Use Google Tag Manager』那邊複製。</div>
+        <div class="m">Per-event</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">Google Tag（全域）</div>
+        <div class="v">新方案：一個 <em>Google Tag</em> 同時送 GA4 + Ads。新站直接用，不要再裝舊的 GA4 Configuration Tag。</div>
+        <div class="m">Global</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">參數三件套</div>
+        <div class="v">Value=<code>{{DLV - value}}</code>、Currency=<code>{{DLV - currency}}</code>、Transaction ID=<code>{{DLV - transaction_id}}</code>。<em>缺一不可</em>，缺 transaction_id 會重複計算。</div>
+        <div class="m">DLV</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">驗證入口</div>
+        <div class="v">GTM Preview → 觸發 purchase → 看 Conversion Tag <em>Fired</em> + 參數正確。Ads 後台延遲 3 小時才反映。</div>
+        <div class="m">Preview</div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-1 · GTM Tag</span>
+    <span>新站直接用 Google Tag · 別再裝舊的</span>
+  </footer>
+</section>
+
+<!-- ============ 7. Enhanced vs Offline OCI directional (light) ============ -->
+<section class="slide light" data-animate="directional">
+  <header class="chrome">
+    <div>7-1 · Enhanced vs OCI</div>
+    <div>07 / 20 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-1-google-ads.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-1</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>兩條提匹配率的路 · 視成交週期挑一條</div>
+    <h2 class="h-xl" data-anim>Enhanced Conversions <em>vs</em> Offline 匯入</h2>
+    <div class="split" style="margin-top:2vh;align-items:stretch">
+      <div data-anim="left" style="display:flex;flex-direction:column;gap:1.6vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">Path A · Enhanced Conversions</div>
+        <div class="h-md">前端<em>明文</em>給 Google</div>
+        <div class="body-zh">勾『Include user-provided data』→ map email/phone/name 到 dataLayer 欄位。<em>Google 自己做 hash</em>——跟 Meta CAPI 相反，<em>不要</em>自己先 hash。</div>
+        <div class="meta-row" style="margin-top:auto"><span>適用</span><span>·</span><span>當下成交、有 email 在頁面</span></div>
+      </div>
+      <div data-anim="right" style="display:flex;flex-direction:column;gap:1.6vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">Path B · Offline Conversion Import</div>
+        <div class="h-md">CRM 用 <em>GCLID</em> 回拋</div>
+        <div class="body-zh">CRM 記錄廣告點擊的 GCLID → 業務電話成單後 CSV/API 匯入 Ads。Ads 把成交歸因回原本的點擊。</div>
+        <div class="meta-row" style="margin-top:auto"><span>限制</span><span>·</span><span>GCLID <em>90 天</em>內有效</span></div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:2vh">
+      <strong>術語提醒</strong>：Enhanced Conversions for <em>Web</em>（電商當下）vs Enhanced Conversions for <em>Leads</em>（B2B 後端成交）——名字像、後端走法不同。Privacy Policy <em>都要</em>寫清楚。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-1 · Two Paths to Match</span>
+    <span>挑一條 · 不要硬上兩條</span>
+  </footer>
+</section>
+
+<!-- ============ 8. 實戰案例 · 保險比價網 (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>7-1 · Case Study</div>
+    <div>08 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-1-google-ads.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-1</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>實戰 · Enhanced Conversions for Leads</div>
+    <h2 class="h-xl" data-anim>保險比價網 · <em>CPA −28%</em></h2>
+    <p class="lead" style="max-width:48em" data-anim>原本 Ads 只看到 GCLID + form_submit，但<em>實際成交是 7 天後電話達成</em>——<br>Smart Bidding 一直優化錯的人群。</p>
+    <div class="grid-3" style="margin-top:1.6vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Before</div>
+        <div class="stat-nb">18%</div>
+        <div class="stat-note">優質 lead 比例（Ads 看不到電話成交、把所有送單者當同等價值）。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">After（2 個月）</div>
+        <div class="stat-nb">34%</div>
+        <div class="stat-note">優質 lead 比例（成交時把 hashed email 回拋，演算法把成交歸因接回點擊）。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">CPA</div>
+        <div class="stat-nb">−28%</div>
+        <div class="stat-note">Smart Bidding 學到「會講電話的人」長什麼樣，廣告自動<em>避開無效送單</em>。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1.6vh">
+      <strong>前提</strong>：必須有使用者 email／phone（Google 會自己 hash）。若 form 連 email 都沒收，這條路走不通——<em>改走 Offline Conversions Import（GCLID 回傳）</em>，成本稍高但同樣有效。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-1 · Case · Insurance Lead</span>
+    <span>第一方資料的力量</span>
+  </footer>
+</section>
+
+<!-- ============ 9. Act II 幕封 · 7-2 LINE LAP (hero dark) ============ -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div>Act II · Unit 7-2</div>
+    <div>09 / 20</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Section 7.2 · LINE LAP Pixel + Cross Tag</div>
+    <h2 class="h-hero" style="font-size:8vw" data-anim>LINE <em>LAP</em><br>＋ <em>Cross Tag</em></h2>
+    <p class="lead" style="max-width:48em;margin:0 auto" data-anim>LINE 在台灣社群佔 <em>85%+</em>——沒 LAP 的投放等於<em>放棄主流市場</em>。<br>文件少、介面繁瑣，這節把重點抓出來。</p>
+    <div class="meta-row" style="justify-content:center;margin-top:2vh" data-anim>
+      <span>5 Slides</span><span>·</span><span>Hands-on + Audience</span>
+      <span>·</span><span>~60 min</span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Act II · LINE LAP</span>
+    <span>Unit 7-2</span>
+  </footer>
+</section>
+
+<!-- ============ 10. LAP Tag 5 步 pipeline (light) ============ -->
+<section class="slide light" data-animate="pipeline">
+  <header class="chrome">
+    <div>7-2 · LAP Tag Pipeline</div>
+    <div>10 / 20 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-2-line-lap.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-2</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Hands-on · GTM 沒官方 Template，全部自訂 HTML</div>
+    <h2 class="h-xl" data-anim>從 <em>Base Tag</em> 到 <em>Cross Tag 受眾</em></h2>
+    <p class="lead" style="max-width:46em" data-anim>LAP 的參數用 <code>_lt(...)</code> 開頭——和 fbq、gtag 都不一樣，<em>不要混</em>。</p>
+    <div class="pipeline-section" style="margin-top:1.2vh">
+      <div class="pipeline-label" data-anim>Pipeline · LAP 後台 → GTM → Audience</div>
+      <div class="pipeline" data-cols="5">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01</div>
+          <div class="step-title">兩種 Tag 都要</div>
+          <div class="step-desc"><em>LINE Tag (base)</em> 全站基礎；<em>Custom Tag</em> 追事件。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02</div>
+          <div class="step-title">GTM Custom HTML</div>
+          <div class="step-desc">沒官方 template，貼 LAP 提供的 script。Base 綁 All Pages。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03</div>
+          <div class="step-title">Conversion Tag</div>
+          <div class="step-desc"><code>_lt('send','cv',{type:'Conversion',value:'{{DLV - value}}'});</code> 綁 purchase。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">04</div>
+          <div class="step-title">建受眾</div>
+          <div class="step-desc">LAP → Audience → 用 LINE Tag 條件（<em>30 天造訪未購</em>）。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">05</div>
+          <div class="step-title">受眾門檻 1000</div>
+          <div class="step-desc">受眾 <em>< 1000 拒絕出稿</em>。小客戶要等量累積。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-2 · LAP Pipeline</span>
+    <span>底線前綴 _lt · 別跟 fbq 混</span>
+  </footer>
+</section>
+
+<!-- ============ 11. Cross Tag + LINE OA 連動 (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>7-2 · Cross Tag & OA</div>
+    <div>11 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-2-line-lap.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-2</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>進階 · 跨帳戶共用 + 廣告自動加好友</div>
+    <h2 class="h-xl" data-anim>Cross Tag 與 <em>官方帳號</em>的兩個專屬功能</h2>
+    <div class="grid-3" style="margin-top:2vh">
+      <div class="pillar" data-anim>
+        <div class="kicker" style="opacity:.7">Cross Tag</div>
+        <div class="t"><em>跨帳戶</em>受眾共用</div>
+        <div class="d">同一個 LINE 官方帳號的<em>多個廣告帳戶</em>共用受眾——代理商管多客戶必備。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="kicker" style="opacity:.7">OA 連動</div>
+        <div class="t"><em>廣告即加友</em></div>
+        <div class="d">『LINE 官方帳號』類型廣告，互動者自動加入官方帳號好友——<em>LINE 特有獲客路徑</em>。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="kicker" style="opacity:.7">LAP CAPI</div>
+        <div class="t"><em>2024</em> 推出</div>
+        <div class="d">LINE Conversions API，概念同 Meta CAPI。中大型客戶值得接；小客戶 base + custom 即可。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1.6vh">
+      <strong>常踩的坑</strong>：Cross Tag 要填的 <code>lap_id</code> 是 LAP 後台的 <em>Tag ID</em>（網址 <code>/tag/xxxxxx</code>），<em>不是</em> Ad Account ID、<em>不是</em> Pixel ID——填錯不報錯，但完全沒數據。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-2 · Cross Tag · OA</span>
+    <span>填錯 lap_id 是 LAP 接案最常見投訴</span>
+  </footer>
+</section>
+
+<!-- ============ 12. Tag Helper vs 後台延遲 directional (light) ============ -->
+<section class="slide light" data-animate="directional">
+  <header class="chrome">
+    <div>7-2 · Verify Strategy</div>
+    <div>12 / 20 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-2-line-lap.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-2</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Verify · 急著 debug 不要看後台</div>
+    <h2 class="h-xl" data-anim>LAP Tag Helper <em>vs</em> LAP 後台</h2>
+    <div class="split" style="margin-top:2vh;align-items:stretch">
+      <div data-anim="left" style="display:flex;flex-direction:column;gap:1.6vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">Tool A · LAP Tag Helper</div>
+        <div class="h-md">Chrome 擴充，<em>即時</em></div>
+        <div class="body-zh">類似 Meta Pixel Helper：開站當下就看 base + conversion 是否 Fire、帶哪些參數。<em>調 Tag 唯一可信來源</em>。</div>
+        <div class="meta-row" style="margin-top:auto"><span>場景</span><span>·</span><span>佈署當下、debug</span></div>
+      </div>
+      <div data-anim="right" style="display:flex;flex-direction:column;gap:1.6vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">Tool B · LAP 後台 Tag 狀態</div>
+        <div class="h-md">延遲 <em>1–2 小時</em></div>
+        <div class="body-zh">後台 Tag 狀態報表延遲——<em>不要拿來</em>判斷剛改完的 Tag 有沒有 Fire。看當天總量、跨日趨勢用。</div>
+        <div class="meta-row" style="margin-top:auto"><span>場景</span><span>·</span><span>對帳、報告、總量</span></div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:2vh">
+      <strong>常見誤判</strong>：學員改完 Tag 立刻刷後台「沒看到資料」就以為壞了——其實是延遲。<em>養成 Helper 先看的習慣</em>，後台留給講師。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-2 · Helper First</span>
+    <span>後台延遲不是 bug · 是設計</span>
+  </footer>
+</section>
+
+<!-- ============ 13. 實戰案例 · 生鮮電商 (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>7-2 · Case Study</div>
+    <div>13 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-2-line-lap.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-2</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>實戰 · LINE Cross Tag 排除黑名單受眾</div>
+    <h2 class="h-xl" data-anim>生鮮電商 · <em>CPA −38%</em></h2>
+    <p class="lead" style="max-width:48em" data-anim>50 萬 LINE OA 好友、但 LAP 廣告 CPA 比 Meta 高 <em>40%</em>——<br>原因藏在「<em>封鎖 OA 30 天內</em>」這群人身上。</p>
+    <div class="grid-3" style="margin-top:1.6vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">問題發現</div>
+        <div class="stat-nb">30%</div>
+        <div class="stat-note">LINE 廣告點擊者其實是<em>近 30 天封鎖 OA</em>的人——LAP 把他們當新客撒廣告，但他們早在黑名單。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">解決後 CPA</div>
+        <div class="stat-nb">−38%</div>
+        <div class="stat-note">用 Cross Tag 排除『近 30 天封鎖』受眾，廣告預算<em>只投有意願的</em>。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">召回率</div>
+        <div class="stat-nb">12%</div>
+        <div class="stat-note">針對 7 天未開訊者做廣告推播召回——比純 OA 推播<em>有效但成本可控</em>。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1.6vh">
+      <strong>本案重點</strong>：不是『加更多廣告預算』，是『<em>把預算從黑名單身上拿回來</em>』。Cross Tag 的價值不在跨平台同步，在<em>跨 segment 排除</em>。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-2 · Case · Fresh E-commerce</span>
+    <span>排除 ＞ 加預算</span>
+  </footer>
+</section>
+
+<!-- ============ 14. Act III 幕封 · 7-3 TikTok (hero light) ============ -->
+<section class="slide hero light">
+  <header class="chrome">
+    <div>Act III · Unit 7-3</div>
+    <div>14 / 20</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Section 7.3 · TikTok Pixel + Events API</div>
+    <h2 class="h-hero" style="font-size:8vw" data-anim>TikTok <em>Pixel</em><br>＋ <em>Events API</em></h2>
+    <p class="lead" style="max-width:48em;margin:0 auto" data-anim>九大事件 + Advanced Matching + 後端 EAPI——<br>追蹤邏輯其實 <em>80% 像 Meta</em>，工程師一次學會兩平台共用。</p>
+    <div class="meta-row" style="justify-content:center;margin-top:2vh" data-anim>
+      <span>5 Slides</span><span>·</span><span>Hands-on + EAPI</span>
+      <span>·</span><span>~60 min</span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Act III · TikTok</span>
+    <span>Unit 7-3</span>
+  </footer>
+</section>
+
+<!-- ============ 15. 九大事件三 bucket (light) ============ -->
+<section class="slide light" data-animate="pipeline">
+  <header class="chrome">
+    <div>7-3 · Nine Events</div>
+    <div>15 / 20 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-3-tiktok.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-3</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Concept · 九大事件 · 三段漏斗</div>
+    <h2 class="h-xl" data-anim>TikTok 九事件，分 <em>Browse / Engage / Convert</em> 三 bucket</h2>
+    <p class="lead" style="max-width:46em" data-anim>比 Meta 多了「<em>下單 vs 付款</em>」分開——COD 與分期付款的精細追蹤有用。</p>
+    <div class="pipeline-section" style="margin-top:1.2vh">
+      <div class="pipeline-label" data-anim>Funnel · Browse → Engage → Convert</div>
+      <div class="pipeline" data-cols="3">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01</div>
+          <div class="step-title">Browse · 認識</div>
+          <div class="step-desc"><em>ViewContent</em>、<em>Search</em>。看了什麼、搜了什麼。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02</div>
+          <div class="step-title">Engage · 互動</div>
+          <div class="step-desc"><em>AddToCart</em>、<em>Checkout</em>、<em>AddToWishlist</em>。準備購買的訊號。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03</div>
+          <div class="step-title">Convert · 成交</div>
+          <div class="step-desc"><em>PlaceAnOrder</em>（下單）/ <em>CompletePayment</em>（付款）/ Subscribe / SubmitForm。</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1.6vh">
+      <strong>關鍵差別</strong>：<em>PlaceAnOrder</em> ≠ <em>CompletePayment</em>。COD 與分期付款時兩者隔好幾天——精細追蹤的店家兩個都要送，<em>用 event_id 去重</em>。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-3 · Nine Events</span>
+    <span>下單 vs 付款 · 分開追</span>
+  </footer>
+</section>
+
+<!-- ============ 16. EAPI + Advanced Matching (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>7-3 · EAPI & AM</div>
+    <div>16 / 20 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-3-tiktok.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-3</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Setup · 兩個拉 Match Quality 的開關</div>
+    <h2 class="h-xl" data-anim>Events API ＋ Advanced Matching <em>同步開</em></h2>
+    <div style="margin-top:2vh">
+      <div class="rowline" data-anim>
+        <div class="k">官方 Template</div>
+        <div class="v">GTM Community Template Gallery 搜 <em>'TikTok Pixel'</em> → 官方版裝起來。<em>有 template 是 TikTok 比 LINE 好上手的主因</em>。</div>
+        <div class="m">GTM</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">Advanced Matching</div>
+        <div class="v">base Tag 勾 Advanced Matching → 提供 email/phone/external_id → TikTok 自動 hash。Match Quality 叫 <em>Event Health</em>，目標 <em>≥ 3</em>（5 分制）或 <em>≥ 7</em>（10 分制）。</div>
+        <div class="m">≥ 3</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">Events API（EAPI）</div>
+        <div class="v">Webhook 訂單建立 → Make.com 或 PHP → POST <code>business-api.tiktok.com/.../event/track/</code> 送 CompletePayment。需先在 Business Center 申請 <em>Access Token</em>。</div>
+        <div class="m">Backend</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">去重 event_id</div>
+        <div class="v"><em>共用 Module 6 的 event_id</em>——TikTok EAPI 跟 Meta CAPI 100% 同邏輯。前端 Pixel 與後端 EAPI 帶同一個 event_id 就會去重。</div>
+        <div class="m">Reuse</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">ttclid 點擊 ID</div>
+        <div class="v"><em>30 天有效</em>、URL 只出現一次——GTM 第一次捕捉時<em>寫入 cookie</em>，後續事件從 cookie 讀。漏接歸因斷掉。</div>
+        <div class="m">Cookie</div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-3 · EAPI Setup</span>
+    <span>跟 Meta CAPI 共用工程師腦袋</span>
+  </footer>
+</section>
+
+<!-- ============ 17. Pixel only vs Pixel+EAPI directional (light) ============ -->
+<section class="slide light" data-animate="directional">
+  <header class="chrome">
+    <div>7-3 · Pixel only vs +EAPI</div>
+    <div>17 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-3-tiktok.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-3</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Decision · 哪些客戶要直接上 EAPI</div>
+    <h2 class="h-xl" data-anim>Pixel <em>only</em> 不夠時，<em>EAPI 救場</em></h2>
+    <div class="split" style="margin-top:2vh;align-items:stretch">
+      <div data-anim="left" style="display:flex;flex-direction:column;gap:1.6vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">Path A · Pixel only</div>
+        <div class="h-md">前端為主、<em>事件覆蓋率約 50%</em></div>
+        <div class="body-zh">小客戶、目標族群非 iOS 重災區、預算有限——前端 Pixel + Advanced Matching 就夠用。<em>事件覆蓋率 45–60%</em>，能跑出基礎 Smart Bidding。</div>
+        <div class="meta-row" style="margin-top:auto"><span>適用</span><span>·</span><span>月廣告 < NT$30 萬</span></div>
+      </div>
+      <div data-anim="right" style="display:flex;flex-direction:column;gap:1.6vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">Path B · Pixel + EAPI</div>
+        <div class="h-md">後端補、<em>覆蓋率到 85%+</em></div>
+        <div class="body-zh">電商、年輕客群、iOS adblocker 重災區——必上 EAPI。Webhook → API 接 30 行程式，<em>Match Quality + 30%</em>，ROAS 跟著跳。</div>
+        <div class="meta-row" style="margin-top:auto"><span>適用</span><span>·</span><span>月廣告 ≥ NT$30 萬 · iOS 客群</span></div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:2vh">
+      <strong>判斷依據</strong>：看 Events Manager → Pixel → <em>Event Match Quality</em>。長期 < 6（10 分制）= 該上 EAPI；長期 ≥ 7 = Pixel only 還能撐。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-3 · Pixel vs Pixel+EAPI</span>
+    <span>EMQ 是決策依據</span>
+  </footer>
+</section>
+
+<!-- ============ 18. 實戰案例 · 潮牌電商 (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>7-3 · Case Study</div>
+    <div>18 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m7-3-tiktok.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7-3</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>實戰 · TikTok EAPI 救回 Z 世代電商</div>
+    <h2 class="h-xl" data-anim>潮牌電商 · <em>ROAS 2.1 → 3.4</em></h2>
+    <p class="lead" style="max-width:48em" data-anim>目標族群 18–24 歲、<em>70% 用 iOS 且裝 adblocker</em>——<br>TikTok Pixel 事件覆蓋率<em>只剩 48%</em>，廣告演算法看不見成交。</p>
+    <div class="grid-3" style="margin-top:1.6vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">事件覆蓋率</div>
+        <div class="stat-nb">48 → 89</div>
+        <div class="stat-note">百分比。前端 Pixel 被 adblocker 擋 → EAPI 從後端補回，<em>幾乎沒有遺漏</em>。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Event Match Quality</div>
+        <div class="stat-nb">5.3 → 7.6</div>
+        <div class="stat-note">10 分制。EAPI 帶<em>更完整的 hashed user data</em>，TikTok 對得上更多人。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">ROAS</div>
+        <div class="stat-nb">2.1 → 3.4</div>
+        <div class="stat-note"><em>+62%</em>。Smart Bidding 學到完整成交人群長相，廣告投放<em>精準度提升</em>。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1.6vh">
+      <strong>關鍵實作</strong>：EAPI 要帶 <code>event_id</code>（跟 Pixel 去重）+ <code>ttclid</code>（從 URL 第一次捕捉、寫 cookie 持久化）。<em>兩個都缺</em>就只是「再傳一次」沒提升。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 7-3 · Case · Streetwear</span>
+    <span>iOS + adblocker 時代的標準解</span>
+  </footer>
+</section>
+
+<!-- ============ 19. 收束 · 三平台對照 + 紅線 (hero dark) ============ -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div>Closing · Three Platforms</div>
+    <div>19 / 20</div>
+  </header>
+  <div class="frame" style="justify-content:center;gap:2.4vh">
+    <div class="kicker" data-anim style="text-align:center">Wrap-up · 三平台一張對照表</div>
+    <h2 class="h-xl" data-anim style="text-align:center">三套 SDK，<em>一份原則</em></h2>
+    <p class="lead" style="max-width:50em;margin:0 auto;text-align:center" data-anim>前端 Tag 收 + 後端 API 補 + Advanced Matching 提匹配——<em>三平台共用同一套腦袋</em>。</p>
+    <div style="margin-top:1.6vh;max-width:60em;margin-left:auto;margin-right:auto;width:100%">
+      <div class="rowline" data-anim>
+        <div class="k">Google Ads</div>
+        <div class="v">Conversion Tag + <em>Enhanced Conversions</em>（明文 email，Google 自己 hash）+ Offline OCI（GCLID 90 天）</div>
+        <div class="m">Web + Leads</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">LINE LAP</div>
+        <div class="v">Base + Custom HTML（<code>_lt(...)</code>）+ <em>Cross Tag</em> 受眾排除 + 2024 LAP CAPI</div>
+        <div class="m">≥ 1000 受眾</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">TikTok</div>
+        <div class="v">官方 Template + Advanced Matching + <em>Events API</em>（共用 event_id）+ ttclid 寫 cookie</div>
+        <div class="m">EMQ ≥ 7</div>
+      </div>
+    </div>
+    <p class="body-zh" style="max-width:50em;margin:1.6vh auto 0;text-align:center;opacity:.78" data-anim>
+      <strong>紅線</strong>：Enhanced 與 EAPI 都會把使用者資料送到平台——<em>Privacy Policy 必寫</em>，歐盟需走 Consent Mode（下週 Module 8）。
+    </p>
+  </div>
+  <footer class="foot">
+    <span>Module 7 · Closing</span>
+    <span>三平台收齊 · Module 8 處理同意</span>
+  </footer>
+</section>
+
+<!-- ============ 20. Map → M8 (light) ============ -->
+<section class="slide light">
+  <header class="chrome">
+    <div>Next · Module 8 Preview</div>
+    <div>20 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/module7.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · M7</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Where we go next · GTM × 廣告科技下一站</div>
+    <h2 class="h-xl" data-anim>下週 → <em>Consent v2 與 Tag 治理</em></h2>
+    <p class="lead" style="max-width:46em" data-anim>三平台都串完了——但所有 hashed email 與 ttclid 的回拋，<em>都要先過同意這一關</em>。<br>Module 8 把治理、同意、檢核清單一次接上。</p>
+    <div style="margin-top:2vh">
+      <div class="rowline" data-anim>
+        <div class="k">M8-1 · Consent Mode v2</div>
+        <div class="v">把今天教的 Enhanced / EAPI 接上 <em>granted vs denied</em> 的兩套訊號路徑——歐盟必修，台灣前瞻。</div>
+        <div class="m">~50 min</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">M8-2 · Tag 治理</div>
+        <div class="v">命名、版本、權限、變更紀錄——<em>三平台 Tag 數量一翻倍</em>，沒治理就是地雷區。</div>
+        <div class="m">~50 min</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">M8-3 · 上線 Checklist</div>
+        <div class="v">本週交付的三平台 Conversion + 下週的同意設定 → 一張<em>正式上線檢核表</em>。</div>
+        <div class="m">~50 min</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1.6vh">
+      <strong>本週交付</strong>：① 三平台各一組 Conversion 在 Preview Mode 截圖；② Enhanced Conversions 診斷通過畫面。<em>下週上課前完成</em>。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Module 7 → Module 8</span>
+    <span>Consent · Governance · Go-live</span>
+  </footer>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>

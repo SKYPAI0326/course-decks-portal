@@ -37,7 +37,7 @@ jobs:
           find deckcheck -name "*.py" -exec python3 -m py_compile {} \;
       - name: deckcheck CLI smoke test
         run: |
-          # CI 沒有 deck repo，跑空 set 確認 framework 不 crash
+          # decks 已合併進本 repo 子資料夾，fast profile 直接靜態掃全站
           python3 check-deck.py --all --profile fast --quiet || true
       - name: Validate canonical/tokens.json
         run: python3 -c "import json; json.load(open('deckcheck/canonical/tokens.json'))"
@@ -58,21 +58,10 @@ jobs:
         run: |
           pip install pyyaml playwright Pillow
           playwright install chromium --with-deps
-      - name: Clone all *-decks repos for full check
-        run: |
-          mkdir -p ../decks-workspace
-          cd ../decks-workspace
-          for repo in dm70h-decks gen-ai-140h-decks gen-ai-36h-decks ipas-ai-beginner-decks \
-                     ntub-seo-ga4-decks ntub-gtm-adtech-decks gtm-decks ai-workshop-decks \
-                     gemini-ai-decks line-stickers-decks n8n-decks gen-image-decks \
-                     office-ai-decks prompt-basic-decks simple-ai-decks ccs-foundations-decks \
-                     course-catalog-2026; do
-            git clone --depth 1 https://github.com/SKYPAI0326/$repo.git || true
-          done
-          ls -la
       - name: Run profile=${{ github.event.inputs.profile }}
         env:
-          DECKCHECK_DECKS_PARENT: /home/runner/work/course-decks-portal/decks-workspace
+          # decks 已合併進本 repo 子資料夾，無需 clone；指向 checkout 根目錄
+          DECKCHECK_DECKS_PARENT: ${{ github.workspace }}
         run: |
           python3 check-deck.py --all --profile ${{ github.event.inputs.profile }} \
             --quiet --reporter html --reporter json --reporter markdown --out reports || true

@@ -29,7 +29,7 @@ from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from typing import Iterable
 
-DECKS_PARENT = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs/01-PROJECTS/課程簡報"
+DECKS_PARENT = Path(__file__).resolve().parent  # decks 為本 repo 子資料夾
 
 # ---------- 高度估算常數（單位：vh）----------
 # 對齊真實 CSS：.slide{padding:6vh 6vw 10vh 6vw} = 16vh 上下

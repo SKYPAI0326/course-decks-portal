@@ -1,0 +1,2376 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D18 · Build & Ship（CH7-3/4 + PRAC7-1/2/3）｜生成式 AI 職訓 140hr｜弄一下工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#2a1e13;
+    --ink-rgb:42,30,19;
+    --paper:#eedfc7;
+    --paper-rgb:238,223,199;
+    --paper-tint:#e0d0b6;
+    --ink-tint:#3a2a1d;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(15px,1.22vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:6.2vw;
+    line-height:1.08;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2.3vw;
+    line-height:1.3;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ============ 01 · Cover (hero dark) ============ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>Vol.18 · D18 / 20</div>
+    <div>Build &amp; Ship</div>
+  </div>
+  <div class="frame center" style="justify-content:center;gap:3.4vh">
+    <div class="kicker" data-anim>生成式 AI 職訓 140hr · Module 18</div>
+    <h1 class="display-zh" data-anim style="font-weight:900">把 v0 <em>跑通</em>、<br>把 v1 <em>送上線</em></h1>
+    <div class="lead" data-anim style="max-width:54vw;text-align:center;margin-top:1.2vh">
+      測試找洞、UX 修順、發表把話講清楚 ——<br>D18 是把專題從「自己能跑」推到「別人能用」的一天。
+    </div>
+    <div class="meta-row" data-anim style="margin-top:3vh">
+      <span>8–10 小時授課</span><span>·</span><span>D18 / 20</span><span>·</span><span>CH7-3 + CH7-4 + PRAC7-1/2/3</span>
+    </div>
+    <div class="meta-row" data-anim style="margin-top:1.6vh;opacity:.74">
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">弄一下工作室 · Lecturer Decks</div>
+    <div>D18 · 01 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 02 · 開場引言 (light, quote) ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome">
+    <div>D18 · Opening</div>
+    <div>02 / 38</div>
+  </div>
+  <div class="frame center" style="justify-content:center;gap:2.4vh">
+    <div class="kicker" data-anim>為什麼今天這 8 小時最關鍵</div>
+    <div class="callout" style="border-color:currentColor;max-width:62vw;text-align:left;padding:4vh 3vw">
+      <div class="q-big">
+        <span data-anim="line">「修不完，<em>不是工具不夠</em>，</span>
+        <span data-anim="line">是<em>測試做得太少</em>。</span>
+        <span data-anim="line">v0 你自己能跑、v1 別人能用 ——</span>
+        <span data-anim="line">中間那條線，叫做<em>使用者試</em>。」</span>
+      </div>
+      <span class="cite" data-anim>D18 · Build &amp; Ship</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div class="title">弄一下工作室 · Build &amp; Ship</div>
+    <div>02 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 03 · 學習目標 (dark, grid-3 stat-card) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>D18 · Learning Goals</div>
+    <div>03 / 38</div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>結束今天你會帶走的三樣東西</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:5vh">D18 · <em>三個交付物</em></h2>
+    <div class="grid-3">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Deliverable A</div>
+        <div class="stat-nb">10<span class="stat-unit">案例</span></div>
+        <div class="stat-note">4 正常 + 4 邊界 + 2 錯誤的測試紀錄表，PRAC7-4 驗收用</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Deliverable B</div>
+        <div class="stat-nb">4:30<span class="stat-unit">逐字稿</span></div>
+        <div class="stat-note">五段 Demo 結構，PRAC7-5 發表當天直接念</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Deliverable C</div>
+        <div class="stat-nb">v1<span class="stat-unit">已部署</span></div>
+        <div class="stat-note">UX 修好、錯誤友善、成本控管 —— v1 是準備發表的版本</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">D18 / 20 · 8–10 小時</div>
+    <div>03 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 04 · Act I 幕封 CH7-3 (hero light) ============ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>Act I · CH 7.3</div>
+    <div>04 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-3</a></div>
+  </div>
+  <div class="frame" style="justify-content:flex-end;gap:3vh">
+    <div class="kicker" data-anim>Chapter 7.3 · 2 hr</div>
+    <h1 class="h-hero" data-anim>測試與<br><em>UX 優化</em></h1>
+    <div class="lead" data-anim style="max-width:50vw">
+      工具能跑，<em>不代表好用</em>。<br>
+      測試讓你找到問題，UX 修正讓非技術朋友也能順暢用。
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">Part 7 · 專題衝刺與成果發表</div>
+    <div>Act I / V</div>
+  </div>
+</section>
+
+<!-- ============ 05 · 三類測試矩陣 (light, rowline) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>CH 7.3 · 測試案例</div>
+    <div>05 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>不是隨機輸入，是刻意設計的場景</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3.4vh">10 個案例 · <em>4 / 4 / 2</em></h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim>
+        <div class="k">正常 ×4</div>
+        <div class="v">教科書式輸入 · 短輸入（≤100 字）· 長輸入（≥1000 字）· 中文</div>
+        <div class="m">Normal</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">邊界 ×4</div>
+        <div class="v">剛好到字數上限 · 含特殊字元（標點 / Emoji / 換行）· 一個關鍵字 · 不相關但合法</div>
+        <div class="m">Edge</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">錯誤 ×2</div>
+        <div class="v">空白 / 純空格（應擋下不送 API）· 超長（應截斷或提示）</div>
+        <div class="m">Error</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:2.6vh">
+      <span><em>把測試結果記下來。</em>一張四欄表（輸入 → 期待輸出 → 實際輸出 → 通過/失敗）就夠，PRAC7-4 驗收會用到。</span>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.3 · 測試三類</div>
+    <div>05 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 06 · 4 個常見 UX 問題 (dark, grid-4) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>CH 7.3 · UX 修正</div>
+    <div>06 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>四個 v0 一定有的洞</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh"><em>UX 四問</em>，逐一修</h2>
+    <div class="grid-4">
+      <div class="pillar" data-anim>
+        <div class="ic">i</div>
+        <div class="t">沒有 <em>Loading</em></div>
+        <div class="d">點了沒反應 → 重複點擊。修：按鈕變灰 + 文字「處理中…」，或 streaming 逐字輸出。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">ii</div>
+        <div class="t">空值 <em>undefined</em></div>
+        <div class="d">送出前 <code style="font-family:var(--mono);font-size:.85em">if(!input.trim())</code> 驗證；回應用 <code style="font-family:var(--mono);font-size:.85em">msg?.content?.[0]?.text ?? ''</code>。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">iii</div>
+        <div class="t">輸出<em>太長沒切</em></div>
+        <div class="d">加「複製全文」按鈕 · 多版本用分頁 / 卡片 · 只顯示前 300 字 + 展開。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">iv</div>
+        <div class="t">錯誤訊息<em>不友善</em></div>
+        <div class="d">把錯誤碼轉人話 —— 429 → 請稍等再試；500 → 系統忙碌；401 → 服務暫不可用。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.3 · UX 四問</div>
+    <div>06 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 07 · 錯誤訊息對照 (light, rowline) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>CH 7.3 · Error Messages</div>
+    <div>07 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>錯誤碼對照人話</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3.4vh">把 <em>HTTP 狀態</em> 翻成使用者語言</h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim>
+        <div class="k">429</div>
+        <div class="v"><span style="opacity:.5">Too Many Requests</span> → 「請稍等一下再試」</div>
+        <div class="m">Rate Limit</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">500</div>
+        <div class="v"><span style="opacity:.5">Internal Server Error</span> → 「系統忙碌，請重新整理後再試」</div>
+        <div class="m">Server</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">401</div>
+        <div class="v"><span style="opacity:.5">Unauthorized</span> → 「服務暫時無法使用」</div>
+        <div class="m">Auth</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">空輸入</div>
+        <div class="v">前端攔截，提示「請貼上履歷與職缺」 ——<em> 不送 API</em></div>
+        <div class="m">Validate</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.3 · Error UX</div>
+    <div>07 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 08 · 放聲試用 SOP (dark, pipeline) ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome" data-anim>
+    <div>CH 7.3 · Think-Aloud</div>
+    <div>08 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>讓不熟的人試一次，UX 問題會自己冒出來</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:1vh">放聲試用 · <em>4 步</em></h2>
+    <div class="lead" data-anim style="margin-bottom:3.6vh;max-width:60vw">不要解釋、不要救援 —— 只聽。</div>
+    <div class="pipeline" data-cols="4">
+      <div class="step" data-anim>
+        <span class="step-nb">01</span>
+        <div class="step-title">只給 URL</div>
+        <div class="step-desc">不附說明，問「你覺得這是做什麼的？」猜不出來 → 頁面文案要改。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">02</span>
+        <div class="step-title">放聲思考</div>
+        <div class="step-desc">「現在想什麼？」「這按鈕你預期做什麼？」「會困惑嗎？」 —— 只問、不解。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">03</span>
+        <div class="step-title">三問收尾</div>
+        <div class="step-desc">最有用 / 最困惑 / 只能改一件事會改哪 —— 三題，不超過 3 分鐘。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">04</span>
+        <div class="step-title">排優先序</div>
+        <div class="step-desc">先修「卡住核心路徑」的問題，美觀延後 —— 接到 PRAC7-3。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh"><em>不要在試用時幫使用者解釋。</em>口頭解釋本身就是 UX 問題 —— 把解釋寫進介面，不要靠你坐旁邊。</div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.3 · Think-Aloud SOP</div>
+    <div>08 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 09 · 範例：履歷工具反饋整理 (light, split) ============ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>CH 7.3 · 講師示範</div>
+    <div>09 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>講師示範 · 履歷優化工具的 UX 觀察整理</div>
+    <h2 class="h-xl" style="margin-bottom:3vh"><em>原始觀察</em> → 修正清單</h2>
+    <div class="split" style="gap:5vw">
+      <div data-anim="left">
+        <div class="meta" style="margin-bottom:1.4vh">原始試用筆記</div>
+        <div class="body-zh" style="line-height:1.85">
+          · 打開 3 秒後問「這做什麼的？」<br>
+          · 沒貼職缺就按產生<br>
+          · 等 5 秒沒看到 loading，按了第二次<br>
+          · 「三段我要怎麼用？」<br>
+          · 三問：希望按鈕有「處理中」字樣
+        </div>
+      </div>
+      <div data-anim="right">
+        <div class="meta" style="margin-bottom:1.4vh;color:#7a4f1a">高優先修法（先做）</div>
+        <div class="body-serif" style="line-height:1.85">
+          ① 副標：「貼上履歷+職缺，一鍵改寫三段」<br>
+          ② 兩欄都有內容才啟用按鈕<br>
+          ③ 點擊後改文字「產生中…」並 disable<br>
+          ④ 每段上方加小標「段落一（對應 XX 需求）」
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.3 · 反饋 → 清單</div>
+    <div>09 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 10 · 課堂練習 P1 (light, split-55) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>CH 7.3 · 課堂練習</div>
+    <div>10 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>課堂練習 · 40 分鐘</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">P1 · <em>10 案例</em> + <em>1 位試用</em></h2>
+    <div class="split-55" style="gap:5vw">
+      <div>
+        <div class="meta" style="margin-bottom:1.4vh" data-anim>練習 A · 20 min</div>
+        <div class="h-md" data-anim style="margin-bottom:1.4vh">為你的專題寫 10 案例</div>
+        <div class="body-zh" data-anim style="line-height:1.8">
+          開一張表格，四欄：類型 / 輸入 / 期待輸出 / 實際 ——<br>
+          依 4 / 4 / 2 配比填滿 10 列，每列「期待輸出」寫一句樣貌（不是答案）。
+        </div>
+      </div>
+      <div>
+        <div class="meta" style="margin-bottom:1.4vh" data-anim>練習 B · 20 min</div>
+        <div class="h-md" data-anim style="margin-bottom:1.4vh">找 1 位非技術朋友放聲試用</div>
+        <div class="body-zh" data-anim style="line-height:1.8">
+          只給 URL、不解釋，請他邊用邊說 ——<br>
+          結束問三題、把問題標「核心路徑 / 美觀」，前者優先。
+        </div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh">
+      <span><em>檢核：</em>10 案例分三類齊全 / 試用全程沒解釋 / 失敗案例能說「Prompt 還是程式碼」問題。</span>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">P1 · CH7-3 練習</div>
+    <div>10 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 11 · Act II 幕封 CH7-4 (hero dark) ============ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>Act II · CH 7.4</div>
+    <div>11 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-4</a></div>
+  </div>
+  <div class="frame" style="justify-content:flex-end;gap:3vh">
+    <div class="kicker" data-anim>Chapter 7.4 · 2 hr</div>
+    <h1 class="h-hero" data-anim>發表敘事與<br><em>作品集頁</em></h1>
+    <div class="lead" data-anim style="max-width:50vw">
+      作品好，<em>不代表發表好</em>。<br>
+      五段結構讓你的工具被看見、被理解、被記住。
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">Part 7 · 專題衝刺與成果發表</div>
+    <div>Act II / V</div>
+  </div>
+</section>
+
+<!-- ============ 12 · 5 段 Demo 結構 (light, pipeline) ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome" data-anim>
+    <div>CH 7.4 · Demo Narrative</div>
+    <div>12 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-4</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>從問題出發，技術只是過程</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3.4vh">5 段 Demo · <em>4 分 30 秒</em></h2>
+    <div class="pipeline" data-cols="5">
+      <div class="step" data-anim>
+        <span class="step-nb">30 s</span>
+        <div class="step-title">問題</div>
+        <div class="step-desc">真實場景，不用技術術語。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">30 s</span>
+        <div class="step-title">做法</div>
+        <div class="step-desc">為什麼這樣做，技術點到為止。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">2:30</span>
+        <div class="step-title">展示</div>
+        <div class="step-desc">Live demo，不跳過等待，指出最有價值處。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">30 s</span>
+        <div class="step-title">限制</div>
+        <div class="step-desc">誠實說做不到什麼 —— 比隱瞞有說服力。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">30 s</span>
+        <div class="step-title">後續</div>
+        <div class="step-desc">最想繼續做的一件事，顯示你還在思考。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh"><em>5 分鐘是鐵律。</em>準備 4:30 留 30 秒緩衝。多餘的剪掉，不是找地方塞。</div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.4 · 5 段結構</div>
+    <div>12 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 13 · 限制怎麼說 (dark, rowline 高低分) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>CH 7.4 · Limitations</div>
+    <div>13 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-4</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>觀眾聽不到限制，會自己找 —— 比你說更尷尬</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh"><em>誠實</em> 比誇大有說服力</h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim style="grid-template-columns:1fr 1.6fr 1.6fr">
+        <div class="k">字數限制</div>
+        <div class="v" style="opacity:.55">「目前有一些限制」（模糊）</div>
+        <div class="v" style="opacity:1;font-weight:500">「超過 800 字品質下降，是 token 限制，下一步加截斷提示」</div>
+      </div>
+      <div class="rowline" data-anim style="grid-template-columns:1fr 1.6fr 1.6fr">
+        <div class="k">沒做的功能</div>
+        <div class="v" style="opacity:.55">「還在開發中」（聽起來像藉口）</div>
+        <div class="v" style="opacity:1;font-weight:500">「登入刻意不做，MVP 只驗證核心，帳號會讓開發時間 ×3」</div>
+      </div>
+      <div class="rowline" data-anim style="grid-template-columns:1fr 1.6fr 1.6fr">
+        <div class="k">輸出不穩</div>
+        <div class="v" style="opacity:.55">沉默（最糟）</div>
+        <div class="v" style="opacity:1;font-weight:500">「已記錄測試案例，下一步加 output validation」</div>
+      </div>
+      <div class="rowline" data-anim style="grid-template-columns:1fr 1.6fr 1.6fr">
+        <div class="k">只能中文</div>
+        <div class="v" style="opacity:.55">「英文版還沒做」（暗示缺陷）</div>
+        <div class="v" style="opacity:1;font-weight:500">「使用者都是中文使用者，這是<em>刻意的選擇</em>」</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.4 · 高分說法</div>
+    <div>13 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 14 · 4:30 鐵律 (light, quote) ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome" data-anim>
+    <div>CH 7.4 · The 4:30 Rule</div>
+    <div>14 / 38</div>
+  </div>
+  <div class="frame center" style="justify-content:center;gap:2.4vh">
+    <div class="kicker" data-anim>口說每分鐘約 150 字 · 4:30 ≈ 675 字</div>
+    <div class="callout" style="border-color:currentColor;max-width:64vw;text-align:left;padding:4vh 3vw">
+      <div class="q-big">
+        <span data-anim="line">「超時不只是禮貌問題，</span>
+        <span data-anim="line">也代表你<em>沒有清楚理解</em>什麼最重要。</span>
+        <span data-anim="line">多餘的部分剪掉，</span>
+        <span data-anim="line"><em>不是找地方塞</em>。」</span>
+      </div>
+      <span class="cite" data-anim>5 minute live demo · golden rule</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div class="title">CH 7.4 · 4:30 Rule</div>
+    <div>14 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 15 · 作品集 4 元素 (dark, grid-4) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>CH 7.4 · Portfolio Card</div>
+    <div>15 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-4</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>把專題加進你 PRAC5-3 那張作品展示頁</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">作品集卡片 · <em>四個元素</em></h2>
+    <div class="grid-4">
+      <div class="pillar" data-anim>
+        <div class="ic">A</div>
+        <div class="t"><em>四基本欄</em></div>
+        <div class="d">名稱 · 一句話說明（≤30 字） · 技術標籤（≤3 個） · 部署網址</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">B</div>
+        <div class="t">10 秒 <em>GIF</em></div>
+        <div class="d">Loom / 螢幕錄影 → 比文字更快讓人理解工具長什麼樣。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">C</div>
+        <div class="t"><em>學到的一件事</em></div>
+        <div class="d">具體經驗，禁「學到很多」「收穫滿滿」 —— 例：第一版把 Key 放前端，上線前一小時才發現。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">D</div>
+        <div class="t">GitHub Repo</div>
+        <div class="d">公開 repo 顯示願意被看見。確認 <code style="font-family:var(--mono);font-size:.85em">.gitignore</code> 擋住 <code style="font-family:var(--mono);font-size:.85em">.env</code>。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.4 · Portfolio</div>
+    <div>15 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 16 · 三類觀眾 (light, grid-3) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>CH 7.4 · Audiences</div>
+    <div>16 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-4</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>同一個作品，三類人在乎不同面向</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3.4vh">確保<em> 三者都看得到</em></h2>
+    <div class="grid-3">
+      <div class="pillar" data-anim>
+        <div class="ic">★</div>
+        <div class="t">技術面試官</div>
+        <div class="d">看 GitHub repo · 測試紀錄 · commit message —— 確認你能寫、會驗、留得住歷史。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">●</div>
+        <div class="t">潛在合作者</div>
+        <div class="d">看 live demo · 一句話說明 · 限制段 —— 判斷能不能解他的問題。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">▶</div>
+        <div class="t">招募者 / HR</div>
+        <div class="d">看敘事 · 學到的一件事 · 解決什麼問題 —— 30 秒判斷要不要往下看。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">CH 7.4 · Three Eyes</div>
+    <div>16 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 17 · 課堂練習 P2 (dark, split-55) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>CH 7.4 · 課堂練習</div>
+    <div>17 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/CH7-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH7-4</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>課堂練習 · 35 分鐘</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">P2 · <em>逐字稿</em> + <em>作品集</em></h2>
+    <div class="split-55" style="gap:5vw">
+      <div>
+        <div class="meta" style="margin-bottom:1.4vh" data-anim>練習 A · 20 min</div>
+        <div class="h-md" data-anim style="margin-bottom:1.4vh">寫 4:30 逐字稿並計時朗讀</div>
+        <div class="body-zh" data-anim style="line-height:1.8">
+          照五段結構分段寫，<em>不要即興、不要只列大綱</em> ——<br>
+          展示段把實際操作步驟寫進去，計時朗讀一次 ——<br>
+          超過 4:30 就砍，<em>不是加速念過去</em>。
+        </div>
+      </div>
+      <div>
+        <div class="meta" style="margin-bottom:1.4vh" data-anim>練習 B · 15 min</div>
+        <div class="h-md" data-anim style="margin-bottom:1.4vh">把專題加進 PRAC5-3 作品集頁</div>
+        <div class="body-zh" data-anim style="line-height:1.8">
+          打開 PRAC5-3 那頁，加新卡片：<br>
+          四元素 + 10 秒 GIF + 一句學到的事 ——<br>
+          作品集現在加才算<em>真正收尾</em>。
+        </div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh">
+      <span><em>檢核：</em>五段都有 / 計時 4:00–4:30 / 第一句講「使用者的具體問題」 / 作品集卡片四元素 + 一句學到的事完成。</span>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">P2 · CH7-4 練習</div>
+    <div>17 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 18 · Act III 幕封 PRAC7-1 (hero light) ============ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>Act III · PRAC 7.1</div>
+    <div>18 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-1</a></div>
+  </div>
+  <div class="frame" style="justify-content:flex-end;gap:3vh">
+    <div class="kicker" data-anim>Practice 7.1 · 4 hr</div>
+    <h1 class="h-hero" data-anim>開發衝刺<br><em>第一輪</em></h1>
+    <div class="lead" data-anim style="max-width:50vw">
+      4 小時，目標一個：<em>讓主要使用路徑跑通</em>。<br>
+      不需要完美，需要可以讓人用。
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">Part 7 · 衝刺第一輪</div>
+    <div>Act III / V</div>
+  </div>
+</section>
+
+<!-- ============ 19 · 4hr 5 步路線 (dark, pipeline) ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.1 · Sprint Plan</div>
+    <div>19 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-1</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>4 小時切五塊，照表操課</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">v0 · <em>5 步</em> / 4 hr</h2>
+    <div class="pipeline" data-cols="5">
+      <div class="step" data-anim>
+        <span class="step-nb">15 min</span>
+        <div class="step-title">專題定義器</div>
+        <div class="step-desc">填欄位生 v0 規格書 —— 填不出 = 沒想清楚。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">45 min</span>
+        <div class="step-title">HTML 骨架</div>
+        <div class="step-desc">不美化，先跑通：topbar + 輸入 + 輸出 + 按鈕。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">90 min</span>
+        <div class="step-title">串接 AI</div>
+        <div class="step-desc">靜態前端直呼 / 後端代理擇一，先把核心路徑跑通。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">30 min</span>
+        <div class="step-title">三案例測試</div>
+        <div class="step-desc">正常 / 邊界 / 空白 各一，截圖存 —— PRAC7-4 要用。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">15 min</span>
+        <div class="step-title">Push GitHub</div>
+        <div class="step-desc">v0 first working version。確認 <code style="font-family:var(--mono);font-size:.85em">.env</code> 在 <code style="font-family:var(--mono);font-size:.85em">.gitignore</code>。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.1 · 4hr Roadmap</div>
+    <div>19 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 20 · 專題定義器 7 欄位 (light, rowline) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.1 · v0 Spec</div>
+    <div>20 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-1</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>填不出來的欄位 = 還沒想清楚</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">專題定義器 · <em>7 欄位</em></h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim>
+        <div class="k">一句話說明</div>
+        <div class="v">使用者 + 問題 + 解法（給誰／痛在哪／你怎麼解）</div>
+        <div class="m">f1</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">MVP 輸入欄位</div>
+        <div class="v">列出必填 / 選填，標欄位類型與字數</div>
+        <div class="m">f2</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">System Prompt</div>
+        <div class="v">核心指令一段話 —— 角色 / 任務 / 輸出格式 / 字數</div>
+        <div class="m">f3</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">模型 / 溫度 / 架構</div>
+        <div class="v">claude-haiku-4-5 · 0.7 · 靜態前端 + Vercel（預設）</div>
+        <div class="m">f4–f6</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">先不做的功能</div>
+        <div class="v">明確邊界：歷史記錄 · 登入 · 圖片輸入 · 英文版</div>
+        <div class="m">f7</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.1 · 7 Fields</div>
+    <div>20 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 21 · Spec 戳洞 LLM Audit (dark, split) ============ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.1 · Spec Audit</div>
+    <div>21 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-1</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>步驟 1.5 · 寫程式前 5 分鐘</div>
+    <h2 class="h-xl" style="margin-bottom:3vh">先讓 LLM <em>戳破 spec</em></h2>
+    <div class="split" style="gap:5vw">
+      <div data-anim="left">
+        <div class="meta" style="margin-bottom:1.4vh">三步審查請 LLM 跑</div>
+        <div class="body-zh" style="line-height:1.85">
+          <strong style="font-family:var(--serif-zh)">① 模糊偵測</strong><br>
+          原文 → 為何模糊 → 建議改寫（≥3 點）<br><br>
+          <strong style="font-family:var(--serif-zh)">② MVP 體檢</strong><br>
+          必做 / 可砍 / 越界 三級分類<br><br>
+          <strong style="font-family:var(--serif-zh)">③ GWT 驗收</strong><br>
+          給定 X，當 Y，則 Z（每個必做功能 1 行）
+        </div>
+      </div>
+      <div data-anim="right">
+        <div class="meta" style="margin-bottom:1.4vh;color:#d9b88a">期待回覆會看到</div>
+        <div class="body-serif" style="line-height:1.85">
+          · 模糊偵測表（3-5 列三欄）<br>
+          · MVP 三級分類各帶 1 句理由<br>
+          · GWT 驗收條件清單<br>
+          · 30 字「最該優先解決」結論<br><br>
+          <span style="opacity:.7;font-style:italic">若只回「整體看起來不錯」<br>= spec 太薄，回去重填工具欄位再來。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.1 · 5 min LLM Audit</div>
+    <div>21 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 22 · 第一輪驗收 5 條 (light, rowline) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.1 · DoD</div>
+    <div>22 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-1</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>第一輪衝刺驗收 · 5 條全勾才能往 PRAC7-2</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">v0 · <em>Definition of Done</em></h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim>
+        <div class="k">01</div>
+        <div class="v">完成專題定義器，<em>生成 v0 規格書</em></div>
+        <div class="m">Spec</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">02</div>
+        <div class="v">HTML 骨架完成：輸入區 / 送出按鈕 / 輸出區</div>
+        <div class="m">Skeleton</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">03</div>
+        <div class="v">AI 串接跑通：輸入 → 顯示 AI 回應</div>
+        <div class="m">Wired</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">04</div>
+        <div class="v">跑了三個測試案例，<em>結果截圖存好</em></div>
+        <div class="m">Tested</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">05</div>
+        <div class="v">程式碼 push GitHub（<code style="font-family:var(--mono);font-size:.85em">.env</code> 已在 <code style="font-family:var(--mono);font-size:.85em">.gitignore</code>）</div>
+        <div class="m">Pushed</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.1 · DoD 5 條</div>
+    <div>22 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 23 · 踩坑提醒 (dark, callout 大塊) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.1 · Pitfalls</div>
+    <div>23 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-1</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>第一輪衝刺最常踩的三個坑</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">先講 <em>3 個地雷</em>，省你 1 小時</h2>
+    <div class="grid-3" style="gap:3vw">
+      <div data-anim>
+        <div class="meta" style="margin-bottom:1vh;color:#d9b88a">地雷 ①</div>
+        <div class="h-md" style="margin-bottom:1.2vh">API Key 放前端</div>
+        <div class="body-zh" style="line-height:1.7;opacity:.82">第一版偷快直接寫 JS，push 後一小時 Key 已洩漏。<em>從第一行就用 Vercel Functions 代理</em>，不要想說「之後再改」。</div>
+      </div>
+      <div data-anim>
+        <div class="meta" style="margin-bottom:1vh;color:#d9b88a">地雷 ②</div>
+        <div class="h-md" style="margin-bottom:1.2vh">temperature 太高</div>
+        <div class="body-zh" style="line-height:1.7;opacity:.82">設 0.9 → AI 編造使用者沒寫過的經歷。<em>履歷 / 知識類工具用 0.3</em>，創意才開到 0.7+。</div>
+      </div>
+      <div data-anim>
+        <div class="meta" style="margin-bottom:1vh;color:#d9b88a">地雷 ③</div>
+        <div class="h-md" style="margin-bottom:1.2vh">沒驗證就送出</div>
+        <div class="body-zh" style="line-height:1.7;opacity:.82">空欄位點按鈕 → API 報錯 / 編資訊。<em>送出前 3 行 if</em>，比後面修 30 行錯誤處理便宜。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.1 · 三個地雷</div>
+    <div>23 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 24 · Act IV 幕封 PRAC7-2 (hero dark) ============ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>Act IV · PRAC 7.2</div>
+    <div>24 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-2</a></div>
+  </div>
+  <div class="frame" style="justify-content:flex-end;gap:3vh">
+    <div class="kicker" data-anim>Practice 7.2 · 2 hr</div>
+    <h1 class="h-hero" data-anim>中期自審 +<br><em>Demo 壓測</em></h1>
+    <div class="lead" data-anim style="max-width:52vw">
+      v0 demo 完的中期驗收 ——<br>
+      LLM 三人格、24h 隔離、自己壓給自己看。<em>批評不靠別人施捨</em>。
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">Part 7 · 中期自審</div>
+    <div>Act IV / V</div>
+  </div>
+</section>
+
+<!-- ============ 25 · LLM 1 人格快審 (light, pipeline) ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.2 · Quick Audit</div>
+    <div>25 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-2</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>15 分鐘版 · 沒時間錄影也至少做這個</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">LLM 1 人格 · <em>15 min 快審</em></h2>
+    <div class="pipeline" data-cols="3">
+      <div class="step" data-anim>
+        <span class="step-nb">5 min</span>
+        <div class="step-title">簡述 demo 給 LLM</div>
+        <div class="step-desc">3-4 句講清楚：給誰、解什麼問題、核心輸入輸出、目前的限制。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">10 min</span>
+        <div class="step-title">扮 1 種人格給回饋</div>
+        <div class="step-desc">建議「<em>挑剔技術主管</em>」—— 一讚 + 一疑 + 一建議，必須點到核心。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">5 min</span>
+        <div class="step-title">整理 v1 改動</div>
+        <div class="step-desc">從回饋抓出 1–2 個 v1 要先動的改動 —— 接到 PRAC7-3 高優先清單。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh"><em>回饋只回「不錯，繼續努力」</em>= 你給的 demo 描述太薄；回去把「目前限制」寫具體再問。</div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.2 · 1 人格快審</div>
+    <div>25 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 26 · 5min Demo + 24h 隔離 (dark, split) ============ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.2 · Record &amp; Cool</div>
+    <div>26 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-2</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>完整版 · 2 小時做完</div>
+    <h2 class="h-xl" style="margin-bottom:3vh">錄 5 min · 隔 <em>24 hr</em></h2>
+    <div class="split" style="gap:5vw">
+      <div data-anim="left">
+        <div class="meta" style="margin-bottom:1.4vh;color:#d9b88a">Day 1 · 60 min</div>
+        <div class="body-zh" style="line-height:1.85">
+          <strong style="font-family:var(--serif-zh)">① 15 min · Demo 準備</strong><br>
+          講稿 + 操作清單 + 假設情境輸入<br><br>
+          <strong style="font-family:var(--serif-zh)">② 10 min · 限時錄影</strong><br>
+          一鏡到底 5 分鐘，<em>不重來</em><br><br>
+          <strong style="font-family:var(--serif-zh)">③ 30 min · LLM 三人格</strong><br>
+          上傳影片摘要 → 主管 / 學員 / 投資人各跑一輪
+        </div>
+      </div>
+      <div data-anim="right">
+        <div class="meta" style="margin-bottom:1.4vh;color:#d9b88a">Day 2 · 30 min（隔 24h）</div>
+        <div class="body-serif" style="line-height:1.85">
+          <strong>自評 + 整合 4 套回饋</strong><br><br>
+          隔一天再看自己的影片 —— <em>把自己當陌生人</em>。<br><br>
+          整合：<br>
+          ① 自評（24h 後的自己）<br>
+          ② LLM 主管回饋<br>
+          ③ LLM 學員回饋<br>
+          ④ LLM 投資人回饋<br><br>
+          → 抓出 v1 高優先清單。
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.2 · 完整版 SOP</div>
+    <div>26 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 27 · LLM 三人格壓測 (light, grid-3) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.2 · Three Personas</div>
+    <div>27 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-2</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>同一份 demo 摘要 · 三種視角各跑一輪</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3.4vh">三人格<em> 壓測矩陣</em></h2>
+    <div class="grid-3">
+      <div class="pillar" data-anim>
+        <div class="ic">M</div>
+        <div class="t">挑剔<em>技術主管</em></div>
+        <div class="d">看：架構選型理由、錯誤處理、cost 控管、code review 會打回的點。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">U</div>
+        <div class="t">第一次<em>用的學員</em></div>
+        <div class="d">看：3 秒內猜不猜得到做什麼、操作流程是否直覺、輸出能不能直接用。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">$</div>
+        <div class="t">問商業價值<em>投資人</em></div>
+        <div class="d">看：解的問題夠不夠痛、誰會付錢、為什麼是你能做、規模化的路徑。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh"><em>三人格不是同一個 prompt 換名字。</em>每個人格各自有「在乎的事 / 評分標準 / 必問的 3 個問題」 —— 講義有完整模板。</div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.2 · 三人格</div>
+    <div>27 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 28 · 4 套回饋整合矩陣 (dark, rowline) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.2 · Synthesis</div>
+    <div>28 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-2</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>4 個來源 + 5 個面向 = 你的 v1 待辦表</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">4 套回饋 · <em>1 張清單</em></h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim>
+        <div class="k">面向 1</div>
+        <div class="v">使用流程哪一步卡？（4 套都點到 = 必修）</div>
+        <div class="m">Flow</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">面向 2</div>
+        <div class="v">輸出品質 / 可用性（學員視角優先）</div>
+        <div class="m">Output</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">面向 3</div>
+        <div class="v">技術風險 / 安全 / 成本（主管視角優先）</div>
+        <div class="m">Tech</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">面向 4</div>
+        <div class="v">敘事是否打到痛點（投資人視角優先）</div>
+        <div class="m">Story</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">面向 5</div>
+        <div class="v">24h 後的自己最想改什麼（自評視角）</div>
+        <div class="m">Self</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.2 · 5 面向整合</div>
+    <div>28 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 29 · 中期驗收清單 (light, rowline) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.2 · DoD</div>
+    <div>29 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-2</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>中期驗收 · 全勾才能往 PRAC7-3</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">中期 · <em>Definition of Done</em></h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim>
+        <div class="k">01</div>
+        <div class="v">至少跑過 1 種 LLM 人格給回饋 · 整理 v1 要先動的 1–2 個改動</div>
+        <div class="m">Min</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">02</div>
+        <div class="v">完整版：5 min demo 一鏡到底錄完，<em>無重錄</em></div>
+        <div class="m">Record</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">03</div>
+        <div class="v">三人格回饋 + 自評 = 4 套回饋齊全</div>
+        <div class="m">4-Voice</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">04</div>
+        <div class="v">五面向整合表填完 · 標出 3–5 個 v1 高優先項目</div>
+        <div class="m">Backlog</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.2 · DoD</div>
+    <div>29 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 30 · Act V 幕封 PRAC7-3 (hero light) ============ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>Act V · PRAC 7.3</div>
+    <div>30 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-3</a></div>
+  </div>
+  <div class="frame" style="justify-content:flex-end;gap:3vh">
+    <div class="kicker" data-anim>Practice 7.3 · 3 hr</div>
+    <h1 class="h-hero" data-anim>開發衝刺<br><em>第二輪</em></h1>
+    <div class="lead" data-anim style="max-width:52vw">
+      依改進清單執行 v1：UX 修好、錯誤補齊、成本控管 ——<br>
+      v1 是<em>準備部署</em>的版本。
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">Part 7 · 衝刺第二輪</div>
+    <div>Act V / V</div>
+  </div>
+</section>
+
+<!-- ============ 31 · v1 5 步路線 (dark, pipeline) ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.3 · v1 Plan</div>
+    <div>31 / 38 <a class="chrome-link starred" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>3 小時切五塊，重點是 UX / 錯誤 / 成本</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">v1 · <em>5 步</em> / 3 hr</h2>
+    <div class="pipeline" data-cols="5">
+      <div class="step" data-anim>
+        <span class="step-nb">15 min</span>
+        <div class="step-title">挑高優先 3–5</div>
+        <div class="step-desc">從 PRAC7-2 清單篩出來 —— 影響核心路徑優先。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">90 min</span>
+        <div class="step-title">UX 修正</div>
+        <div class="step-desc">Loading 狀態、空值驗證、輸出截斷、副標說明。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">45 min</span>
+        <div class="step-title">錯誤補齊</div>
+        <div class="step-desc">429 / 500 / 401 訊息友善化 · try-catch 包好。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">30 min</span>
+        <div class="step-title">成本控管</div>
+        <div class="step-desc">max_tokens 合理值、輸入長度上限、模型選對等級。</div>
+      </div>
+      <div class="step" data-anim>
+        <span class="step-nb">15 min</span>
+        <div class="step-title">10 案例 + commit</div>
+        <div class="step-desc">CH7-3 的 10 案例全跑過 → commit「v1 ready to deploy」。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.3 · 3hr Roadmap</div>
+    <div>31 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 32 · 高優先 3-5 篩選 (light, split-55) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.3 · Prioritization</div>
+    <div>32 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>不是每個問題都修 —— 篩出非修不可的</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">3 個篩子 · <em>選出 3–5 個</em></h2>
+    <div class="split-55" style="gap:5vw">
+      <div>
+        <div class="h-md" data-anim style="margin-bottom:1.4vh">必過的篩子</div>
+        <div class="body-zh" data-anim style="line-height:1.85">
+          ① <em>影響核心路徑</em>嗎？（不修 = 主功能跑不通）<br>
+          ② <em>新使用者第一次</em>就會踩到嗎？<br>
+          ③ 修這個會<em>讓部署被 block</em> 嗎？（如安全 / 帳單）
+        </div>
+      </div>
+      <div>
+        <div class="h-md" data-anim style="margin-bottom:1.4vh">放掉的訊號</div>
+        <div class="body-zh" data-anim style="line-height:1.85;opacity:.75">
+          · 只有「重度使用者」才會碰到<br>
+          · 美觀細節（顏色 / 字型 / 間距）<br>
+          · 「以後做會更好」的進階功能<br>
+          · 個人偏好型回饋（不是通用問題）
+        </div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:3vh">
+      <span><em>3 小時改 3–5 個 + 測試。</em>選 6 個 = 90% 機率有 1 個來不及測，整批變成 v1.5 而不是 v1。</span>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.3 · 3 篩子</div>
+    <div>32 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 33 · UX/錯誤/成本三面向 (dark, grid-3) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.3 · v1 Focus</div>
+    <div>33 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>v1 一定要動的三件事</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">三面向 · <em>逐一檢查</em></h2>
+    <div class="grid-3">
+      <div class="pillar" data-anim>
+        <div class="ic">U</div>
+        <div class="t"><em>UX 修正</em></div>
+        <div class="d">Loading / 空值 / 錯誤訊息 / 輸出格式 ——<br>CH7-3 的 4 個 UX 問題逐項檢查。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">E</div>
+        <div class="t"><em>錯誤處理</em></div>
+        <div class="d">429 / 500 / 401 / Network ——<br>每種錯誤都顯示人話，不留 undefined。</div>
+      </div>
+      <div class="pillar" data-anim>
+        <div class="ic">$</div>
+        <div class="t"><em>成本控管</em></div>
+        <div class="d">max_tokens · 輸入字數上限 · 模型等級 ——<br>避免一個惡意輸入燒掉一個月額度。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.3 · UX / Error / Cost</div>
+    <div>33 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 34 · v1 部署前 5 條驗收 (light, rowline) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.3 · DoD</div>
+    <div>34 / 38 <a class="chrome-link" href="../課程專用網頁/courses/gen-ai-140h/part7/PRAC7-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC7-3</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>v1 部署前驗收 · 全勾才能交給 PRAC7-4</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">v1 · <em>Definition of Done</em></h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim>
+        <div class="k">01</div>
+        <div class="v">Loading 狀態已實作（送出時按鈕禁用 + 文字變更）</div>
+        <div class="m">UX</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">02</div>
+        <div class="v">空白輸入<em>有擋住</em>，不會送 API</div>
+        <div class="m">Validate</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">03</div>
+        <div class="v">API 錯誤顯示友善訊息（<em>不是技術錯誤碼</em>）</div>
+        <div class="m">Error</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">04</div>
+        <div class="v"><code style="font-family:var(--mono);font-size:.85em">max_tokens</code> 設定合理值，輸入有長度限制</div>
+        <div class="m">Cost</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">05</div>
+        <div class="v">10 個測試案例全部跑過，程式碼 commit 完成</div>
+        <div class="m">Ship</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.3 · v1 DoD</div>
+    <div>34 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 35 · commit message 範例 (dark, callout) ============ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>PRAC 7.3 · Commit Habit</div>
+    <div>35 / 38</div>
+  </div>
+  <div class="frame center" style="justify-content:center;gap:3vh">
+    <div class="kicker" data-anim>commit message 是寫給 3 個月後的自己 + 面試官看</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:1.4vh">寫成 <em>故事的一行</em></h2>
+    <div class="callout" data-anim style="border-color:currentColor;max-width:62vw;text-align:left;padding:3.4vh 3vw;font-family:var(--mono);font-size:max(13px,1.05vw);line-height:1.85">
+      <span style="opacity:.5">$ </span>git commit -m "<em>v1: fix loading UX + friendly error messages</em>"<br>
+      <span style="opacity:.5">$ </span>git commit -m "<em>v1: add input length cap to control cost</em>"<br>
+      <span style="opacity:.5">$ </span>git commit -m "<em>v1: validate empty input before API call</em>"<br>
+      <span style="opacity:.5">$ </span>git commit -m "<em>v1: 10 test cases passed, ready to deploy</em>"
+    </div>
+    <div class="lead" data-anim style="max-width:60vw;text-align:center;opacity:.7;font-size:1.4vw">
+      不寫「fix」「update」「change」 —— 寫<em>動詞 + 對象 + 為什麼</em>。
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">PRAC 7.3 · Commit Habit</div>
+    <div>35 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 36 · D18 收尾 (hero light) ============ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>D18 · Wrap</div>
+    <div>36 / 38</div>
+  </div>
+  <div class="frame" style="justify-content:flex-end;gap:3vh">
+    <div class="kicker" data-anim>D18 · 8–10 hr 結束</div>
+    <h1 class="h-hero" data-anim>v1 上線了，<br>剩<em>把話講好</em></h1>
+    <div class="lead" data-anim style="max-width:52vw">
+      明天 D19 是<em>畢業典禮</em>：最終發表 · 作品集 showcase · 140hr 學習地圖回顧。<br>今晚把 4:30 逐字稿念過一遍，明天直接上場。
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">D18 → D19</div>
+    <div>36 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 37 · 一頁總覽：D18 5 個 deliverable (light, rowline) ============ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>D18 · Recap</div>
+    <div>37 / 38</div>
+  </div>
+  <div class="frame">
+    <div class="kicker" data-anim>今天該帶走的 5 件事 · 走出教室前對一遍</div>
+    <h2 class="h-xl" data-anim style="margin-bottom:3vh">D18 · <em>Take-Home Five</em></h2>
+    <div style="display:flex;flex-direction:column;flex:1;justify-content:center">
+      <div class="rowline" data-anim>
+        <div class="k">① 測試表</div>
+        <div class="v">10 案例（4 / 4 / 2）+ 實際輸出 + 通過/失敗欄</div>
+        <div class="m">CH7-3</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">② 試用筆記</div>
+        <div class="v">1 位非技術朋友的放聲試用觀察 + 修正清單分優先序</div>
+        <div class="m">CH7-3</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">③ 4:30 逐字稿</div>
+        <div class="v">五段結構齊全 · 計時通過 · 第一句講具體問題</div>
+        <div class="m">CH7-4</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">④ 作品集卡片</div>
+        <div class="v">PRAC5-3 那頁加新卡：四元素 + GIF + 一句學到的事</div>
+        <div class="m">CH7-4</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">⑤ v1 已部署</div>
+        <div class="v">UX 修好 · 錯誤友善 · 成本控管 · 10 案例全過 · git commit 完成</div>
+        <div class="m">PRAC7-1/2/3</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">D18 · 5 件事帶走</div>
+    <div>37 / 38</div>
+  </div>
+</section>
+
+<!-- ============ 38 · To Be Continued (hero dark) ============ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>D18 · End</div>
+    <div>38 / 38</div>
+  </div>
+  <div class="frame center" style="justify-content:center;gap:3vh">
+    <div class="kicker" data-anim>To Be Continued</div>
+    <h1 class="display-zh" data-anim style="text-align:center">明天<em>畢業典禮</em></h1>
+    <div class="lead" data-anim style="max-width:54vw;text-align:center;margin-top:1.2vh">
+      D19 / 20 · 最終成果頁面 · 課程回顧與學習地圖<br>
+      <em>140 小時的終點 · 也是接案 / 找工作 / 自學的起點</em>
+    </div>
+    <div class="meta-row" data-anim style="margin-top:3vh">
+      <span>Vol.18 · D18 / 20</span><span>·</span><span>Build &amp; Ship</span><span>·</span><span>Next: D19 Graduation</span>
+    </div>
+    <div class="sign" data-anim style="margin-top:2vh">— 弄一下工作室 · Lecturer Decks —</div>
+  </div>
+  <div class="foot" data-anim>
+    <div class="title">生成式 AI 職訓 140hr · 弄一下工作室</div>
+    <div>38 / 38</div>
+  </div>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>

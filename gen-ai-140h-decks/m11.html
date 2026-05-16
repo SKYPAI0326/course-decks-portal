@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D11 · Git + 全端（CH5-3 + CH5-4 + PRAC5-3/4）｜生成式 AI 職訓 140hr｜弄一下工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#2a1e13;
+    --ink-rgb:42,30,19;
+    --paper:#eedfc7;
+    --paper-rgb:238,223,199;
+    --paper-tint:#e0d0b6;
+    --ink-tint:#3a2a1d;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.08vw);line-height:1.7;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:1.2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:1.4vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(14px,1.08vw);line-height:1.5;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:1.2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:1.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.2vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:5vw;
+    line-height:1.08;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2.3vw;
+    line-height:1.3;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+/* === overflow-tighten-r4 === */
+.slide .frame .lead{margin-top:1.4vh !important;font-size:1.4vw !important;line-height:1.45 !important}
+.slide .frame .callout{padding:1vh 2vw !important;font-size:max(13px,1vw) !important;line-height:1.5 !important}
+.slide .frame .callout strong{font-size:max(13px,1.05vw)}
+.slide .grid-4{gap:1.6vh 2.6vw !important;padding:1vh 0 !important}
+.slide .stat-card{padding-top:1vh !important;gap:.5vh !important}
+.slide .stat-card .stat-note{font-size:max(11px,.82vw) !important;line-height:1.45 !important;opacity:.78}
+.slide .stat-card .stat-nb{font-size:4.6vw !important;line-height:.95 !important}
+.slide .stat-card .stat-label{font-size:max(10px,.72vw) !important}
+/* row-list 內 inline 樣式收緊 */
+.slide .frame > div[style*="display:grid"][style*="grid-template-columns"]{padding-top:.7vh !important;padding-bottom:.7vh !important}
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ============ 1 / 38 · Cover · D11 hero dark ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>生成式 AI 職訓 140hr · 弄一下工作室</div>
+    <div>Vol.11 · D11 · Part 5</div>
+  </div>
+  <div class="frame" style="display:grid; gap:2.6vh; align-content:center">
+    <div class="kicker" data-anim>Day Eleven · 9 hours · 2 CH + 2 PRAC</div>
+    <h1 class="h-hero" data-anim>Git + 全端</h1>
+    <h2 class="h-sub" data-anim>讓<em>每一步都能反悔</em>，讓<em>API 金鑰不外洩</em></h2>
+    <p class="lead" style="max-width:62vw" data-anim>
+      D10 你會寫 HTML/CSS/JS、會請 AI 幫你做前端。<br>
+      D11 我們補上兩件「真的要上線才會用到」的事——<br>
+      <em>版本控制</em>讓你不怕改壞，<em>後端代理</em>讓你的 API 金鑰能光明正大公開部署。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>Vol.11</span><span>·</span><span>Git · GitHub · 後端代理 · Railway / Render</span><span>·</span><span>2026</span>
+    </div>
+    <div class="meta-row" style="margin-top:1.6vh;opacity:.78" data-anim>
+      <span>Duration · 9 小時授課 · D11 / 20</span>
+    </div>
+    <div class="meta-row" style="margin-top:1.6vh;opacity:.74" data-anim>
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>140 小時體系的第十一天</div>
+    <div>— D11 / 20 —</div>
+  </div>
+</section>
+
+<!-- ============ 2 / 38 · 大引用：開場金句 ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome">
+    <div>Why Git + Backend · 為何今天要學這兩個</div>
+    <div>02 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="display:grid; gap:3vh; align-content:center">
+    <div class="kicker" data-anim>The Premise · 今天的主張</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:5vw; line-height:1.2; letter-spacing:-.01em; max-width:78vw">
+      <span data-anim="line" style="display:block">會寫程式 ≠ 能上線。</span>
+      <span data-anim="line" style="display:block">能上線，是<em>會反悔</em>＋<em>不外洩</em>。</span>
+    </blockquote>
+    <p class="lead" style="max-width:60vw; opacity:.7" data-anim>
+      Git 讓你每一次改都有後路；環境變數＋後端代理讓你的 AI 工具能<br>
+      <em>公開部署也不怕被盜刷</em>。這兩件事學會之前，做得再漂亮的工具都只能在自己電腦跑。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— D11 核心主張</span><span>·</span><span>反悔保險 + 金鑰不外洩</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 02 · The Premise</div>
+    <div>— · —</div>
+  </div>
+</section>
+
+<!-- ============ 3 / 38 · 學習目標 grid-3 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>D11 · Learning Outcomes</div>
+    <div>03 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>OUTCOMES · 今天結束你能做到</div>
+    <h2 class="h-xl" data-anim>三件事</h2>
+    <p class="lead" style="margin-top:3vh; max-width:60vw" data-anim>不只是「聽過 Git」，而是「離開教室就有一個含後端的工具公開部署在網路上」。</p>
+
+    <div class="grid-3" style="margin-top:7vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 01</div>
+        <div class="stat-nb" style="font-size:3.4vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">會反悔</div>
+        <div class="stat-note">能用 init / add / commit / log / diff / checkout 六個指令管理任何專案，能寫出三個月後翻記錄看得懂的 commit message。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 02</div>
+        <div class="stat-nb" style="font-size:3.4vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">會藏鑰匙</div>
+        <div class="stat-note">能用 .env 加 .gitignore 把 API 金鑰擋在版本庫之外，能解釋為何寫死在前端 = 上線就被盜刷。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 03</div>
+        <div class="stat-nb" style="font-size:3.4vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">會上線</div>
+        <div class="stat-note">能寫一個 /api/ask 後端代理，把含後端的 AI 工具部署到 Railway / Render，前端在 Vercel，鑰匙在後端環境變數。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 03 · 學習目標 · 9 hours</div>
+    <div>2 CH + 2 PRAC · D11</div>
+  </div>
+</section>
+
+<!-- ============ 4 / 38 · Act I 幕封 · CH5-3 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>第一幕 · Git 與版本保存</div>
+    <div>Act I · 04 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:3.5vh; align-content:center">
+    <div class="kicker" data-anim>Act I · CH 5.3 · 3 hr 課堂 + 2 hr 自學</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>每一步<br>都可以反悔</h1>
+    <h2 class="h-sub" data-anim>工作區 · 暫存區 · 版本庫 — 三段式存檔</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      Word 的存檔，是「<em>蓋掉</em>上一個版本」。<br>
+      Git 的 commit，是「<em>留下</em>每一個版本，永遠可以回去」。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act I 開幕</div>
+    <div>— Version Control —</div>
+  </div>
+</section>
+
+<!-- ============ 5 / 38 · 存檔 vs Git directional ============ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome">
+    <div>Problem · 為什麼存檔不夠</div>
+    <div>05 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame grid-2" style="padding-top:3vh; gap:5vw">
+    <div data-anim="left">
+      <div class="kicker">傳統存檔（Word / Photoshop）</div>
+      <h3 class="h-sub" style="margin-top:1vh">蓋掉舊版</h3>
+      <ul style="margin-top:1.6vh; font-size:max(14px,1.05vw); line-height:1.65; list-style:none">
+        <li>· 檔名加 v2 / v3 / final / final-真的-final.docx</li>
+        <li>· 改壞了只能 Ctrl+Z 連按，超過 50 步救不回來</li>
+        <li>· 要回到「上週三那個版本」幾乎不可能</li>
+        <li>· 多人改同一檔 → 互相蓋掉</li>
+      </ul>
+    </div>
+    <div class="rule v" style="opacity:.3"></div>
+    <div data-anim="right">
+      <div class="kicker">Git commit（程式碼專用）</div>
+      <h3 class="h-sub" style="margin-top:1vh">留下每個版本</h3>
+      <ul style="margin-top:1.6vh; font-size:max(14px,1.05vw); line-height:1.65; list-style:none">
+        <li>· 每次 commit ＝ 一個帶說明的快照</li>
+        <li>· 可以 git log 翻全部歷史</li>
+        <li>· 可以 git checkout 跳回任何一個過去的版本</li>
+        <li>· 兩人在不同分支改 → Git 幫你合併（merge）</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 05 · Save vs Commit</div>
+    <div>— Why Git —</div>
+  </div>
+</section>
+
+<!-- ============ 6 / 38 · 三段式 pipeline ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>Three Stages · Git 的三個區域</div>
+    <div>06 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Working → Staging → Repository</div>
+    <h2 class="h-xl" data-anim>檔案會經過<em>三個區</em>。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>暫存區（Staging）的存在，是讓你「改了五個檔，這次只挑三個進 commit」——commit 才能精準。</p>
+
+    <div class="pipeline" data-cols="3" style="margin-top:7vh">
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Stage 01</div>
+        <h3 class="h-md">工作區</h3>
+        <p style="margin-top:1.6vh; font-size:max(14px,1.1vw); line-height:1.65; opacity:.85">Working Directory<br><span style="opacity:.7">你正在編輯的檔案，存在硬碟上的本體</span></p>
+        <p style="margin-top:1.4vh; font-family:var(--mono); font-size:11px; letter-spacing:.18em; opacity:.6">edit · save</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Stage 02 · git add</div>
+        <h3 class="h-md">暫存區</h3>
+        <p style="margin-top:1.6vh; font-size:max(14px,1.1vw); line-height:1.65; opacity:.85">Staging Area<br><span style="opacity:.7">準備要 commit 的修改清單，可以挑進挑出</span></p>
+        <p style="margin-top:1.4vh; font-family:var(--mono); font-size:11px; letter-spacing:.18em; opacity:.6">git add &lt;file&gt;</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Stage 03 · git commit</div>
+        <h3 class="h-md">版本庫</h3>
+        <p style="margin-top:1.6vh; font-size:max(14px,1.1vw); line-height:1.65; opacity:.85">Repository<br><span style="opacity:.7">永久保存的快照，每個都有 message 說明為何而改</span></p>
+        <p style="margin-top:1.4vh; font-family:var(--mono); font-size:11px; letter-spacing:.18em; opacity:.6">git commit -m "..."</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 06 · 三段式</div>
+    <div>— Space/→ 推進 —</div>
+  </div>
+</section>
+
+<!-- ============ 7 / 38 · 三步驟初始化 starred ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>First Repo · 第一次用 Git 的三步驟</div>
+    <div>07 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁，含完整指令可複製貼上）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>init · add · commit</div>
+    <h2 class="h-xl" data-anim>三個指令，第一個 repo 就成型。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">01 · git init</div><div class="rl-text">在資料夾裡建一個隱藏的 .git 資料夾——從這刻起 Git 開始追蹤這個目錄的所有變動。一個專案做一次就好。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">02 · git add .</div><div class="rl-text">把目前所有檔案放進暫存區。「.」代表所有檔案；也可以指定 git add index.html 只加單一檔。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">03 · git commit -m "..."</div><div class="rl-text">把暫存區的內容打包成一個 commit，留下永久快照。-m 後面的就是這次的說明（commit message）。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">+ git status</div><div class="rl-text">隨時看「現在有哪些檔被改了、哪些已 add、哪些還沒」——卡住時先打這個指令幾乎都能找到方向。</div></div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 07 · 第一個 repo</div>
+    <div>— Hands-on ready —</div>
+  </div>
+</section>
+
+<!-- ============ 8 / 38 · commit message 反例 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Write Why · commit message 怎麼寫</div>
+    <div>08 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>The Rule · 寫「為什麼」，不寫「改了什麼」</div>
+    <h2 class="h-xl" data-anim>Git 自己記得<em>你改了哪幾行</em>。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>所以你寫的 message 不該重複它。要寫的是「我為什麼決定這樣改」。</p>
+
+    <div class="grid-2" style="margin-top:6vh; gap:4vw">
+      <div class="callout" style="border-left-color:#b53c3c" data-anim>
+        <div style="font-family:var(--mono); font-size:11px; letter-spacing:.22em; opacity:.6; margin-bottom:1.2vh">無用 ✕</div>
+        <div style="font-family:var(--mono); font-size:max(13px,1vw); line-height:1.6">
+          update button<br>
+          fix bug<br>
+          修改首頁<br>
+          asdfasdf
+        </div>
+        <div style="margin-top:2vh; font-size:max(13px,1vw); opacity:.75">三個月後翻紀錄毫無幫助——Git 已經會告訴你哪幾行被改了。</div>
+      </div>
+      <div class="callout" style="border-left-color:#3a6a3a" data-anim>
+        <div style="font-family:var(--mono); font-size:11px; letter-spacing:.22em; opacity:.6; margin-bottom:1.2vh">有用 ✓</div>
+        <div style="font-family:var(--mono); font-size:max(13px,1vw); line-height:1.6">
+          修正送出按鈕在 iOS Safari 無法點擊的問題<br>
+          首頁 hero 改成兩欄，配合 D11 招生頁設計稿<br>
+          移除 jQuery 依賴，改用原生 fetch
+        </div>
+        <div style="margin-top:2vh; font-size:max(13px,1vw); opacity:.75">三個月後翻紀錄能立刻想起當時為什麼決定動這塊。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 08 · commit message</div>
+    <div>— Why over What —</div>
+  </div>
+</section>
+
+<!-- ============ 9 / 38 · log/diff/checkout ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Inspect & Restore · 查 / 比 / 還</div>
+    <div>09 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>log · diff · checkout</div>
+    <h2 class="h-xl" data-anim>反悔的<em>三個動作</em>。</h2>
+
+    <div class="grid-3" style="margin-top:6vh; gap:3vw">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">查</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--mono); line-height:1.2; letter-spacing:0">git log</div>
+        <div class="stat-note">列出所有 commit 的 hash + 時間 + message。常用 git log --oneline 看一行版。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">比</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--mono); line-height:1.2; letter-spacing:0">git diff</div>
+        <div class="stat-note">看「現在的工作區」跟「最後一次 commit」差在哪。也可以 git diff &lt;commit-A&gt; &lt;commit-B&gt; 比兩個版本。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">還</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--mono); line-height:1.2; letter-spacing:0">git checkout</div>
+        <div class="stat-note">跳回某個過去的 commit 看當時的檔案狀態。git checkout -- &lt;file&gt; 可以丟掉某檔的未 commit 修改。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>初學者最怕的事：「我會不會把整個專案弄壞？」</strong>不會。只要有 commit 過，東西就在那裡——Git 的設計就是讓你<em>放心亂試</em>。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 09 · 反悔三件套</div>
+    <div>— Safely Experiment —</div>
+  </div>
+</section>
+
+<!-- ============ 10 / 38 · .gitignore 安全 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>.gitignore · 別讓不該進 repo 的東西進來</div>
+    <div>10 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>The Filter · Git 的「無視清單」</div>
+    <h2 class="h-xl" data-anim>每個專案<em>第一個</em>建立的檔案。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>在專案根目錄建一個叫 .gitignore 的檔，每行一個 pattern——這些檔案 Git 會完全當作不存在。</p>
+
+    <div class="grid-2" style="margin-top:6vh; gap:4vw">
+      <div data-anim>
+        <div class="kicker">Web 專案最低必填</div>
+        <div style="font-family:var(--mono); font-size:max(13px,1vw); line-height:1.85; margin-top:1.6vh; padding:2vh 1.6vw; background:rgba(var(--ink-rgb),.06); border-radius:6px">
+          .env<br>
+          .env.local<br>
+          node_modules/<br>
+          .DS_Store<br>
+          dist/<br>
+          *.log
+        </div>
+      </div>
+      <div data-anim>
+        <div class="kicker">為什麼一定要這樣</div>
+        <ul style="margin-top:1.6vh; font-size:max(14px,1.1vw); line-height:1.9; list-style:none">
+          <li>· <em>.env</em> = 你的密碼與 API 金鑰，外洩等於被盜刷</li>
+          <li>· <em>node_modules/</em> = 動輒幾百 MB，從 package.json 重裝就好</li>
+          <li>· <em>.DS_Store</em> = macOS 的廢檔，給其他系統的人看到很尷尬</li>
+          <li>· <em>dist/</em> = 編譯產物，每次部署會重生</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 10 · .gitignore</div>
+    <div>— First file you write —</div>
+  </div>
+</section>
+
+<!-- ============ 11 / 38 · GitHub 推送流程 starred ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Push to GitHub · 從本機到雲端的四步驟</div>
+    <div>11 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁，含 SSH 設定 + 常見錯誤訊息對照表）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>Local → Remote</div>
+    <h2 class="h-xl" data-anim>把<em>本機 repo</em> 變成<em>網路 repo</em>。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">01 · 在 GitHub 建空 repo</div><div class="rl-text">github.com / New repo / 不勾任何初始檔（不要 README、不要 .gitignore，本機已經有了）。建完它會給你一段指令。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">02 · git remote add origin &lt;URL&gt;</div><div class="rl-text">告訴本機 repo「你的雲端家在這個 URL」。origin 是慣例的遠端名稱，可以不只一個。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">03 · git branch -M main</div><div class="rl-text">把預設分支改名為 main（有些舊版 Git 預設是 master，GitHub 預設是 main，統一一下避免推不上去）。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">04 · git push -u origin main</div><div class="rl-text">第一次推送加 -u（upstream），之後只要 git push 就好。整個 commit 歷史一次上傳到 GitHub。</div></div>
+    </div>
+
+    <div class="callout" style="margin-top:2.6vh" data-anim>
+      <strong>之後每次更新流程：</strong>改檔 → <code style="font-family:var(--mono)">git add .</code> → <code style="font-family:var(--mono)">git commit -m "..."</code> → <code style="font-family:var(--mono)">git push</code>。四個動作就是你後半輩子的工程節奏。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 11 · Push to remote</div>
+    <div>— Your daily loop —</div>
+  </div>
+</section>
+
+<!-- ============ 12 / 38 · 常見地雷 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Common Pitfalls · 新手最常踩的坑</div>
+    <div>12 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Survival Kit · 卡住時看這裡</div>
+    <h2 class="h-xl" data-anim>四個<em>救命指令</em>。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">不知道現在狀況</div><div class="rl-text">先打 <code style="font-family:var(--mono)">git status</code>。它會告訴你哪些檔被改、哪些已 add、哪些還沒——九成的卡關都是搞不清現在處於哪個階段。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">add 錯了想反悔</div><div class="rl-text"><code style="font-family:var(--mono)">git restore --staged &lt;file&gt;</code>。把已 add 的檔退回工作區，但不會丟掉你的修改內容。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">commit message 打錯字</div><div class="rl-text"><code style="font-family:var(--mono)">git commit --amend -m "新訊息"</code>。只能改最後一個 commit；如果已經 push 了則需要 -f 強推（多人專案先問清楚）。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">push 被擋（remote 比較新）</div><div class="rl-text">先 <code style="font-family:var(--mono)">git pull --rebase</code> 把遠端新東西拉下來，再 push。九成發生在你忘記 pull 直接 commit 的時候。</div></div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 12 · 救命指令</div>
+    <div>— git status first —</div>
+  </div>
+</section>
+
+<!-- ============ 13 / 38 · CH5-3 收束 quote ============ -->
+<section class="slide dark" data-animate="quote">
+  <div class="chrome">
+    <div>CH5-3 收束 · 為何要學會反悔</div>
+    <div>13 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:3vh; align-content:center">
+    <div class="kicker" data-anim>End of Act I · 把 Git 接到後端之前</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:4.6vw; line-height:1.22; max-width:78vw">
+      <span data-anim="line" style="display:block">不會 Git 的人，</span>
+      <span data-anim="line" style="display:block">不敢<em>大膽改、大膽試</em>。</span>
+      <span data-anim="line" style="display:block">這就是區隔「業餘」與「專業」的<em>那條線</em>。</span>
+    </blockquote>
+    <p class="lead" style="max-width:60vw; opacity:.78" data-anim>
+      接下來 CH5-4 我們把這個能力升級——學會把 API 金鑰藏好、把含後端的 AI 工具公開部署。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— CH 5.3 收束</span><span>·</span><span>下一站：CH 5.4 含後端服務的完整部署</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 13 · End of Act I</div>
+    <div>— → Act II —</div>
+  </div>
+</section>
+
+<!-- ============ 14 / 38 · Act II 幕封 · CH5-4 hero dark ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>第二幕 · 含後端服務的完整部署</div>
+    <div>Act II · 14 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:3.5vh; align-content:center">
+    <div class="kicker" data-anim>Act II · CH 5.4 · 3 hr 課堂 + 2 hr 自學</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>讓 API 金鑰<br>不外洩</h1>
+    <h2 class="h-sub" data-anim>環境變數 · /api/ask · Railway · Render</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      前端寫死 API key 等於把家裡鑰匙貼在大門外。<br>
+      這一幕教你怎麼<em>把鑰匙搬到後端</em>，前端只跟你的後端講話。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act II 開幕</div>
+    <div>— Backend Proxy —</div>
+  </div>
+</section>
+
+<!-- ============ 15 / 38 · 靜態 vs 後端 對比 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Static vs Backend · 什麼時候你需要後端</div>
+    <div>15 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Two Types · 兩種網站架構</div>
+    <h2 class="h-xl" data-anim>不是<em>所有工具都需要後端</em>。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>D10 學的個人作品頁、PRAC4-1/2 那種純前端工具——靜態就夠。但只要有 API 金鑰、要存資料、要跨裝置同步，就必須上後端。</p>
+
+    <div class="grid-2" style="margin-top:6vh; gap:4vw">
+      <div data-anim>
+        <div class="kicker">靜態網站（D10 範圍）</div>
+        <h3 class="h-md" style="margin-top:1.4vh">純 HTML/CSS/JS</h3>
+        <ul style="margin-top:2vh; font-size:max(14px,1.1vw); line-height:1.85; list-style:none">
+          <li>· 部署：GitHub Pages / Vercel / Netlify</li>
+          <li>· 成本：免費</li>
+          <li>· 適合：作品集、文件、單頁工具、計算器</li>
+          <li>· <em>不能</em>放任何 API 金鑰</li>
+        </ul>
+      </div>
+      <div data-anim>
+        <div class="kicker">含後端（D11 升級）</div>
+        <h3 class="h-md" style="margin-top:1.4vh">前端 + 自己的 server</h3>
+        <ul style="margin-top:2vh; font-size:max(14px,1.1vw); line-height:1.85; list-style:none">
+          <li>· 部署：Railway / Render（後端）+ Vercel（前端）</li>
+          <li>· 成本：每月免費額度，超過幾美金</li>
+          <li>· 適合：呼叫 OpenAI / Anthropic API、要存資料</li>
+          <li>· 金鑰<em>只</em>放在後端環境變數</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 15 · 兩種架構</div>
+    <div>— Pick one per project —</div>
+  </div>
+</section>
+
+<!-- ============ 16 / 38 · 三題判斷 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Decision Tree · 該選哪一種</div>
+    <div>16 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Three Questions · 對每個工具問三題</div>
+    <h2 class="h-xl" data-anim>三題<em>都「不用」</em>，靜態就好。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>三題裡<em>任一題</em>是「要」，就需要後端（或 BaaS 像 Supabase 也算）。</p>
+
+    <div class="grid-3" style="margin-top:7vh; gap:3vw">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Q1</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">要不要<br>藏 API key？</div>
+        <div class="stat-note">要呼叫 OpenAI / Anthropic / 任何付費 API → 鑰匙絕對不能放前端 → 需要後端代理。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Q2</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">要不要<br>存資料？</div>
+        <div class="stat-note">使用者輸入要被記住下次再用？要記帳、要存對話歷史 → 需要後端 + 資料庫（或 Supabase 這類 BaaS）。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Q3</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">要不要<br>跨裝置同步？</div>
+        <div class="stat-note">手機開的內容電腦也要看到 → localStorage 不夠 → 需要後端帳號系統。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 16 · Decision Tree</div>
+    <div>— 3 Yes/No —</div>
+  </div>
+</section>
+
+<!-- ============ 17 / 38 · 環境變數與外洩警報 starred ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>API Key Security · 鑰匙不能放這些地方</div>
+    <div>17 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁，含 .env 完整範本 + revoke 流程）">講義 · CH5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Where NOT · 三個禁區</div>
+    <h2 class="h-xl" data-anim>金鑰外洩 = 數小時內<em>被盜刷數千美金</em>。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>網路爬蟲一直在掃 GitHub 找暴露的金鑰，速度比你想的快。先建立鐵則，再學技術。</p>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">禁區 01</div><div class="rl-text"><em>絕對不能</em>寫在前端 JS 檔——所有人開瀏覽器 F12 都看得到。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">禁區 02</div><div class="rl-text"><em>絕對不能</em> commit 進 Git——就算只 commit 一秒鐘再 amend 掉，歷史紀錄裡永遠都在。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">禁區 03</div><div class="rl-text"><em>絕對不能</em>傳給 AI 對話框、貼進公開 doc、寄信、Slack——你不會知道誰備份了它。</div></div>
+    </div>
+
+    <div class="callout" style="margin-top:2.6vh; border-left-color:#b53c3c" data-anim>
+      <strong>已經不小心推上去了怎麼辦？</strong>第一步<em>不是</em>刪 commit。第一步是<em>立刻去 Anthropic Console / OpenAI 後台 revoke 那把金鑰</em>，產一把新的。Git 歷史裡的那把已經要當作全世界都看得到——它不能再用了。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 17 · 鐵則</div>
+    <div>— Revoke first, fix later —</div>
+  </div>
+</section>
+
+<!-- ============ 18 / 38 · .env 流程 pipeline ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>The .env Setup · 三檔搭配的標準姿勢</div>
+    <div>18 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>.env · .gitignore · .env.example</div>
+    <h2 class="h-xl" data-anim>三個檔案<em>互相照應</em>。</h2>
+
+    <div class="pipeline" data-cols="3" style="margin-top:7vh">
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">File 01 · 不進 git</div>
+        <h3 class="h-md">.env</h3>
+        <p style="margin-top:1.6vh; font-family:var(--mono); font-size:max(11px,.85vw); line-height:1.7; opacity:.85">ANTHROPIC_API_KEY=sk-ant-...<br>OPENAI_API_KEY=sk-...<br>PORT=3000</p>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.75">真的金鑰放這裡，自己機器才看得到。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">File 02 · 守門員</div>
+        <h3 class="h-md">.gitignore</h3>
+        <p style="margin-top:1.6vh; font-family:var(--mono); font-size:max(11px,.85vw); line-height:1.7; opacity:.85">.env<br>.env.local<br>node_modules/</p>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.75">擋住 .env 進 git。每個專案的第一個檔。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">File 03 · 進 git 的範本</div>
+        <h3 class="h-md">.env.example</h3>
+        <p style="margin-top:1.6vh; font-family:var(--mono); font-size:max(11px,.85vw); line-height:1.7; opacity:.85">ANTHROPIC_API_KEY=<br>OPENAI_API_KEY=<br>PORT=3000</p>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.75">給其他人（或未來的自己）看「需要哪些變數」，留欄位但不填值。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 18 · .env 三檔組</div>
+    <div>— Space/→ 推進 —</div>
+  </div>
+</section>
+
+<!-- ============ 19 / 38 · /api/ask 後端骨架 starred ============ -->
+<section class="slide light" id="s19-backend">
+  <div class="chrome">
+    <div>Backend Skeleton · 一個 /api/ask 路由就夠</div>
+    <div>19 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁，含完整 server.js 可複製）">講義 · CH5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>Minimum Backend · Node.js + Express 版</div>
+    <h2 class="h-xl" data-anim>後端最小骨架 ≈ <em>30 行</em>。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>不用學整個後端框架——只要一條路由：前端 POST 過來 → 後端讀 .env 的 key → 呼叫 Anthropic → 回傳結果。Python Flask 版概念完全一樣，約 20 行。</p>
+
+    <div style="margin-top:2.6vh; padding:1.4vh 1.6vw; background:rgba(var(--ink-rgb),.06); border-radius:6px; font-family:var(--mono); font-size:max(11px,.92vw); line-height:1.45" data-anim>
+      <span style="opacity:.55">// server.js</span><br>
+      import express from "express";<br>
+      import Anthropic from "@anthropic-ai/sdk";<br>
+      import "dotenv/config";<br>
+      <br>
+      const app = express();<br>
+      app.use(express.json());<br>
+      app.use(express.static("public"));  <span style="opacity:.55">// 前端放 public/</span><br>
+      <br>
+      const client = new Anthropic();  <span style="opacity:.55">// 自動讀 process.env.ANTHROPIC_API_KEY</span><br>
+      <br>
+      app.post("/api/ask", async (req, res) =&gt; {<br>
+      &nbsp;&nbsp;const msg = await client.messages.create({<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;model: "claude-3-5-sonnet-latest",<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;max_tokens: 1024,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;messages: [{ role: "user", content: req.body.prompt }],<br>
+      &nbsp;&nbsp;});<br>
+      &nbsp;&nbsp;res.json({ reply: msg.content[0].text });<br>
+      });<br>
+      <br>
+      app.listen(process.env.PORT || 3000);
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 19 · /api/ask</div>
+    <div>— 30 lines is enough —</div>
+  </div>
+</section>
+
+<!-- ============ 20 / 38 · 後端 4 步驟結構 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Anatomy · 拆解這 30 行在做什麼</div>
+    <div>20 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>Four Concepts · 後端代理的四個觀念</div>
+    <h2 class="h-xl" data-anim>四個動作<em>合起來叫「後端代理」</em>。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">01 · 讀環境變數</div><div class="rl-text"><code style="font-family:var(--mono)">dotenv</code> 套件把 .env 載進 process.env。Anthropic SDK 會自動讀 <code style="font-family:var(--mono)">ANTHROPIC_API_KEY</code>，不用手動傳。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">02 · 開一個 POST 路由</div><div class="rl-text">前端用 <code style="font-family:var(--mono)">fetch("/api/ask", {method:"POST", body: JSON.stringify({prompt})})</code> 把問題送過來。後端在 <code style="font-family:var(--mono)">req.body</code> 拿到。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">03 · 後端代呼 AI</div><div class="rl-text">後端拿著金鑰呼叫 Anthropic API。整個過程前端看不到金鑰、也看不到 API endpoint——只看到「我家後端」。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">04 · 回傳給前端</div><div class="rl-text">把 AI 回答用 <code style="font-family:var(--mono)">res.json()</code> 送回去。前端 fetch 拿到後渲染到畫面上。</div></div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 20 · Backend anatomy</div>
+    <div>— Proxy pattern —</div>
+  </div>
+</section>
+
+<!-- ============ 21 / 38 · Railway 部署 pipeline starred ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>Deploy to Railway · 從 GitHub 到公開網址</div>
+    <div>21 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁，含 Railway 完整截圖步驟）">講義 · CH5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>Five Steps · 一次性設定，之後 push 即部署</div>
+    <h2 class="h-xl" data-anim>後端上線<em>五步驟</em>。</h2>
+
+    <div class="pipeline" data-cols="5" style="margin-top:6vh">
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 01</div>
+        <h3 class="h-md" style="font-size:1.4vw">推 GitHub</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">確認 .env 在 .gitignore 裡，再 git push。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 02</div>
+        <h3 class="h-md" style="font-size:1.4vw">連結 repo</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">Railway 登入用 GitHub 帳號 → New Project → 選你的 repo。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 03</div>
+        <h3 class="h-md" style="font-size:1.4vw">填環境變數</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">Variables 頁籤 → 把 .env 裡的每行貼上去。<em>這是金鑰真正放的地方</em>。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 04</div>
+        <h3 class="h-md" style="font-size:1.4vw">等 build</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">Railway 自動偵測 package.json → npm install → npm start。看 Logs 確認沒錯誤。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 05</div>
+        <h3 class="h-md" style="font-size:1.4vw">取得網址</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">Settings → Generate Domain → 拿到 .up.railway.app 公開網址。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:2.6vh" data-anim>
+      <strong>之後每次更新：</strong>本機改好 → <code style="font-family:var(--mono)">git push</code>。Railway 偵測到新 push 自動重新部署，不用回平台操作。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 21 · Deploy</div>
+    <div>— Push to deploy —</div>
+  </div>
+</section>
+
+<!-- ============ 22 / 38 · 部署故障排除 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Debug Deploy · 部署失敗怎麼辦</div>
+    <div>22 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/CH5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>The Big 4 · 第一次部署最常見的四個錯</div>
+    <h2 class="h-xl" data-anim>九成的部署失敗<em>都是這四個</em>。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">缺 start script</div><div class="rl-text">package.json 沒寫 <code style="font-family:var(--mono)">"scripts": &#123;"start": "node server.js"&#125;</code>，Railway 不知道怎麼跑你的程式。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">PORT 寫死了</div><div class="rl-text"><code style="font-family:var(--mono)">app.listen(3000)</code> 不行——Railway / Render 會動態指派 port。要寫 <code style="font-family:var(--mono)">app.listen(process.env.PORT || 3000)</code>。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">忘記填環境變數</div><div class="rl-text">本機跑得好好的，Railway 一跑就 401 / undefined——99% 是忘記在 Variables 頁籤把 ANTHROPIC_API_KEY 填上去。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">前端打錯後端網址</div><div class="rl-text">部署後前端的 fetch URL 還是 <code style="font-family:var(--mono)">http://localhost:3000</code>。要改成相對路徑 <code style="font-family:var(--mono)">/api/ask</code>，或 Railway 給的網址。</div></div>
+    </div>
+
+    <div class="callout" style="margin-top:2.6vh" data-anim>
+      <strong>Debug 第一動作：去 Deployment Logs 頁籤</strong>。Railway / Render 都把 build 與 runtime 錯誤訊息全部寫在這裡，貼給 AI 幾乎都能秒解。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 22 · Debug Deploy</div>
+    <div>— Read the logs —</div>
+  </div>
+</section>
+
+<!-- ============ 23 / 38 · CH5-4 收束 quote ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome">
+    <div>CH5-4 收束 · 上手做的時候到了</div>
+    <div>23 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:3vh; align-content:center">
+    <div class="kicker" data-anim>End of Act II · 概念講完，剩下用做的</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:4.6vw; line-height:1.22; max-width:78vw">
+      <span data-anim="line" style="display:block">看懂後端代理只需要 30 分鐘。</span>
+      <span data-anim="line" style="display:block">第一次<em>跑通</em>整套<em>大概要踩三個坑</em>。</span>
+      <span data-anim="line" style="display:block">所以接下來<em>兩個 PRAC 我們現場一起踩</em>。</span>
+    </blockquote>
+    <p class="lead" style="max-width:60vw; opacity:.78" data-anim>
+      PRAC5-3 先做純前端的作品集首頁練 Git 部署節奏；<br>
+      PRAC5-4 再上含後端的完整工具，把今天所有觀念串成一條工作流。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— CH 5.4 收束</span><span>·</span><span>下一站：PRAC 5.3 個人作品展示首頁</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 23 · End of Act II</div>
+    <div>— → Hands-on —</div>
+  </div>
+</section>
+
+<!-- ============ 24 / 38 · Act III 幕封 · PRAC5-3 hero light ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>第三幕 · 個人作品展示首頁</div>
+    <div>Act III · 24 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:3.5vh; align-content:center">
+    <div class="kicker" data-anim>Act III · PRAC 5.3 · 1.5 hr 動手</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>把所有工具<br>串成一頁</h1>
+    <h2 class="h-sub" data-anim>portfolio.html · 卡片清單 · 部署</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      你前面做的 PRAC4-1 ~ PRAC4-4、PRAC5-1 v2，散落在不同 URL。<br>
+      這一節把它們<em>整合成一張首頁</em>——同時也是練 Git push 的最好機會。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act III 開幕</div>
+    <div>— Portfolio Page —</div>
+  </div>
+</section>
+
+<!-- ============ 25 / 38 · 任務說明 + 一句話法則 starred ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>The Brief · 你接下來 1.5 小時要做什麼</div>
+    <div>25 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-3.html" target="_blank" rel="noopener" title="開啟互動工具（新分頁，含卡片生成器 + 範例 portfolio.html）">講義 · PRAC5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>Goal · 一頁、3-6 張卡、一個 URL</div>
+    <h2 class="h-xl" data-anim>做出一個<em>能放履歷的網址</em>。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>每張卡 = 一個工具：名稱 + 一句話說明 + 連結。產出後 git push，PRAC5-2 設過的部署會自動更新。</p>
+
+    <div class="callout" style="margin-top:3vh; border-left-color:#b58a3a" data-anim>
+      <strong>關鍵心法 · 一句話法則：</strong>每個工具用「一句話說清楚<em>它能解決什麼問題</em>」，不要寫技術描述。<br>
+      <span style="font-family:var(--mono); font-size:max(13px,1vw); opacity:.7">✕ 使用 NLP 的會議摘要工具</span><br>
+      <span style="font-family:var(--mono); font-size:max(13px,1vw); opacity:.85">✓ 把會議逐字稿自動整理成行動清單</span>
+    </div>
+
+    <div class="callout" style="margin-top:2vh" data-anim>
+      <strong>Why 練這個？</strong>履歷上一行「會用 AI 開發工具」沒人信。一個能點開的網址、上面五個你做的工具——這就是你 D11 結束帶走的<em>第一份對外名片</em>。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 25 · Brief</div>
+    <div>— Your business card —</div>
+  </div>
+</section>
+
+<!-- ============ 26 / 38 · 4 步驟流程 pipeline starred ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>Workflow · 1.5 小時的四個動作</div>
+    <div>26 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-3.html" target="_blank" rel="noopener" title="開啟互動工具（新分頁，含卡片生成器邊填邊累積）">講義 · PRAC5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>List → Fill → Copy → Push</div>
+    <h2 class="h-xl" data-anim>四個動作<em>串成一條工作流</em>。</h2>
+
+    <div class="pipeline" data-cols="4" style="margin-top:6vh">
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 01 · 5 min</div>
+        <h3 class="h-md" style="font-size:1.4vw">列工具清單</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">把 PRAC4-1 ~ PRAC4-4、PRAC5-1 v2 全列出來。挑 3 ~ 6 個最完整的。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 02 · 30 min</div>
+        <h3 class="h-md" style="font-size:1.4vw">填生成器</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">打開 PRAC5-3 內建生成器，每個工具填名稱、一句話說明、連結。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 03 · 20 min</div>
+        <h3 class="h-md" style="font-size:1.4vw">複製 HTML</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">點「生成首頁 HTML」→ 複製到 portfolio.html。瀏覽器開來確認樣式。</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">Step 04 · 25 min</div>
+        <h3 class="h-md" style="font-size:1.4vw">推送部署</h3>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); line-height:1.55; opacity:.78">git add / commit / push。Vercel 偵測到新 push 自動重新部署，等 60 秒拿到網址。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 26 · 四步流程</div>
+    <div>— Space/→ 推進 —</div>
+  </div>
+</section>
+
+<!-- ============ 27 / 38 · 卡片生成器 + 連結策略 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Card Generator · 連結要填相對還是絕對</div>
+    <div>27 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-3.html" target="_blank" rel="noopener" title="開啟互動工具（新分頁）">講義 · PRAC5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Tactics · 兩個現場最常被問的問題</div>
+    <h2 class="h-xl" data-anim>連結怎麼填？<em>看部署形式</em>。</h2>
+
+    <div class="grid-2" style="margin-top:6vh; gap:4vw">
+      <div class="callout" data-anim>
+        <div class="kicker">情境 A · 工具與首頁同 repo</div>
+        <h3 class="h-md" style="margin-top:1vh">用相對路徑</h3>
+        <div style="font-family:var(--mono); font-size:max(13px,1vw); line-height:1.7; margin-top:1.6vh; padding:1.6vh 1.4vw; background:rgba(var(--paper-rgb),.08); border-radius:4px">
+          part4/PRAC4-2.html<br>
+          tools/expense-tracker.html
+        </div>
+        <p style="margin-top:2vh; font-size:max(13px,1vw); opacity:.8">優點：repo 改名 / 換 domain 都不用改連結。</p>
+      </div>
+      <div class="callout" data-anim>
+        <div class="kicker">情境 B · 工具部署到獨立網址</div>
+        <h3 class="h-md" style="margin-top:1vh">用完整 URL</h3>
+        <div style="font-family:var(--mono); font-size:max(13px,1vw); line-height:1.7; margin-top:1.6vh; padding:1.6vh 1.4vw; background:rgba(var(--paper-rgb),.08); border-radius:4px">
+          https://my-tool.vercel.app<br>
+          https://expense.up.railway.app
+        </div>
+        <p style="margin-top:2vh; font-size:max(13px,1vw); opacity:.8">優點：每個工具獨立 repo / 獨立部署，可單獨更新。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 27 · 連結策略</div>
+    <div>— Pick per case —</div>
+  </div>
+</section>
+
+<!-- ============ 28 / 38 · 三段交付清單 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Delivery Rubric · 三段交付清單</div>
+    <div>28 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Three 30-min Blocks · 每段交一樣東西</div>
+    <h2 class="h-xl" data-anim>每 30 分鐘<em>拿出一個成品</em>。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">第 1 段（30 min）</div><div class="rl-text">列出 3-6 個工具的清單（名稱、一句話、URL），用 PRAC5-3 生成器逐一輸入完成 → 截圖傳到群組。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">第 2 段（30 min）</div><div class="rl-text">複製生成的 HTML 到本機 portfolio.html，瀏覽器開啟確認樣式正確 → 拍螢幕照傳到群組。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">第 3 段（30 min）</div><div class="rl-text">git add / commit / push 到 GitHub，等 Vercel 自動部署完成 → <em>把公開網址貼到群組</em>，這是今天的交付物。</div></div>
+    </div>
+
+    <div class="callout" style="margin-top:2.6vh" data-anim>
+      <strong>卡關時：</strong>不要悶頭硬撞。先在群組貼出「我卡在第 X 段，錯誤訊息是 ...」，講師或同學會在五分鐘內回。Git / 部署的錯誤 80% 都是同一批問題。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 28 · Rubric</div>
+    <div>— Show before fix —</div>
+  </div>
+</section>
+
+<!-- ============ 29 / 38 · 產出檢核 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Done? · 結束前自檢</div>
+    <div>29 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC5-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Self-check · 五個勾選</div>
+    <h2 class="h-xl" data-anim>離開教室前<em>確認這五件</em>。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">□ 01</div><div class="rl-text">portfolio.html 在公開網址打得開（不是 localhost、不是 file://）</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">□ 02</div><div class="rl-text">有 3-6 張工具卡片，每張的「一句話」都不是技術術語</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">□ 03</div><div class="rl-text">每張卡的連結點下去都打得開（沒有 404）</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">□ 04</div><div class="rl-text">這個 URL 已經貼到群組（講師可立即點開）</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">□ 05</div><div class="rl-text">這個 URL 已經存進你的「我的作品集」工具，下次自動跟你結業作品一起匯出</div></div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 29 · End of Act III</div>
+    <div>— → Final Act —</div>
+  </div>
+</section>
+
+<!-- ============ 30 / 38 · Act IV 幕封 · PRAC5-4 hero dark ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>第四幕 · 含後端代理的完整部署</div>
+    <div>Act IV · 30 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:3.5vh; align-content:center">
+    <div class="kicker" data-anim>Act IV · PRAC 5.4 · 2 hr 動手</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>把今天<br>全部串起來</h1>
+    <h2 class="h-sub" data-anim>Git + .env + 後端 + Railway — 一條工作流</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      D11 最重的 PRAC。<br>
+      做完你會帶走<em>一個含後端的 AI 工具，部署在公開網址上，金鑰放在 Railway 環境變數</em>。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act IV 開幕</div>
+    <div>— Full-stack Deploy —</div>
+  </div>
+</section>
+
+<!-- ============ 31 / 38 · 任務說明 starred ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>The Brief · 你接下來 2 小時要做什麼</div>
+    <div>31 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-4.html" target="_blank" rel="noopener" title="開啟互動工具（新分頁，含 server.js 起手範本）">講義 · PRAC5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>Goal · 一個工具、一支 server、一個公開網址</div>
+    <h2 class="h-xl" data-anim>把 CH5-4 的程式碼<em>變成你的工具</em>。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw" data-anim>不用從零寫——直接複製 CH5-4 的 server.js 當起點，改 prompt 邏輯就好。前端可以是任何一個你之前做過的 PRAC4 工具。</p>
+
+    <div class="callout" style="margin-top:3vh; border-left-color:#b58a3a" data-anim>
+      <strong>建議題目（任選）：</strong>
+      <ul style="margin-top:1.4vh; line-height:1.85; list-style:none">
+        <li>· <em>會議逐字稿 → 行動清單</em>（最熱門，輸入框 + 按鈕 + 結果區）</li>
+        <li>· <em>客戶意見分類器</em>（分四類：抱怨／建議／讚美／提問）</li>
+        <li>· <em>履歷一句話強化器</em>（貼一句弱版本，回三個強版本）</li>
+        <li>· 任何 PRAC4 做過的工具，只要原本是「在前端寫 OpenAI key」就改成走後端</li>
+      </ul>
+    </div>
+
+    <div class="callout" style="margin-top:2vh" data-anim>
+      <strong>關鍵心法：</strong>不要重做前端 UI——挑 PRAC4 你最滿意的工具，把它的「呼叫 AI」那段抽出來放到後端就好。整個 PRAC 的學習重點是「<em>後端在哪、金鑰怎麼藏</em>」，不是 UI。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 31 · Brief</div>
+    <div>— Reuse front-end —</div>
+  </div>
+</section>
+
+<!-- ============ 32 / 38 · 5 步驟 pipeline starred ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>Workflow · 2 小時的五個動作</div>
+    <div>32 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-4.html" target="_blank" rel="noopener" title="開啟互動工具（新分頁，含每步驟指令清單）">講義 · PRAC5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>init → install → .env → test → deploy</div>
+    <h2 class="h-xl" data-anim>五個動作<em>串成一條完整工作流</em>。</h2>
+
+    <div class="pipeline" data-cols="5" style="margin-top:6vh">
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">01 · 10 min</div>
+        <h3 class="h-md" style="font-size:1.3vw">建專案</h3>
+        <p style="margin-top:1.4vh; font-family:var(--mono); font-size:max(11px,.85vw); line-height:1.6; opacity:.8">mkdir my-ai-backend<br>cd my-ai-backend<br>npm init -y</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">02 · 20 min</div>
+        <h3 class="h-md" style="font-size:1.3vw">裝套件 + 程式碼</h3>
+        <p style="margin-top:1.4vh; font-family:var(--mono); font-size:max(11px,.85vw); line-height:1.6; opacity:.8">npm i express<br>@anthropic-ai/sdk dotenv<br>// 貼 CH5-4 server.js</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">03 · 10 min</div>
+        <h3 class="h-md" style="font-size:1.3vw">三檔組</h3>
+        <p style="margin-top:1.4vh; font-family:var(--mono); font-size:max(11px,.85vw); line-height:1.6; opacity:.8">.env<br>.gitignore<br>.env.example</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">04 · 30 min</div>
+        <h3 class="h-md" style="font-size:1.3vw">本機跑通</h3>
+        <p style="margin-top:1.4vh; font-family:var(--mono); font-size:max(11px,.85vw); line-height:1.6; opacity:.8">node server.js<br>localhost:3000<br>確認 AI 回得來</p>
+      </div>
+      <div class="pipeline-section" data-anim>
+        <div class="pipeline-label">05 · 50 min</div>
+        <h3 class="h-md" style="font-size:1.3vw">推 + 部署</h3>
+        <p style="margin-top:1.4vh; font-family:var(--mono); font-size:max(11px,.85vw); line-height:1.6; opacity:.8">git push<br>Railway 連 repo<br>填 ENV → 拿網址</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 32 · 五步流程</div>
+    <div>— Space/→ 推進 —</div>
+  </div>
+</section>
+
+<!-- ============ 33 / 38 · Railway 環境變數 + .env.example starred ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Critical Step · 第 5 步最容易漏的事</div>
+    <div>33 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-4.html" target="_blank" rel="noopener" title="開啟互動工具（新分頁，含 Railway Variables 截圖）">講義 · PRAC5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:3.5vh">
+    <div class="kicker" data-anim>The One Thing · 部署後沒填這個 = 工具直接報 401</div>
+    <h2 class="h-xl" data-anim>Railway 的 <em>Variables 頁籤</em>。</h2>
+    <p class="lead" style="margin-top:2vh; max-width:62vw" data-anim>本機你的 .env 在自己電腦上有效。Railway 看不到你電腦——它要用自己的環境變數。沒填，就只有「undefined」。</p>
+
+    <div class="grid-2" style="margin-top:3vh; gap:4vw">
+      <div data-anim>
+        <div class="kicker">本機（.env）</div>
+        <div style="font-family:var(--mono); font-size:max(13px,1vw); line-height:1.7; margin-top:1.6vh; padding:2vh 1.6vw; background:rgba(var(--ink-rgb),.06); border-radius:6px">
+          ANTHROPIC_API_KEY=sk-ant-real-key-xxxxx<br>
+          PORT=3000
+        </div>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); opacity:.75">node server.js 會讀這個</p>
+      </div>
+      <div data-anim>
+        <div class="kicker">Railway（Variables 頁籤）</div>
+        <div style="font-family:var(--mono); font-size:max(13px,1vw); line-height:1.7; margin-top:1.6vh; padding:2vh 1.6vw; background:rgba(var(--ink-rgb),.06); border-radius:6px">
+          ANTHROPIC_API_KEY = sk-ant-real-key-xxxxx<br>
+          <span style="opacity:.5">// PORT 不用填，Railway 自動帶</span>
+        </div>
+        <p style="margin-top:1.4vh; font-size:max(13px,1vw); opacity:.75">部署版本會讀這個</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:2.6vh" data-anim>
+      <strong>.env.example 的角色：</strong>進 git，內容只有變數名稱沒有值。三個月後你（或同事）clone 這個 repo，看 .env.example 就知道「啊，要建一個 .env 填這幾個變數才能跑」——這就是你給未來自己的<em>說明書</em>。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 33 · Variables</div>
+    <div>— Local ≠ Cloud —</div>
+  </div>
+</section>
+
+<!-- ============ 34 / 38 · 全端部署檢查清單 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Full-stack Checklist · 全端部署檢查清單</div>
+    <div>34 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Done = 八勾全綠</div>
+    <h2 class="h-xl" data-anim>全部勾完<em>才算 PRAC5-4 完成</em>。</h2>
+
+    <div class="grid-2" style="margin-top:3vh; gap:3vw">
+      <div data-anim>
+        <div class="kicker">本機端</div>
+        <ul style="margin-top:1.6vh; font-size:max(14px,1.1vw); line-height:2; list-style:none">
+          <li>□ npm init / install 都成功</li>
+          <li>□ .env 裡有真實的 ANTHROPIC_API_KEY</li>
+          <li>□ .gitignore 有把 .env 擋住</li>
+          <li>□ node server.js 能跑、localhost 能呼叫 AI</li>
+        </ul>
+      </div>
+      <div data-anim>
+        <div class="kicker">雲端</div>
+        <ul style="margin-top:1.6vh; font-size:max(14px,1.1vw); line-height:2; list-style:none">
+          <li>□ git push 成功，GitHub 看得到 commit</li>
+          <li>□ GitHub repo 裡<em>沒有</em> .env</li>
+          <li>□ Railway Variables 頁籤填了 ANTHROPIC_API_KEY</li>
+          <li>□ Railway 給的公開網址打得開、AI 回得來</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:2.6vh" data-anim>
+      <strong>第二項要特別檢查：</strong>有時候第一次 commit 已經把 .env 推上去了，後面才補 .gitignore——這時 .env 還在 git 歷史裡。要打 <code style="font-family:var(--mono)">git rm --cached .env</code> + 立刻去 Anthropic 後台 revoke 那把金鑰、產新的。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 34 · Checklist</div>
+    <div>— 8 boxes —</div>
+  </div>
+</section>
+
+<!-- ============ 35 / 38 · 常見坑總整理 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Pitfalls · D11 總整理：你會遇到的所有坑</div>
+    <div>35 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part5/PRAC5-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC5-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>The Survival Guide · 帶回家備用</div>
+    <h2 class="h-xl" data-anim>D11 全坑<em>一頁清單</em>。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">部署後 401</div><div class="rl-text">99% 是 Railway Variables 沒填 ANTHROPIC_API_KEY。回 Variables 頁籤補填，等 redeploy。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">部署 build 失敗</div><div class="rl-text">看 Deployment Logs。最常見：package.json 沒 start script、或 node 版本太舊（在 package.json 加 <code style="font-family:var(--mono)">"engines":&#123;"node":"&gt;=18"&#125;</code>）。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">Application failed to respond</div><div class="rl-text">PORT 寫死成 3000 了。Railway 會給你一個動態 port，必須用 <code style="font-family:var(--mono)">process.env.PORT || 3000</code>。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">前端 fetch 失敗（CORS）</div><div class="rl-text">前端、後端不同 domain 時。後端裝 <code style="font-family:var(--mono)">cors</code> 套件 → <code style="font-family:var(--mono)">app.use(cors())</code>。或乾脆讓 Express 用 express.static 一起服務前端。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">.env 已經被推上去</div><div class="rl-text"><em>立刻 revoke 金鑰</em>——第一動作。然後 git rm --cached .env、補 .gitignore、commit、push。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">本機改了 push 後 Railway 沒更新</div><div class="rl-text">Railway 沒設好 webhook。回 Settings → Deploy 區看 Auto Deploy 是否打勾。或手動點 Redeploy 一次。</div></div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 35 · Pitfalls</div>
+    <div>— Take this home —</div>
+  </div>
+</section>
+
+<!-- ============ 36 / 38 · 收束幕封 → D12 hero light ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>To Be Continued · D12 預告</div>
+    <div>36 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:3.5vh; align-content:center">
+    <div class="kicker" data-anim>D11 → D12 · 第十二天會發生什麼事</div>
+    <h1 class="h-hero" style="font-size:8.5vw" data-anim>速通工具庫</h1>
+    <h2 class="h-sub" data-anim>八個小工具<em>一天速做完</em></h2>
+    <p class="lead" style="max-width:60vw" data-anim>
+      D11 你學會了完整工作流——慢、扎實。<br>
+      D12 我們用同一套工作流，<em>一天速做八個小工具</em>：抽籤器、看板、倒數牆、Kanban……<br>
+      讓「全端部署」從第二次開始變成<em>肌肉記憶</em>。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Day Twelve Preview</div>
+    <div>— PRAC 5.5 ~ 5.12 —</div>
+  </div>
+</section>
+
+<!-- ============ 37 / 38 · 工具地圖 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Tools Map · 今天用到的工具一頁清單</div>
+    <div>37 / 38</div>
+  </div>
+  <div class="frame" style="padding-top:7vh">
+    <div class="kicker" data-anim>One-page Tools Map · 帶回家速查</div>
+    <h2 class="h-xl" data-anim>D11 用到的<em>所有工具</em>。</h2>
+
+    <div class="rowline" style="margin-top:3vh">
+      <div class="rl-item" data-anim><div class="rl-label">Git CLI</div><div class="rl-text">init / status / add / commit / log / diff / checkout / push / pull——10 個指令打天下。卡住先打 status。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">GitHub</div><div class="rl-text">遠端 repo 與部署 webhook 的中介。免費方案個人專案夠用一輩子。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">.env + .gitignore + .env.example</div><div class="rl-text">三檔組合是「後端開發的標準起手」。每個專案的第一個動作。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">Express + dotenv + Anthropic SDK</div><div class="rl-text">後端最小組合。30 行程式碼搞定 /api/ask。Python Flask 替代品也行。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">Railway / Render</div><div class="rl-text">含後端的部署平台。連 GitHub repo + 填環境變數 + 等 build = 公開網址。每月免費額度。</div></div>
+      <div class="rl-item" data-anim><div class="rl-label">Vercel / GitHub Pages</div><div class="rl-text">純靜態前端的部署平台。Vercel 偵測 push 自動 redeploy，GitHub Pages 在 Settings 開啟。</div></div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 37 · D11 工具地圖</div>
+    <div>— Take this home —</div>
+  </div>
+</section>
+
+<!-- ============ 38 / 38 · 結束 hero（To Be Continued） ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>D11 · End</div>
+    <div>38 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:3vh; align-content:center">
+    <div class="kicker" data-anim>End of Day Eleven · 9 hours · 2 CH + 2 PRAC</div>
+    <h1 class="h-hero" data-anim>To Be<br>Continued</h1>
+    <h2 class="h-sub" data-anim>D12 · 速通工具庫（PRAC 5.5 ~ 5.12）</h2>
+    <p class="lead" style="max-width:55vw; opacity:.85" data-anim>
+      今天你帶走了<em>會反悔（Git）+ 會藏鑰匙（.env）+ 會上線（Railway）</em>——<br>
+      明天我們把這套工作流<em>跑八次</em>，讓它變成你身體的一部分。
+    </p>
+    <div class="meta-row" style="margin-top:2vh" data-anim>
+      <span>Vol.11</span><span>·</span><span>D11 / 20</span><span>·</span><span>弄一下工作室</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>明天見 · See you tomorrow</div>
+    <div>— D12 / 20 —</div>
+  </div>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商業用圖片生成｜AI 設計流水線 PM 協作｜弄一下工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#2a1e13;
+    --ink-rgb:42,30,19;
+    --paper:#eedfc7;
+    --paper-rgb:238,223,199;
+    --paper-tint:#e0d0b6;
+    --ink-tint:#3a2a1d;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(15px,1.22vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:6.2vw;
+    line-height:1.08;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2.3vw;
+    line-height:1.3;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ====================================================================
+     gen-image · 商業用圖片生成 · 32 slides
+     開場(1-3) / M1 創作閉環(4-8) / M2 起·生圖(9-13) / M3 承·線稿(14-18)
+     M4 轉·反控(19-23) / M5 合·整合(24-28) / 收束(29-32)
+     ==================================================================== -->
+
+<!-- ============ 1 / 32 · Cover ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>商業用圖片生成 · 8h · 弄一下工作室</div>
+    <div>Vol.01 · gen-image</div>
+  </div>
+  <div class="frame" style="display:grid; gap:4vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>One Day Workshop · 5 Modules · 13 Units</div>
+    <h1 class="h-hero" data-anim>商業用圖片生成</h1>
+    <h2 class="h-sub" data-anim>AI 設計流水線 × PM 協作</h2>
+    <p class="lead" style="max-width:62vw" data-anim>
+      你不是設計師、你是 <em>AI 的需求方</em>。<br>
+      不學畫設計——學怎麼下對需求、驗收 AI 產出、滾出可繼承的骨架、讓 AI 守在品牌框架內。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>Vol.01</span><span>·</span><span>brief 六件套 · 5 骨架 · L0-L4 · 品牌小卡</span><span>·</span><span>2026</span>
+    </div>
+    <div class="meta-row" style="margin-top:1.6vh;opacity:.78" data-anim>
+      <span>Duration · 8 小時授課 · 5 Modules</span>
+    </div>
+    <div class="meta-row" style="margin-top:1.6vh;opacity:.74" data-anim>
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>受眾 · 小公司行銷 / 行政 · 新創老闆 · 課程設計師 · 自媒體</div>
+    <div>— gen-image / 2026 春 —</div>
+  </div>
+</section>
+
+<!-- ============ 2 / 32 · 開場金句 quote ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome">
+    <div>The Premise · 課程主張</div>
+    <div>02 / 32</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Why Not Designer · 為何不教你變設計師</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:5.2vw; line-height:1.22; letter-spacing:-.01em; max-width:80vw">
+      <span data-anim="line" style="display:block">你不是<em>設計師</em>，</span>
+      <span data-anim="line" style="display:block">你是 AI 的<em>需求方</em>。</span>
+    </blockquote>
+    <p class="lead" style="max-width:62vw; opacity:.74" data-anim>
+      做設計的是 AI——它畫圖比你快、比你準、比你省。<br>
+      你做的是需求判定、結構驗收、系列把關，AI 做不了的那一段。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— 本課方法論基石</span><span>·</span><span>適用任何 AI 視覺協作場景</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 02 · The Premise</div>
+    <div>— · —</div>
+  </div>
+</section>
+
+<!-- ============ 3 / 32 · 學習目標 grid-3 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Learning Outcomes · 學完之後，你能做到</div>
+    <div>03 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/index.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 總覽</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>OUTCOMES · 不是「聽過」是「做得到」</div>
+    <h2 class="h-xl" data-anim>三條<em>可驗證</em>能力</h2>
+    <p class="lead" style="margin-top:3vh; max-width:60vw" data-anim>八小時走一遍完整閉環，不靠美感、靠清單。</p>
+
+    <div class="grid-3" style="margin-top:6vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 01 · 下對需求</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">brief 六件套</div>
+        <div class="stat-note">把任意廣告需求轉成 brief 六件套（業種 / 商品 / 客群 / 訴求 / 必要元素 / 風格 preset），讓 AI 不用猜。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 02 · 結構驗收</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">5 骨架 + L2 反推</div>
+        <div class="stat-note">辨識 5 種版面骨架，30 秒判斷一張完稿能不能收，會反推 L2 線稿並判定是否可繼承。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 03 · 系列把關</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">品牌小卡</div>
+        <div class="stat-note">建一份 brand-dna.md（色票 / 字族 / 禁用），讓 AI 後續產出守在品牌框架內、3-5 張可被認出同品牌。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 03 · 學習目標</div>
+    <div>5 Modules · 13 Units · 8 hours</div>
+  </div>
+</section>
+
+<!-- ============ 4 / 32 · M1 幕封 hero light ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Module 1 · 開場 · 創作閉環</div>
+    <div>Act I · 04 / 32</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Module 1 · 1 hr · 2 Units</div>
+    <h1 class="h-hero" style="font-size:9.4vw" data-anim>創作閉環</h1>
+    <h2 class="h-sub" data-anim>把身份從設計師切到需求方</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      第一件事不是學工具，是換腦袋。<br>
+      你既不會畫設計、也沒判準——所以才需要把自己定位成 AI 的需求方。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Module 1 開幕</div>
+    <div>— CH1-1 · CH1-2 —</div>
+  </div>
+</section>
+
+<!-- ============ 5 / 32 · 設計師 vs 需求方（directional） ============ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome">
+    <div>Two Mindsets · 兩種思維</div>
+    <div>05 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH1-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH1-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>CH1-1 · 你不是設計師、你是 AI 的需求方</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>兩種思維、<em>兩條路</em></h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh">
+      <div data-anim="left" style="padding:3vh 2vw; border-left:3px solid currentColor; opacity:.55">
+        <div class="kicker" style="opacity:.9">設計師思維 · 主觀迴圈</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.6vw">自己畫 · 用眼睛 · 追單張</h3>
+        <ul style="margin-top:3vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.4vh; font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.55">
+          <li>主動作：自己畫 / 自己改 / 自己決定</li>
+          <li>驗收：我覺得好不好看</li>
+          <li>修改：「再漂亮一點」「不對，重畫」</li>
+          <li>規模：單張、慢、品質靠運氣</li>
+          <li>遇卡關：苦思美感、重新構圖</li>
+        </ul>
+      </div>
+      <div data-anim="right" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">需求方思維 · 流水線</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.6vw">下需求 · 用清單 · 滾系列</h3>
+        <ul style="margin-top:3vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.4vh; font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.55">
+          <li>主動作：下需求 / 驗收 / 把關 / 迭代</li>
+          <li>驗收：結構是否對、能不能繼承、守在品牌內</li>
+          <li>修改：「保留 X / 第 Y 項改成 Z」</li>
+          <li>規模：多張、穩定、可系列化</li>
+          <li>遇卡關：對清單找出具體問題、給具體指令</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 05 · 兩種思維對比</div>
+    <div>核心：身份決定了你能不能用清單救自己</div>
+  </div>
+</section>
+
+<!-- ============ 6 / 32 · 講→等→看→改 pipeline ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>The 4-Step Loop · 跟 AI 工作的迴圈</div>
+    <div>06 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH1-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH1-1</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker">Pipeline · 一圈四步</div>
+    <h2 class="h-xl">講 → 等 → 看 → 改<em>，反覆滾</em></h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw">
+      需求方的工作不是「下一次 prompt」，是跑一個閉環。
+    </p>
+
+    <div class="pipeline-section">
+      <div class="pipeline-label">講師按 → 鍵或滾輪逐步點亮</div>
+      <div class="pipeline" data-cols="4">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01 · Brief</div>
+          <div class="step-title">講清楚要什麼</div>
+          <div class="step-desc">brief 六件套填齊。花 2 分鐘補欄位，比讓 AI 猜 10 次重跑省時間。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02 · Wait</div>
+          <div class="step-title">等 AI 做</div>
+          <div class="step-desc">這步是 AI 的工作，不是你的。別預設「應該長這樣」、保持中立準備驗收。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03 · Check</div>
+          <div class="step-title">看 AI 做得行不行</div>
+          <div class="step-desc">用結構清單驗收，不靠感覺。眼睛被 AI 平均美感騙、清單不會。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">04 · Iterate</div>
+          <div class="step-title">給具體修改指令</div>
+          <div class="step-desc">「保留通過的 X 項，第 Y 項改成 Z」。指令具體到能打勾。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:4vh">
+      <strong>關鍵心法：</strong>「驗收是結構判斷，不是美感判斷。」美感判斷讓設計師去做——你做結構判斷。
+      <div class="callout-src">— CH1-1 核心金句</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 06 · 4-Step Loop</div>
+    <div>4 Steps · 互動式翻頁</div>
+  </div>
+</section>
+
+<!-- ============ 7 / 32 · brief 六件套 starred ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Prompt Template · brief 六件套</div>
+    <div>07 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/CH2-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH2-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>★ Prompt Template · 全課最常用</div>
+    <h2 class="h-xl" data-anim>brief 六件套——<em>缺一補一</em></h2>
+    <p class="lead" style="margin-top:2vh; max-width:62vw" data-anim>
+      把腦中模糊想法結構化成 AI 能吃的 brief。<strong>缺一個欄位、AI 就猜一個、結果就會偏</strong>。
+    </p>
+
+    <div style="margin-top:4vh">
+      <div class="rowline" data-anim>
+        <div class="k">1 · 業種</div>
+        <div class="v">咖啡店 / 美妝 / App / 旅遊 / 教育 / 醫美 / 寵物 / 居家 / 健身 / 活動</div>
+        <div class="m">定錨整張圖</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">2 · 商品</div>
+        <div class="v">春季抹茶拿鐵 / 玫瑰皂 / 8 月講座 / 限定甜點……寫具體商品名</div>
+        <div class="m">定錨</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">3 · 客群</div>
+        <div class="v">25-35 歲女性、注重生活風格 / 行政主管 / 有寵物的雙薪家庭</div>
+        <div class="m">定錨</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">4 · 訴求</div>
+        <div class="v">療癒 / 季節感 / 手作 / 專業 / 限時——管「溫度」</div>
+        <div class="m">情緒</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">5 · 必要元素</div>
+        <div class="v">主標 / 副標 / 商品圖 / 價格 / 徽章 / CTA——管「骨架」</div>
+        <div class="m">結構</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">6 · 風格 preset</div>
+        <div class="v">日系極簡 / 韓系奶油 / 美式雜誌 / 復古印刷……寫到能 google 到的具體風格</div>
+        <div class="m">調性</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 07 · brief 六件套</div>
+    <div>★ 講義有完整填空模板與業種範例</div>
+  </div>
+</section>
+
+<!-- ============ 8 / 32 · 三段工作流地圖 + 平台 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Workflow Map · 三段閉環</div>
+    <div>08 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH1-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH1-2</a></div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:5vh">
+    <div>
+      <div class="kicker" data-anim>CH1-2 · 三段工作流</div>
+      <h2 class="h-xl" style="font-size:5.6vw; line-height:1.12" data-anim>生圖 → 線稿 →<br><em>線稿反控</em></h2>
+      <p class="body-zh" data-anim style="margin-top:2.4vh">
+        為什麼要中間加一道「轉線稿」？因為線稿是<strong>把結構抽出來的中轉站</strong>——抽完才能拿同骨架去跑新業種、跑系列、跑跨平台。
+      </p>
+      <div class="callout" style="margin-top:2.4vh" data-anim>
+        <strong>線稿是空房間，主題是新住戶。</strong>沒有這道中轉站，每張都得從零跑、永遠滾不出系列感。
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:2vh; margin-top:5vh">
+      <div class="kicker" data-anim>Platform · 三條路線</div>
+      <h3 class="h-md" data-anim style="font-size:2.2vw">挑你能負擔的</h3>
+      <ul style="display:flex; flex-direction:column; gap:1.6vh; padding-left:0; list-style:none; font-family:var(--sans-zh); font-size:max(14px,1.05vw); line-height:1.5" data-anim>
+        <li><strong style="font-family:var(--serif-zh)">零預算</strong><br><span style="opacity:.7">Gemini Free（~30 張/日）+ Canva 免費版</span></li>
+        <li><strong style="font-family:var(--serif-zh)">單付費</strong><br><span style="opacity:.7">ChatGPT Plus $20 或 Banana Pro 訂閱擇一</span></li>
+        <li><strong style="font-family:var(--serif-zh)">雙付費</strong><br><span style="opacity:.7">兩家都訂、卡關時切換、不綁死任一家</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 08 · 三段工作流 + 平台路線</div>
+    <div>Module 1 收束</div>
+  </div>
+</section>
+
+<!-- ============ 9 / 32 · M2 幕封 hero dark ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>Module 2 · 起 · 商業廣告生圖</div>
+    <div>Act II · 09 / 32</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Module 2 · 2 hr · 2 Units + PRAC2</div>
+    <h1 class="h-hero" style="font-size:9.4vw" data-anim>商業廣告生圖</h1>
+    <h2 class="h-sub" data-anim>從 brief 到一張可用的 1:1 完稿</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      8 種版型 × brief 六件套 × 風格 preset。<br>
+      跑完這一段，你會擁有自己第一張不靠運氣的完稿。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Module 2 開幕</div>
+    <div>— CH2-1 · CH2-2 · PRAC2 —</div>
+  </div>
+</section>
+
+<!-- ============ 10 / 32 · 8 種版型 grid-9 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Eight Layouts · 8 種廣告版型</div>
+    <div>10 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH2-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH2-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>CH2-1 · 同一杯抹茶拿鐵能做 8 種廣告</div>
+    <h2 class="h-xl" data-anim>8 種版型，<em>各司其職</em></h2>
+
+    <div class="grid-9" style="margin-top:4vh; gap:2.4vh 3vw">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">A · Hero</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">主視覺</div>
+        <div class="stat-note">官網首屏、店面 KV，最大張、最定調的那一張。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">B · Banner</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">橫幅</div>
+        <div class="stat-note">EDM 頂圖、官網橫幅、活動長條 banner。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">C · Social</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">社群貼文</div>
+        <div class="stat-note">IG / FB 1:1 或 4:5 貼文，最常見、最常需要。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">D · Series</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">系列</div>
+        <div class="stat-note">3-5 張同骨架不同主題，最考驗品牌一致性。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">E · Gift</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">禮盒</div>
+        <div class="stat-note">節慶、年節送禮頁、限定組合視覺。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">F · Detail</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">特寫</div>
+        <div class="stat-note">商品微距、材質質感、強調用料。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">G · Sale</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">促銷</div>
+        <div class="stat-note">限時、折扣、倒數，大字 + 強配色 + CTA。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">H · Lifestyle</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">生活</div>
+        <div class="stat-note">情境式置入、人手 / 場景、走「氛圍」不走「商品」。</div>
+      </div>
+      <div class="stat-card" data-anim style="opacity:.55">
+        <div class="stat-label">+ Recap</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">8 用途</div>
+        <div class="stat-note">同產品 × 8 版型 = 一個月夠用的內容資產。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 10 · 8 Layouts</div>
+    <div>下一頁：怎麼挑</div>
+  </div>
+</section>
+
+<!-- ============ 11 / 32 · 選版型 3 問速查 starred ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Quick Reference · 選版型 3 問</div>
+    <div>11 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/CH2-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH2-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>★ Quick Reference · 拿到任務的速查表</div>
+    <h2 class="h-xl" data-anim>3 問定版型——<em>30 秒選完</em></h2>
+
+    <div style="margin-top:4vh">
+      <div class="rowline" data-anim>
+        <div class="k">Q1 · 投放在哪？</div>
+        <div class="v">官網首屏 → A Hero｜EDM 頂 → B Banner｜IG/FB → C Social｜LINE → 4:5 變體</div>
+        <div class="m">尺寸決定</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">Q2 · 目的是什麼？</div>
+        <div class="v">建品牌印象 → A / D / H｜推單品 → C / F｜清庫存促購買 → G｜送禮季 → E</div>
+        <div class="m">目的決定</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">Q3 · 是不是要跑系列？</div>
+        <div class="v">單張 → 任挑｜3 張以上 → D Series（必走線稿反推、不能每張從零跑）</div>
+        <div class="m">系列決定</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:4vh" data-anim>
+      <strong>判定優先序：</strong>系列需求 &gt; 投放尺寸 &gt; 行銷目的。<strong>系列要先確認</strong>——決定要不要走線稿反推這條長線。
+      <div class="callout-src">★ 講義含 8 版型 × 業種 完整對照表</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 11 · 選版型 3 問</div>
+    <div>★ 講師建議邊問邊查表</div>
+  </div>
+</section>
+
+<!-- ============ 12 / 32 · brief→prompt 範本 starred ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Prompt Template · brief 組成 prompt</div>
+    <div>12 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/CH2-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH2-2</a></div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:5vh">
+    <div>
+      <div class="kicker" data-anim>★ Prompt Template · 把六件套組成 AI 能吃的 prompt</div>
+      <h2 class="h-xl" style="font-size:5.4vw; line-height:1.15" data-anim>從 brief 到<br><em>第 1 張完稿</em></h2>
+      <p class="body-zh" data-anim style="margin-top:2vh">
+        順序固定：<strong>業種 + 客群 + 商品 + 訴求 + 必要元素 + 風格 preset + 尺寸</strong>。順序對、AI 才不會抓錯主軸。
+      </p>
+      <div class="callout" style="margin-top:2.4vh" data-anim>
+        <strong>風格 preset 寫法：</strong>不要寫「日系」（太空）。寫「日系極簡 + 大量留白 + 米色奶油 + 細手寫襯線」——能 google 到的具體風格才有效。
+      </div>
+    </div>
+    <div style="margin-top:5vh; display:flex; flex-direction:column; gap:1.4vh">
+      <div class="kicker" data-anim>Prompt 範本（複製改）</div>
+      <div data-anim style="background:rgba(var(--ink-rgb),.06); border-left:2px solid currentColor; padding:2.2vh 1.6vw; font-family:var(--mono); font-size:max(11px,.82vw); line-height:1.65; letter-spacing:.01em; white-space:pre-wrap">幫我做一張 IG 1:1 廣告：
+
+【業種】咖啡店
+【客群】25-35 歲女性、注重生活風格
+【商品】春季抹茶拿鐵 NT$160
+【訴求】季節限定、療癒手作
+【必要元素】主標、副標、價格、CTA「點我外送」
+【風格 preset】日系極簡 + 大量留白 + 米色奶油 + 細手寫襯線
+【尺寸】1080×1080</div>
+      <p class="body-zh" data-anim style="margin-top:.5vh; opacity:.72; font-size:max(13px,.95vw)">文字易亂碼？讓 AI 只產空版、文字交給 Canva 補。</p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 12 · brief → prompt</div>
+    <div>★ 完整變體與業種範例見講義</div>
+  </div>
+</section>
+
+<!-- ============ 13 / 32 · PRAC2 課堂演練 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>In-class Drill · PRAC2 多主題生圖</div>
+    <div>13 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/PRAC2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC2</a></div>
+  </div>
+  <div class="frame grid-2-8-4" style="padding-top:5vh">
+    <div>
+      <div class="kicker" data-anim>PRAC 2 · 30 min · 動手</div>
+      <h2 class="h-xl" style="font-size:5.6vw; line-height:1.12" data-anim>挑 2-3 個業種<br>各跑<em> 1 張完稿</em></h2>
+
+      <p class="lead" data-anim style="margin-top:2.6vh; margin-bottom:2.4vh">
+        從 10 業種主題庫挑你最常接案的 2-3 個（美妝 / 餐飲 / App / 旅遊 / 教育 / 活動 / 醫美 / 寵物 / 居家 / 健身），每個跑 1 張。
+      </p>
+
+      <ol style="font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.7; padding-left:1.4em; display:flex; flex-direction:column; gap:1.4vh" data-anim>
+        <li>從主題庫複製對應業種的 brief 六件套</li>
+        <li>選 1 個版型（用 11 頁 3 問）</li>
+        <li>組 prompt 丟 Gemini 或 ChatGPT</li>
+        <li>產出後用結構清單驗收（≥ 6/8 才收）</li>
+      </ol>
+
+      <div class="callout" style="margin-top:2.4vh" data-anim>
+        <strong>產出要求：</strong>版型正確、字階三層、配色 ≤ 3 色。三項全達即過關。
+      </div>
+    </div>
+    <div style="margin-top:7vh; display:flex; flex-direction:column; gap:1.4vh">
+      <div class="kicker" data-anim>Tip · 卡關 Plan B</div>
+      <p class="body-zh" data-anim>
+        <strong style="font-family:var(--serif-zh)">文字亂碼？</strong><br>
+        讓 AI 只產空版、把文字留給 Canva 用真字型補。<br><br>
+        <strong style="font-family:var(--serif-zh)">同 prompt 跑出來品質浮動？</strong><br>
+        切換另一家試。表現浮動是常態，不綁死任一家。<br><br>
+        <strong style="font-family:var(--serif-zh)">商用前？</strong><br>
+        AI 產出僅供參考，商用前用 Firefly / Canva 合法素材重製。
+      </p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 13 · PRAC 2</div>
+    <div>Module 2 收束</div>
+  </div>
+</section>
+
+<!-- ============ 14 / 32 · M3 幕封 hero light ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Module 3 · 承 · 圖轉線稿</div>
+    <div>Act III · 14 / 32</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Module 3 · 2 hr · 2 Units + PRAC3</div>
+    <h1 class="h-hero" style="font-size:9.4vw" data-anim>圖轉線稿</h1>
+    <h2 class="h-sub" data-anim>把結構從完稿抽出來</h2>
+    <p class="lead" style="max-width:58vw" data-anim>
+      L2 視覺化線稿是這條流水線的<em>關鍵中轉站</em>。<br>
+      抽完才能拿同骨架跑新業種、跑系列、跑變體。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Module 3 開幕</div>
+    <div>— CH3-1 · CH3-2 · PRAC3 —</div>
+  </div>
+</section>
+
+<!-- ============ 15 / 32 · L0-L4 五級對照 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Wireframe Levels · 線稿五級</div>
+    <div>15 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH3-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH3-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>CH3-1 · 線稿不只一種</div>
+    <h2 class="h-xl" data-anim>L0 → L4，<em>五個層級</em></h2>
+
+    <div style="margin-top:4vh">
+      <div class="rowline" data-anim>
+        <div class="k">L0 · JSON</div>
+        <div class="v">純結構數據（區塊位置、層級、佔位符）——機器吃的</div>
+        <div class="m">最抽象</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L1 · ASCII</div>
+        <div class="v">用文字符號畫的線框示意——可手繪、可口述</div>
+        <div class="m">教學用</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L2 · 視覺化線稿</div>
+        <div class="v"><em>本課主軸</em>：保留物件輪廓、移除色彩紋理、文字換日文佔位符</div>
+        <div class="m">★ 反推目標</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L3 · 灰階草稿</div>
+        <div class="v">加陰影、有層次、像鉛筆稿——溝通用、不便繼承</div>
+        <div class="m">過渡層</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L4 · 完稿</div>
+        <div class="v">有色彩、有照片、有真字——最終交付物</div>
+        <div class="m">最具象</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3.4vh" data-anim>
+      <strong>為什麼是 L2 不是 L3？</strong>L2 結構乾淨、佔位符明確、跨業種可繼承；L3 有陰影殘留、AI 容易把舊主題痕跡帶進新圖。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 15 · L0-L4</div>
+    <div>L2 是流水線的中轉站</div>
+  </div>
+</section>
+
+<!-- ============ 16 / 32 · L2 反推 prompt starred ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Prompt Template · L2 線稿反推</div>
+    <div>16 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/CH3-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH3-1</a></div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:5vh">
+    <div>
+      <div class="kicker" data-anim>★ Prompt Template · 同對話延續</div>
+      <h2 class="h-xl" style="font-size:5.4vw; line-height:1.15" data-anim>L2 反推<br><em>三句話搞定</em></h2>
+      <p class="body-zh" data-anim style="margin-top:2vh">
+        在<strong>同一個對話</strong>內接剛才的完稿，下三句指令：<strong>保留輪廓 / 移除色彩 / 文字換佔位符</strong>。
+      </p>
+      <div class="callout" style="margin-top:2.4vh" data-anim>
+        <strong>為什麼用日文佔位符？</strong>「あいうえお」不是中也不是英，AI 會理解為「這裡要放字、不是真內容」，下次套新主題時不會殘留。
+      </div>
+    </div>
+    <div style="margin-top:5vh; display:flex; flex-direction:column; gap:1.4vh">
+      <div class="kicker" data-anim>Prompt 範本（同對話接著貼）</div>
+      <div data-anim style="background:rgba(var(--ink-rgb),.06); border-left:2px solid currentColor; padding:2.2vh 1.6vw; font-family:var(--mono); font-size:max(11px,.82vw); line-height:1.65; letter-spacing:.01em; white-space:pre-wrap">把剛才那張圖轉成 L2 視覺化線稿：
+
+1. 保留所有物件輪廓
+   （商品、徽章、CTA 框框）
+2. 移除所有色彩、紋理、照片
+   只留黑線白底
+3. 所有文字換成日文佔位符
+   「あいうえお」「かきくけこ」
+4. 不加陰影、不加灰階
+   純線條、像填色畫
+
+尺寸維持 1:1。</div>
+      <p class="body-zh" data-anim style="margin-top:.5vh; opacity:.72; font-size:max(13px,.95vw)">★ 講義含完整反推 prompt + 4 種常見失敗修正句</p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 16 · L2 反推 Prompt</div>
+    <div>★ 同對話延續、不開新對話</div>
+  </div>
+</section>
+
+<!-- ============ 17 / 32 · 6 項驗收 + 4 種失敗 starred ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>QA Checklist · L2 驗收 + 4 種失敗</div>
+    <div>17 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/CH3-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH3-1</a></div>
+  </div>
+  <div class="frame grid-2-6-6" style="padding-top:5vh; gap:4vw 4vh">
+    <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+      <div class="kicker">★ 6 項驗收清單</div>
+      <h3 class="h-md" style="margin-top:2vh; font-size:2.4vw">L2 線稿達標 ≥ 5/6 才收</h3>
+      <ul style="margin-top:2.4vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.3vh; font-family:var(--sans-zh); font-size:max(13px,1vw); line-height:1.55">
+        <li>1 · 輪廓完整：商品、徽章、CTA 都在</li>
+        <li>2 · 色彩移除：純黑線白底、無灰階</li>
+        <li>3 · 佔位符到位：所有文字都是日文假名</li>
+        <li>4 · 形狀一致：跟原圖比例不走樣</li>
+        <li>5 · 位置一致：物件相對位置沒跑掉</li>
+        <li>6 · 風格像線稿：不是縮小版完稿</li>
+      </ul>
+    </div>
+    <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+      <div class="kicker">4 種常見失敗症狀</div>
+      <h3 class="h-md" style="margin-top:2vh; font-size:2.4vw">看到症狀照唸修正句</h3>
+      <ul style="margin-top:2.4vh; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:1.5vh; font-family:var(--sans-zh); font-size:max(13px,1vw); line-height:1.55">
+        <li><strong style="font-family:var(--serif-zh)">保留原照片</strong><br><span style="opacity:.7">→「移除所有照片紋理、只留輪廓線」</span></li>
+        <li><strong style="font-family:var(--serif-zh)">文字未換佔位符</strong><br><span style="opacity:.7">→「所有文字一律換日文假名」</span></li>
+        <li><strong style="font-family:var(--serif-zh)">結構走樣</strong><br><span style="opacity:.7">→「保持原物件相對位置與比例」</span></li>
+        <li><strong style="font-family:var(--serif-zh)">像 PPT</strong><br><span style="opacity:.7">→「純手繪線稿風、不要矩形填色」</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 17 · L2 QA</div>
+    <div>★ 講義含完整修正句範本</div>
+  </div>
+</section>
+
+<!-- ============ 18 / 32 · PRAC3 線稿反推演練 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>In-class Drill · PRAC3 線稿反推</div>
+    <div>18 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/PRAC3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC3</a></div>
+  </div>
+  <div class="frame grid-2-8-4" style="padding-top:5vh">
+    <div>
+      <div class="kicker" data-anim>PRAC 3 · 30 min · 動手</div>
+      <h2 class="h-xl" style="font-size:5.6vw; line-height:1.12" data-anim>5 張現成圖<br>各跑<em> 1 次反推</em></h2>
+
+      <p class="lead" data-anim style="margin-top:2.6vh; margin-bottom:2.4vh">
+        從教材庫挑 5 張商業圖（自選競品、Pinterest 收藏、或假想品牌），每張用 16 頁 prompt 反推 L2、用 17 頁 6 項清單驗收。
+      </p>
+
+      <ol style="font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.7; padding-left:1.4em; display:flex; flex-direction:column; gap:1.4vh" data-anim>
+        <li>選 5 張結構不同的商業圖</li>
+        <li>每張在新對話貼圖 + 反推 prompt</li>
+        <li>產出後用 6 項清單驗收</li>
+        <li>每張寫 100 字結構筆記（這骨架像哪種版型？適合誰？）</li>
+      </ol>
+
+      <div class="callout" style="margin-top:2.4vh" data-anim>
+        <strong>產出要求：</strong>5 張 L2 線稿 + 5 段 100 字結構筆記。
+      </div>
+    </div>
+    <div style="margin-top:7vh; display:flex; flex-direction:column; gap:1.4vh">
+      <div class="kicker" data-anim>Tip · 平台浮動</div>
+      <p class="body-zh" data-anim>
+        <strong style="font-family:var(--serif-zh)">Gemini 反推不乾淨？</strong><br>
+        切 ChatGPT 試。<br><br>
+        <strong style="font-family:var(--serif-zh)">ChatGPT 反推像 PPT？</strong><br>
+        切 Gemini 試。<br><br>
+        <strong style="font-family:var(--serif-zh)">道德邊界：</strong><br>
+        抽<em>抽象結構</em>可用、抄<em>具體商標</em>不可。線稿是空房間、不是別人家裡的家具。
+      </p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 18 · PRAC 3</div>
+    <div>Module 3 收束</div>
+  </div>
+</section>
+
+<!-- ============ 19 / 32 · M4 幕封 hero dark ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>Module 4 · 轉 · 線稿反控圖片</div>
+    <div>Act IV · 19 / 32</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Module 4 · 2.5 hr · 3 Units + PRAC4</div>
+    <h1 class="h-hero" style="font-size:9.4vw" data-anim>線稿反控</h1>
+    <h2 class="h-sub" data-anim>同骨架跨產業 / 多變體 / 守在品牌內</h2>
+    <p class="lead" style="max-width:58vw" data-anim>
+      手裡有了空房間，現在要請新住戶進來。<br>
+      跨產業、變體、品牌 DNA——三條主線一次走完。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Module 4 開幕</div>
+    <div>— CH4-1 · CH4-2 · CH4-3 · PRAC4 —</div>
+  </div>
+</section>
+
+<!-- ============ 20 / 32 · 跨產業套用 prompt starred ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Prompt Template · 同骨架跨產業</div>
+    <div>20 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/CH4-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH4-1</a></div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:5vh">
+    <div>
+      <div class="kicker" data-anim>★ Prompt Template · CH4-1</div>
+      <h2 class="h-xl" style="font-size:5.4vw; line-height:1.15" data-anim>線稿是空房間，<br>主題是<em>新住戶</em></h2>
+      <p class="body-zh" data-anim style="margin-top:2vh">
+        同一份 L2 骨架 + 新業種 brief。骨架完整保留、內容全部換掉。一個 L2 能跑 3-5 個不同業種。
+      </p>
+      <div class="callout" style="margin-top:2.4vh" data-anim>
+        <strong>三原則：</strong>骨架不動 / brief 全新 / 風格 preset 跟新業種搭。三項缺一、就會跑出「四不像」。
+      </div>
+    </div>
+    <div style="margin-top:5vh; display:flex; flex-direction:column; gap:1.4vh">
+      <div class="kicker" data-anim>Prompt 範本（接 PRAC3 線稿）</div>
+      <div data-anim style="background:rgba(var(--ink-rgb),.06); border-left:2px solid currentColor; padding:2.2vh 1.6vw; font-family:var(--mono); font-size:max(11px,.82vw); line-height:1.65; letter-spacing:.01em; white-space:pre-wrap">用上面這張 L2 線稿的結構，
+跑一張新主題的 1:1 完稿：
+
+【業種】HANAKO 職人手工皂
+【客群】30-45 歲、注重生活儀式感
+【商品】玫瑰皂禮盒組 NT$680
+【訴求】手作、職人、療癒
+【必要元素】主標、副標、價格、CTA
+【風格 preset】日系手作 + 米色奶油
+                + 細手寫襯線 + 木紋背景
+【尺寸】1080×1080
+
+骨架不動、佔位符換成上面的真內容。</div>
+      <p class="body-zh" data-anim style="margin-top:.5vh; opacity:.72; font-size:max(13px,.95vw)">★ 講義含 3 業種完整套用範例</p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 20 · 跨產業套用</div>
+    <div>★ 同骨架可跑 3-5 個業種</div>
+  </div>
+</section>
+
+<!-- ============ 21 / 32 · 4 種變體 + 場景選配 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Four Variants · 同 brief × 4 變體</div>
+    <div>21 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH4-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH4-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>CH4-2 · 同骨架的 4 種版面變形</div>
+    <h2 class="h-xl" data-anim>4 種變體，<em>各有舞台</em></h2>
+
+    <div class="grid-4" style="margin-top:5vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Variant 01</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">左右對調</div>
+        <div class="stat-note">商品左 ↔ 文字右。同骨架鏡像，適合 IG 輪播第 2 張。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Variant 02</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">上下對調</div>
+        <div class="stat-note">把橫式版型轉直、適合 Story / Reels 9:16 直版。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Variant 03</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">中心放射</div>
+        <div class="stat-note">商品置中、文字環繞。適合官網 Hero、EDM 頂圖。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Variant 04</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">不對稱</div>
+        <div class="stat-note">主視覺偏左 1/3 + 大留白。適合品牌 KV、雜誌風 Banner。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3.4vh" data-anim>
+      <strong>場景選配判準：</strong>IG 貼文 → 01 / 03｜Story → 02｜EDM → 03｜KV → 04。一個 brief 跑 4 變體，挑 1 張上架、其餘進素材庫。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 21 · 4 Variants</div>
+    <div>同 brief × 4 場景</div>
+  </div>
+</section>
+
+<!-- ============ 22 / 32 · 品牌小卡 3 件事 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Brand DNA · 品牌小卡</div>
+    <div>22 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH4-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH4-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>CH4-3 · 同款品牌、3 張系列也像同個牌子</div>
+    <h2 class="h-xl" data-anim>品牌小卡——<em>3 件事</em>記住就夠</h2>
+    <p class="lead" style="margin-top:2vh; max-width:62vw" data-anim>
+      不需要做完整 CI 手冊。三件事就能讓 AI 後續產出守在品牌框架內。
+    </p>
+
+    <div class="grid-3" style="margin-top:5vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">DNA 01 · 色票</div>
+        <div class="stat-nb" style="font-size:3.0vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">3 色封頂</div>
+        <div class="stat-note">primary 1 色 + accent 1 色 + bg 1 色。多了會散、AI 認不出系列。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">DNA 02 · 字族</div>
+        <div class="stat-nb" style="font-size:3.0vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">2 種字</div>
+        <div class="stat-note">headline 1 種 + body 1 種。能 google 到的具體字型名（Shippori Mincho / Noto Sans TC 等）。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">DNA 03 · 禁用</div>
+        <div class="stat-nb" style="font-size:3.0vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">明確排除</div>
+        <div class="stat-note">不出現的色 / 不用的字 / 不寫的話術。「禁用」比「要用」更穩——AI 越界時你能立刻指認。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 22 · 品牌小卡 3 件事</div>
+    <div>下一頁：怎麼把它寫進 prompt</div>
+  </div>
+</section>
+
+<!-- ============ 23 / 32 · 品牌繼承 prompt + PRAC4 starred ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Prompt Template · 品牌繼承 + PRAC4</div>
+    <div>23 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/PRAC4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC4</a></div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:5vh">
+    <div>
+      <div class="kicker" data-anim>★ Prompt Template · 品牌 DNA 寫進 prompt</div>
+      <h2 class="h-xl" style="font-size:5.0vw; line-height:1.15" data-anim>同骨架 +<br>品牌小卡 =<br><em>系列 3 張</em></h2>
+      <p class="body-zh" data-anim style="margin-top:2vh">
+        把品牌小卡 3 件事寫進 prompt 開頭，AI 後續產出全部繼承。
+      </p>
+      <div class="callout" style="margin-top:2.4vh" data-anim>
+        <strong>系列檢查 3 問：</strong>(1) 配色是不是只用色票 3 色？ (2) 字族有沒有越界？ (3) 有沒有出現禁用清單？三問全過 → 收。任一問不過 → 改。
+      </div>
+    </div>
+    <div style="margin-top:5vh; display:flex; flex-direction:column; gap:1.4vh">
+      <div class="kicker" data-anim>Prompt 範本（接線稿 + 品牌小卡）</div>
+      <div data-anim style="background:rgba(var(--paper-rgb),.06); border-left:2px solid currentColor; padding:2.2vh 1.6vw; font-family:var(--mono); font-size:max(11px,.82vw); line-height:1.65; letter-spacing:.01em; white-space:pre-wrap">【品牌 DNA】弄一下咖啡工作室
+- 色票：#3a2a1d 主｜#c9963a 點｜#eedfc7 底
+- 字族：Shippori Mincho（標）｜
+        Noto Sans TC（內文）
+- 禁用：紅色、英文 sans 標題、
+        感嘆號、emoji
+
+用上面這份骨架，跑 3 張系列：
+1) 春季抹茶拿鐵
+2) 夏季柚子氣泡美式
+3) 秋季焙茶
+
+骨架不動、品牌 DNA 全套用、
+3 張要被認出是同一家店。</div>
+      <p class="body-zh" data-anim style="margin-top:.5vh; opacity:.72; font-size:max(13px,.95vw)">★ PRAC4 · 30 min：填品牌小卡 + 跑 3 張 + 3 問驗收</p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 23 · 品牌繼承 + PRAC 4</div>
+    <div>Module 4 收束</div>
+  </div>
+</section>
+
+<!-- ============ 24 / 32 · M5 幕封 hero light ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Module 5 · 合 · 整合實戰</div>
+    <div>Act V · 24 / 32</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Module 5 · 0.5 hr · 1 Unit</div>
+    <h1 class="h-hero" style="font-size:9.4vw" data-anim>整合實戰</h1>
+    <h2 class="h-sub" data-anim>30 分鐘跑完一次完整閉環</h2>
+    <p class="lead" style="max-width:58vw" data-anim>
+      brief → 完稿 A → L2 線稿 → 線稿 + 新主題 B → C。<br>
+      一個品牌 3 張系列 + 1 份 brand-dna.md，課堂直接交付。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Module 5 開幕</div>
+    <div>— CH5-1 · 整合題 —</div>
+  </div>
+</section>
+
+<!-- ============ 25 / 32 · 30 min 整合閉環 pipeline ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>Integration Pipeline · 30 min 完整閉環</div>
+    <div>25 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH5-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-1</a></div>
+  </div>
+  <div class="frame">
+    <div class="kicker">Pipeline · 5 步閉環</div>
+    <h2 class="h-xl">brief → A → L2 → B →<em> C</em></h2>
+    <p class="lead" style="margin-top:2vh; max-width:60vw">
+      把前面學的全部串起來。30 分鐘、3 張系列、1 份品牌小卡。
+    </p>
+
+    <div class="pipeline-section">
+      <div class="pipeline-label">講師按 → 鍵或滾輪逐步點亮</div>
+      <div class="pipeline">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01 · Brief</div>
+          <div class="step-title">填 brief 六件套</div>
+          <div class="step-desc">挑 1 個案例（自家品牌或假想品牌）+ 填齊六欄 + 寫品牌小卡 3 件事。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02 · A 完稿</div>
+          <div class="step-title">跑第 1 張完稿</div>
+          <div class="step-desc">brief + 風格 preset 丟 AI、產出後用 8 項結構清單驗收。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03 · L2 反推</div>
+          <div class="step-title">同對話反推 L2 線稿</div>
+          <div class="step-desc">同對話接「保留輪廓 / 移除色彩 / 文字換假名」三句、6 項清單驗收。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">04 · B 完稿</div>
+          <div class="step-title">同骨架 + 新主題</div>
+          <div class="step-desc">用 L2 線稿跑「同品牌、不同 SKU 或不同季節」第 2 張，3 問檢查系列一致。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">05 · C 完稿</div>
+          <div class="step-title">同骨架 + 第 3 主題</div>
+          <div class="step-desc">同上。三張並排能被第三方認出「同品牌」就過關。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 25 · 30 min 閉環</div>
+    <div>5 Steps · 互動式翻頁</div>
+  </div>
+</section>
+
+<!-- ============ 26 / 32 · 8 種症狀速查 starred rowline ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Symptom Reference · 8 種症狀速查</div>
+    <div>26 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/CH5-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>★ Quick Reference · 卡關時直接查</div>
+    <h2 class="h-xl" data-anim>拿到圖<em>不對勁</em>——查表貼話術</h2>
+
+    <div style="margin-top:3.4vh">
+      <div class="rowline" data-anim>
+        <div class="k">字長亂碼</div>
+        <div class="v">「只產空版、把所有文字位置留白」→ 文字之後 Canva 補</div>
+        <div class="m">A1</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">配色超出 3 色</div>
+        <div class="v">「只用色票 3 色：#xxx 主、#xxx 點、#xxx 底，其餘色一律不出現」</div>
+        <div class="m">A2</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">徽章位置跑掉</div>
+        <div class="v">「徽章固定在商品右上、距邊 8% 內距」</div>
+        <div class="m">A3</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L2 保留原照片</div>
+        <div class="v">「移除所有照片紋理、只留輪廓黑線、白底」</div>
+        <div class="m">B1</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L2 像 PPT</div>
+        <div class="v">「純手繪線稿風、不要矩形填色、不要陰影」</div>
+        <div class="m">B2</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">系列不像同品牌</div>
+        <div class="v">「品牌 DNA 重貼一次：色票 3 色 + 字族 2 種 + 禁用清單」</div>
+        <div class="m">C1</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">骨架走樣</div>
+        <div class="v">「保留 L2 線稿的物件相對位置與比例、不要重新構圖」</div>
+        <div class="m">C2</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">字族越界</div>
+        <div class="v">「標題只用 Shippori Mincho、內文只用 Noto Sans TC，其餘字型不可」</div>
+        <div class="m">C3</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 26 · 症狀速查</div>
+    <div>★ 講義含完整 8 症狀 + 修正句</div>
+  </div>
+</section>
+
+<!-- ============ 27 / 32 · 倫理紅線 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Ethics · 商用前必走的紅線</div>
+    <div>27 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH5-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-1</a></div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:5vh">
+    <div>
+      <div class="kicker" data-anim>Ethics · 三條紅線</div>
+      <h2 class="h-xl" style="font-size:5.4vw; line-height:1.15" data-anim>商用前——<br><em>三件事</em>必做</h2>
+
+      <ul style="margin-top:3vh; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:1.6vh; font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.55" data-anim>
+        <li><strong style="font-family:var(--serif-zh)">1 · 結構可抄、商標不可抄</strong><br><span style="opacity:.7">L2 抽的是抽象結構，不是具體 logo / IP / 角色。</span></li>
+        <li><strong style="font-family:var(--serif-zh)">2 · 商用前重製</strong><br><span style="opacity:.7">AI 產出僅供參考、商用前用 Firefly / Canva 合法素材重製一次。</span></li>
+        <li><strong style="font-family:var(--serif-zh)">3 · 不假冒、不誤導</strong><br><span style="opacity:.7">AI 圖不可假裝真實照片、不可冒用真人形象。</span></li>
+      </ul>
+    </div>
+    <div style="margin-top:5vh">
+      <div class="callout" data-anim>
+        <strong>關鍵心法：</strong>線稿是空房間，主題是新住戶——<br>
+        但<em>別人家的 logo 不是家具</em>，你不能搬走。
+        <div class="callout-src">— CH4-1 道德邊界</div>
+      </div>
+      <p class="body-zh" data-anim style="margin-top:2.4vh">
+        違反這三條的後果不是「美感不好」，是<strong>下架 + 法律風險 + 品牌信任崩盤</strong>。需求方的最後一道把關。
+      </p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 27 · 倫理紅線</div>
+    <div>商用前一定走一次</div>
+  </div>
+</section>
+
+<!-- ============ 28 / 32 · 課後一週計畫 + 5 案例庫 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Week-After Plan · 課後一週計畫</div>
+    <div>28 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/CH5-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH5-1</a></div>
+  </div>
+  <div class="frame grid-2-6-6" style="padding-top:5vh; gap:4vw 4vh">
+    <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+      <div class="kicker">課後一週、3 件事</div>
+      <h3 class="h-md" style="margin-top:2vh; font-size:2.4vw">今天 / 明天 / 週末各 1 件</h3>
+      <ul style="margin-top:2.4vh; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:1.6vh; font-family:var(--sans-zh); font-size:max(13px,1.05vw); line-height:1.55">
+        <li><strong style="font-family:var(--serif-zh)">今天：</strong>把 PRAC4 的品牌小卡存成 brand-dna.md，丟雲端。</li>
+        <li><strong style="font-family:var(--serif-zh)">明天：</strong>挑下週要交的一張真實工作物料，跑一次完整閉環。</li>
+        <li><strong style="font-family:var(--serif-zh)">週末：</strong>用 8 種版型 × 你最常做的業種，跑 4-8 張進素材庫。</li>
+      </ul>
+    </div>
+    <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+      <div class="kicker">5 案例庫——挑跟你最相關的</div>
+      <h3 class="h-md" style="margin-top:2vh; font-size:2.4vw">不知道從哪開始？挑一個</h3>
+      <ul style="margin-top:2.4vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.3vh; font-family:var(--sans-zh); font-size:max(13px,1vw); line-height:1.55">
+        <li>1 · 餐飲：弄一下咖啡春夏秋冬限定</li>
+        <li>2 · 居家美妝：HANAKO 手工皂禮盒組</li>
+        <li>3 · 教育：自己的課程招生 banner 系列</li>
+        <li>4 · 寵物：飼料品牌 IG 三連貼文</li>
+        <li>5 · 活動：講座 / 工作坊主視覺 + 倒數</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 28 · 課後計畫 + 案例庫</div>
+    <div>Module 5 收束</div>
+  </div>
+</section>
+
+<!-- ============ 29 / 32 · 整合金句 quote hero dark ============ -->
+<section class="slide hero dark" data-animate="quote">
+  <div class="chrome">
+    <div>The Closing Insight · 整合金句</div>
+    <div>29 / 32</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>One Sentence · 八小時濃縮成一句</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:4.6vw; line-height:1.28; letter-spacing:-.005em; max-width:82vw">
+      <span data-anim="line" style="display:block">做設計的是 <em>AI</em>，</span>
+      <span data-anim="line" style="display:block">做 <em>PM</em> 的是你——</span>
+      <span data-anim="line" style="display:block">下需求、驗結構、滾系列。</span>
+    </blockquote>
+    <p class="lead" style="max-width:62vw; opacity:.78" data-anim>
+      brief 六件套、5 骨架、L0-L4、4 變體、品牌小卡 3 件事。<br>
+      工具會換、平台會改，但這套協作流水線會跟你一輩子。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— gen-image 課程主軸</span><span>·</span><span>AI 設計流水線 PM 協作</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 29 · The Closing Insight</div>
+    <div>— · —</div>
+  </div>
+</section>
+
+<!-- ============ 30 / 32 · Map 下一階段 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>What's Next · 下一階段地圖</div>
+    <div>30 / 32 <a class="chrome-link" href="https://skypai0326.github.io/courses/index.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 課程總覽</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Course Map · 跟弄一下工作室繼續走</div>
+    <h2 class="h-xl" data-anim>學完這課，<em>三條延伸路線</em></h2>
+    <p class="lead" style="margin-top:2vh; max-width:62vw" data-anim>
+      gen-image 是「商業視覺產出」垂直課。下一階段依你的場景選。
+    </p>
+
+    <div style="margin-top:4vh">
+      <div class="rowline" data-anim>
+        <div class="k">line-stickers</div>
+        <div class="v">個人手作 LINE 貼圖｜本課的「自用個人版」、走可愛 / IP / 表情系列、上架 LINE 創作者市集</div>
+        <div class="m">個人 / 興趣</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">ai-workshop</div>
+        <div class="v">12 / 18 hr AI 實務全攻略｜把生圖能力放回辦公生產力大環境、文字 / 簡報 / 表格 / 圖一起跑</div>
+        <div class="m">12-18 hr</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">digital-marketing-70h</div>
+        <div class="v">行銷全棧（GTM / SEO / GA4 / 廣告）｜gen-image 是其中「物料產出」段、加購可補齊整條行銷產線</div>
+        <div class="m">70 hr</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 30 · What's Next</div>
+    <div>三條路、挑你目前最缺的那條</div>
+  </div>
+</section>
+
+<!-- ============ 31 / 32 · 一頁總覽工具卡 starred ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Cheat Sheet · 一頁總覽</div>
+    <div>31 / 32 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/index.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 總覽</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>★ Cheat Sheet · 印一張貼桌邊</div>
+    <h2 class="h-xl" data-anim>八小時——<em>一頁帶走</em></h2>
+
+    <div class="grid-9" style="margin-top:4vh; gap:2.4vh 3vw">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 01 · brief</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">六件套</div>
+        <div class="stat-note">業種 / 商品 / 客群 / 訴求 / 必要元素 / 風格 preset。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 02 · 4 步</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">講等看改</div>
+        <div class="stat-note">講清楚 → 等 AI 做 → 用清單看 → 給具體指令改。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 03 · 8 版型</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">A-H</div>
+        <div class="stat-note">Hero / Banner / Social / Series / Gift / Detail / Sale / Lifestyle。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 04 · 3 問</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">選版型</div>
+        <div class="stat-note">投放在哪？目的？要不要跑系列？</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 05 · L0-L4</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">線稿五級</div>
+        <div class="stat-note">本課用 L2：保留輪廓 / 移除色彩 / 文字假名。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 06 · 4 變體</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">同骨架</div>
+        <div class="stat-note">左右 / 上下 / 中心 / 不對稱——一 brief 跑 4 場景。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 07 · 品牌小卡</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">3 件事</div>
+        <div class="stat-note">色票 3 色 + 字族 2 種 + 禁用清單。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 08 · 系列檢查</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">3 問</div>
+        <div class="stat-note">配色 / 字族 / 禁用——三問全過才算系列。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Tool 09 · 商用前</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">重製</div>
+        <div class="stat-note">Firefly / Canva 合法素材重製、不抄商標、不冒真人。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 31 · Cheat Sheet</div>
+    <div>★ 9 工具一頁帶走</div>
+  </div>
+</section>
+
+<!-- ============ 32 / 32 · 結束 hero dark ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>To Be Continued · 弄一下工作室</div>
+    <div>32 / 32</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>End of Workshop · 8 hr · 5 Modules</div>
+    <h1 class="h-hero" style="font-size:9.6vw" data-anim>To Be<br>Continued</h1>
+    <p class="lead" style="max-width:60vw" data-anim>
+      你帶走的不是一張完稿，是一套<em>跟 AI 工作的方法</em>。<br>
+      下週、下個月、明年——同一條流水線都還能用。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>商業用圖片生成</span><span>·</span><span>gen-image</span><span>·</span><span>2026 春</span>
+    </div>
+    <div class="meta-row" style="margin-top:1.6vh;opacity:.74" data-anim>
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span><span>·</span><span>弄一下工作室</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Thank you · 謝謝你陪我跑這 8 小時</div>
+    <div>— gen-image / Vol.01 —</div>
+  </div>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>

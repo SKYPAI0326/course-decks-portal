@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 10 · 資料來源整合 + 期末實作（最終）｜NTUB GTM × 廣告科技｜台北商業大學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#0a1f3d;
+    --ink-rgb:10,31,61;
+    --paper:#f1f3f5;
+    --paper-rgb:241,243,245;
+    --paper-tint:#e4e8ec;
+    --ink-tint:#152a4a;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(15px,1.22vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:6.2vw;
+    line-height:1.08;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2.3vw;
+    line-height:1.3;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+  /* ============ Desktop overflow tightening · 2026-05-10 ============
+     桌機 1920×1080 下，多 rowline / 多 stat-card / 長 callout 容易撐破 100vh。
+     這區段只在 ≥901px 生效，覆蓋預設 padding 與字級，整體把垂直空間收緊。
+     行動版（≤900px）保留原本字級不動。
+  ================================================================ */
+  @media (min-width: 901px) {
+    .rowline { padding: 1.2vh 0 }
+    .rowline .k { font-size: 1.4vw }
+    .rowline .v { font-size: max(12px, .98vw); line-height: 1.45 }
+    .rowline .m { font-size: max(10px, .72vw) }
+    .callout { padding: 1.6vh 1.8vw; font-size: max(13px, 1vw); line-height: 1.45 }
+    .callout .callout-src, .callout .cite { margin-top: .6vh }
+    .stat-card { padding-top: 1vh }
+    .stat-card .stat-note { font-size: max(12px, .92vw); line-height: 1.38; margin-top: .3vh }
+    /* 5-step pipeline 卡片更緊：page 9 / page 14 */
+    [data-animate="pipeline"] .frame > div[style*="display:grid"] > div[data-anim="step"] {
+      padding: 1.2vh 2vw !important;
+    }
+    [data-animate="pipeline"] .frame > div[style*="display:grid"] > div[data-anim="step"] .h-md {
+      font-size: 1.5vw !important;
+    }
+    [data-animate="pipeline"] .frame > div[style*="display:grid"] > div[data-anim="step"] > div > div:last-child {
+      font-size: max(12px, .92vw) !important;
+      line-height: 1.4;
+    }
+    /* hero 頁 grid gap 收一點 */
+    .slide.hero .frame[style*="align-content:center"] { gap: 3vh !important }
+    /* kicker 收 margin */
+    .kicker { margin-bottom: 1.8vh }
+  }
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ============ 01 / 22 · Cover ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>弄一下工作室 · Lecturer Decks</div>
+    <div>Module 10 · Final · NTUB GTM × AdTech</div>
+  </div>
+  <div class="frame" style="display:grid; gap:4vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Vol.10 · Module Ten · Final · 30hr 結業週</div>
+    <h1 class="h-hero" data-anim>把整季<br>串成<em>一張交付</em></h1>
+    <h2 class="h-sub" data-anim>Looker Studio 整合 · 五頁交付模板 · 期末客戶案實作</h2>
+    <p class="lead" style="max-width:62vw" data-anim>
+      最後一週不教新工具。<br>
+      把 GA4 / GTM / Meta / Google / LINE / TikTok / Consent 全部<em>組裝起來</em>，跑完訪談 → 規劃 → 佈建 → 驗證 → 交付，產出一份能對客戶簽字的成品。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>Module 10 · Final / 10</span><span>·</span><span>3 小時授課 · 3 單元</span><span>·</span><span>2026 秋</span>
+    </div>
+    <div class="meta-row" style="margin-top:1.2vh;opacity:.74" data-anim>
+      <span>Lecturer · 弄一下工作室 × 台北商業大學</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>數位行銷實務 II｜GTM × 廣告科技 · 30hr 全課程畢業週</div>
+    <div>— Page 01 / 22 —</div>
+  </div>
+</section>
+
+<!-- ============ 02 / 22 · 開場金句（quote） ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome">
+    <div>The Final · 收束週主張</div>
+    <div>02 / 22</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Why this week · 為什麼這週是壓軸</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:5.4vw; line-height:1.22; letter-spacing:-.01em; max-width:80vw">
+      <span data-anim="line" style="display:block">學了 30 小時、十個模組，</span>
+      <span data-anim="line" style="display:block">客戶要的不是<em>會用工具</em>，</span>
+      <span data-anim="line" style="display:block">是一份能<em>簽字驗收</em>的交付。</span>
+    </blockquote>
+    <p class="lead" style="max-width:62vw; opacity:.72" data-anim>
+      會 GTM、會 GA4、會 Meta CAPI 的人很多。能把它們縫成一張<em>客戶看得懂的儀表板</em>、<br>
+      跑完一次<em>含 SLA 的端到端交付</em>——那才是接案等級的本事。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— Module 10 核心命題</span><span>·</span><span>從零散工具到一份完整交付</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 02 · The Final</div>
+    <div>— · —</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     UNIT 10-1 · Looker Studio 資料源 + 計算欄位（slides 03-07）
+     ============================================================ -->
+
+<!-- ============ 03 / 22 · Unit 10-1 幕封 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Unit 10-1 · Looker Studio 資料源整合</div>
+    <div>Unit I · 03 / 22</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Unit 10-1 · 1 hr · 把四個源接成一張表</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>四個源<br>縫成<em>一張可算的表</em></h1>
+    <h2 class="h-sub" data-anim>GA4 · Google Ads · Meta · Sheets · Blend · 計算欄位 · NULLIF · BigQuery 中繼。</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      四大資料源連法 · Blend 的限制 · ROAS / Blended ROAS 計算 · NULL 陷阱 · 何時該上 BigQuery
+    </p>
+  </div>
+  <div class="foot">
+    <div>Unit 10-1 開幕</div>
+    <div>— Looker 是免費 + 雲端 + 易分享，但接 Meta 是真痛點 —</div>
+  </div>
+</section>
+
+<!-- ============ 04 / 22 · 零散源 vs 縫成一張表（directional） ============ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome">
+    <div>From Sources to Table · 為什麼要整合</div>
+    <div>04 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-1-data-sources.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>The Shift · 報表會做與報表會講的差別</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>從<em>四份截圖貼上</em>到<em>一張可算的表</em></h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh">
+      <div data-anim="left" style="padding:3vh 2vw; border-left:3px solid currentColor; opacity:.7">
+        <div class="kicker" style="opacity:.9">舊狀態 · 各平台各看各的</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.6vw">「會看，但不會合」</h3>
+        <ul style="margin-top:3vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.4vh; font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.55">
+          <li>GA4 看營收、Meta 看花費，分頁切來切去</li>
+          <li>每月手動把四個平台 export 拼 Excel</li>
+          <li>算 Blended ROAS 要外加一個 Sheets</li>
+          <li>客戶問「總體效率」要五分鐘才答得出</li>
+        </ul>
+      </div>
+      <div data-anim="right" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">新狀態 · 一張會自己更新的表</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.6vw">「會合，更會算 Blended」</h3>
+        <ul style="margin-top:3vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.4vh; font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.55">
+          <li>四個源用<em>共同維度</em>串成 Blend</li>
+          <li>計算欄位算 ROAS / MER / AOV / CVR</li>
+          <li>NULLIF 處理除零，<em>不再炸 #ERROR</em></li>
+          <li>客戶開連結就看到——不必每月手動拼</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 04 · The Shift</div>
+    <div>10-1 · 不是學新平台，是把舊平台縫起來</div>
+  </div>
+</section>
+
+<!-- ============ 05 / 22 · 四大資料源 stat-card ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>The Four Sources · 四大資料源連法</div>
+    <div>05 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-1-data-sources.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Sources · 原生 vs 第三方 vs CSV</div>
+    <h2 class="h-xl" data-anim>四個源 · <em>三種接法</em> · 一個痛點</h2>
+
+    <div class="grid-4" style="margin-top:5vh; gap:3vh 3vw">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">GA4</div>
+        <div class="stat-nb">原生<span class="stat-unit">即時</span></div>
+        <div class="stat-note">原生連接器，直接選 property。15 分鐘快取，Dashboard-level。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Google Ads</div>
+        <div class="stat-nb">原生<span class="stat-unit">即時</span></div>
+        <div class="stat-note">原生連接器，選 Ads 帳戶。同 GA4 享 15 分鐘快取。</div>
+      </div>
+      <div class="stat-card" data-anim style="border-color:rgba(127,127,127,.6)">
+        <div class="stat-label">Meta Ads</div>
+        <div class="stat-nb">付費<span class="stat-unit">~$50/月</span></div>
+        <div class="stat-note">沒原生。Supermetrics / Windsor.ai 約 $50–150/月，零預算只能 CSV 手動。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Sheets</div>
+        <div class="stat-nb">原生<span class="stat-unit">手動</span></div>
+        <div class="stat-note">放 LTV / 退貨率 / 客服資料。要手動更新，但接法零摩擦。</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>Meta 是 Looker Studio 最大痛點：</strong>有預算就 Supermetrics，沒預算就 CSV 排程匯出 + Sheets。<em>不要假裝它有原生連接器</em>——客戶問就直說，談清楚才能談月費。
+      <div class="callout-src">10-1 · 四源連法</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 05 · Four Sources</div>
+    <div>GA4 · Ads · Meta · Sheets</div>
+  </div>
+</section>
+
+<!-- ============ 06 / 22 · Blend / 計算欄位 / NULLIF rowline（starred） ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Blend & Formula · 縫起來怎麼算</div>
+    <div>06 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-1-data-sources.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Formulas · 五條照抄就能用的公式</div>
+    <h2 class="h-xl" data-anim>Blend × <em>計算欄位</em> × NULLIF</h2>
+
+    <div style="margin-top:4vh">
+      <div class="rowline" data-anim>
+        <div class="k">Blend 規則</div>
+        <div class="v">類似 SQL LEFT JOIN，用<em>共同維度</em>合併。最多 5 個資料源、欄位名稱必須一致（Campaign ≠ campaign_name）。</div>
+        <div class="m">5 源 上限</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">ROAS（單平台）</div>
+        <div class="v">CASE WHEN (cost+spend) = 0 THEN 0 ELSE revenue / (cost + spend) END。<em>用 CASE 避免除零</em>。</div>
+        <div class="m">CASE WHEN</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">MER · Blended ROAS</div>
+        <div class="v">total_revenue / NULLIF(total_ad_spend, 0)。NULLIF 把 0 變 null 規避除零。<em>分母含 GA4 全營收</em>，數字會比平台 ROAS 低，但這是真話。</div>
+        <div class="m">NULLIF</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">AOV · 客單價</div>
+        <div class="v">revenue / NULLIF(transactions, 0)。和老闆談「每筆交易帶進多少錢」最直觀的指標。</div>
+        <div class="m">/ NULLIF</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">資料刷新</div>
+        <div class="v">免費版 GA4/Ads 15 分鐘、Meta 透過 Supermetrics 約 1 小時。<em>量大走 BigQuery 中繼</em>——查得快但要付 storage（$0.02/GB/月）+ query 費（每月 1TB 免費）。</div>
+        <div class="m">BQ 門檻</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>Blended ROAS 看起來比平台 ROAS 低是對的</strong>——因為分母含 organic 與直流量。<em>客戶懂這件事，談預算最有力</em>。Looker 沒原生 NULLIF？用 CASE WHEN 包起來等價。
+      <div class="callout-src">10-1 · 計算欄位實戰</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 06 · Formulas</div>
+    <div>★ 公式照抄區 · 講義有完整版</div>
+  </div>
+</section>
+
+<!-- ============ 07 / 22 · 7 源 BQ 中繼案例 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Case · 7 源縫進一張報表</div>
+    <div>07 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-1-data-sources.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-1</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Real Case · 某 D2C 品牌週報</div>
+    <h2 class="h-xl" data-anim>7 個源 · 從<em>4 小時人工</em>到<em>0 小時自動</em></h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh; margin-top:4vh">
+      <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor; opacity:.85">
+        <div class="kicker">舊流程 · 每週 4 小時人工</div>
+        <ul style="margin-top:2vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.2vh; font-family:var(--sans-zh); font-size:max(14px,1.05vw); line-height:1.5">
+          <li>GA4（站內）+ Meta + Google Ads</li>
+          <li>LINE LAP + TikTok Ads</li>
+          <li>Shopify 訂單 + Zendesk 退貨率</li>
+          <li>每週 export 7 個 .csv 拼 Excel</li>
+          <li>Excel 算錯沒 audit log</li>
+        </ul>
+      </div>
+      <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">新架構 · BigQuery 當中繼</div>
+        <ul style="margin-top:2vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.2vh; font-family:var(--sans-zh); font-size:max(14px,1.05vw); line-height:1.5">
+          <li>所有源 → BigQuery</li>
+          <li>BQ 建 view 統一欄位</li>
+          <li>Looker 接 view（不接 raw）</li>
+          <li><em>每日自動更新、有版本</em></li>
+          <li>錯了能重跑、可追責任</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>什麼時候該上 BQ？</strong>超過 5 個源 / 每日 100 萬列以上 / 客戶要 audit 紀錄——三選一就值得。<em>BQ storage 一個月 $0.02/GB、query 1TB 免費</em>，小型客戶免費版夠，中大型一上 BQ 就回不去了。
+      <div class="callout-src">10-1 · 實戰案例（D2C 品牌）</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 07 · BigQuery 中繼</div>
+    <div>10-1 · 結束 · 接 10-2 五頁模板</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     UNIT 10-2 · 五頁交付模板（slides 08-12）
+     ============================================================ -->
+
+<!-- ============ 08 / 22 · Unit 10-2 幕封 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>Unit 10-2 · 五頁交付模板</div>
+    <div>Unit II · 08 / 22</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Unit 10-2 · 1 hr · 客戶看得懂的版面</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>五頁就夠<br><em>多一頁是浪費</em></h1>
+    <h2 class="h-sub" data-anim>總覽 · 來源 · 漏斗 · 受眾 · 廣告 · 每頁一個問題、一張主圖、3 個 KPI、一段建議。</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      老闆只看總覽頁 · 各頁分工清楚 · 北極星指標放最顯眼 · 別把所有 metric 倒上去
+    </p>
+  </div>
+  <div class="foot">
+    <div>Unit 10-2 開幕</div>
+    <div>— PPT 30 頁是給自己看，Looker 5 頁是給客戶看 —</div>
+  </div>
+</section>
+
+<!-- ============ 09 / 22 · 5 頁模板 pipeline（starred） ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>The Five Pages · 模板五頁分工</div>
+    <div>09 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-2-template.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Pipeline · 從總覽到細節五段式</div>
+    <h2 class="h-xl" data-anim>五頁模板 · <em>逐頁點亮</em></h2>
+
+    <div style="margin-top:5vh; display:grid; gap:2vh">
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 12vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.6vw; opacity:.7">P1</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">總覽頁 · Executive Summary</div>
+          <div style="font-size:max(13px,1vw); opacity:.78; margin-top:.6vh">6–8 Scorecard + 同比/環比 + 異常 red flag。<em>一頁裝完</em>。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">CEO 5 秒答案</div>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 12vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.6vw; opacity:.7">P2</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">來源頁 · Source / Channel</div>
+          <div style="font-size:max(13px,1vw); opacity:.78; margin-top:.6vh">6 大 channel 看 ROAS。Last-click vs Data-driven 並列，看歸因影響。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">換預算決策</div>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 12vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.6vw; opacity:.7">P3</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">漏斗頁 · Funnel</div>
+          <div style="font-size:max(13px,1vw); opacity:.78; margin-top:.6vh">TOFU / MOFU / BOFU 三層 + 每層轉換 + 環比。<em>缺口最值錢</em>。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">找優化點</div>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 12vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.6vw; opacity:.7">P4</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">受眾頁 · Audience</div>
+          <div style="font-size:max(13px,1vw); opacity:.78; margin-top:.6vh">新/老客 × 年齡性別 × 裝置 × 地區。看 ARPU / CVR / LTV 估算。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">客戶最愛改</div>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 12vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.6vw; opacity:.7">P5</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">廣告頁 · Campaign Detail</div>
+          <div style="font-size:max(13px,1vw); opacity:.78; margin-top:.6vh">campaign × 平台 × ROAS / CPC / CTR / CVR + Top/Bottom 5。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">行銷團隊每日</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 09 · Pipeline 五頁</div>
+    <div>★ 模板照抄區 · 講義有 wireframe</div>
+  </div>
+</section>
+
+<!-- ============ 10 / 22 · 總覽頁 scorecard 結構（starred） ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Page 1 Layout · 總覽頁怎麼擺</div>
+    <div>10 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-2-template.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Executive Summary · 8 Scorecard 清單</div>
+    <h2 class="h-xl" data-anim>總覽頁 8 個 Scorecard · <em>一頁回答現在好不好</em></h2>
+
+    <div style="margin-top:3.5vh; display:grid; grid-template-columns:repeat(4,1fr); gap:1.4vh 1.6vw">
+      <div class="stat-card" data-anim style="padding:1vh 1.2vw">
+        <div class="stat-label" style="font-size:.7vw">本期營收</div>
+        <div class="stat-nb" style="font-size:2.2vw">Revenue<span class="stat-unit" style="font-size:.78vw">+ 環比</span></div>
+        <div class="stat-note" style="font-size:.78vw; line-height:1.35; margin-top:.3vh">最大字、最上方、永遠在</div>
+      </div>
+      <div class="stat-card" data-anim style="padding:1vh 1.2vw">
+        <div class="stat-label" style="font-size:.7vw">MER</div>
+        <div class="stat-nb" style="font-size:2.2vw">Blended<span class="stat-unit" style="font-size:.78vw">ROAS</span></div>
+        <div class="stat-note" style="font-size:.78vw; line-height:1.35; margin-top:.3vh">含 organic 的整體效率</div>
+      </div>
+      <div class="stat-card" data-anim style="padding:1vh 1.2vw">
+        <div class="stat-label" style="font-size:.7vw">CPA</div>
+        <div class="stat-nb" style="font-size:2.2vw">Acquisition<span class="stat-unit" style="font-size:.78vw">cost</span></div>
+        <div class="stat-note" style="font-size:.78vw; line-height:1.35; margin-top:.3vh">每獲客成本，看走向</div>
+      </div>
+      <div class="stat-card" data-anim style="padding:1vh 1.2vw">
+        <div class="stat-label" style="font-size:.7vw">新客數</div>
+        <div class="stat-nb" style="font-size:2.2vw">New<span class="stat-unit" style="font-size:.78vw">users</span></div>
+        <div class="stat-note" style="font-size:.78vw; line-height:1.35; margin-top:.3vh">成長盤的核心</div>
+      </div>
+      <div class="stat-card" data-anim style="padding:1vh 1.2vw">
+        <div class="stat-label" style="font-size:.7vw">AOV</div>
+        <div class="stat-nb" style="font-size:2.2vw">客單<span class="stat-unit" style="font-size:.78vw">價</span></div>
+        <div class="stat-note" style="font-size:.78vw; line-height:1.35; margin-top:.3vh">提案會用</div>
+      </div>
+      <div class="stat-card" data-anim style="padding:1vh 1.2vw">
+        <div class="stat-label" style="font-size:.7vw">ROAS</div>
+        <div class="stat-nb" style="font-size:2.2vw">Paid<span class="stat-unit" style="font-size:.78vw">only</span></div>
+        <div class="stat-note" style="font-size:.78vw; line-height:1.35; margin-top:.3vh">廣告效率單看</div>
+      </div>
+      <div class="stat-card" data-anim style="padding:1vh 1.2vw">
+        <div class="stat-label" style="font-size:.7vw">流量</div>
+        <div class="stat-nb" style="font-size:2.2vw">Sessions<span class="stat-unit" style="font-size:.78vw">+ 來源</span></div>
+        <div class="stat-note" style="font-size:.78vw; line-height:1.35; margin-top:.3vh">看趨勢，不看絕對值</div>
+      </div>
+      <div class="stat-card" data-anim style="padding:1vh 1.2vw; border-color:rgba(127,127,127,.6)">
+        <div class="stat-label" style="font-size:.7vw">轉換率</div>
+        <div class="stat-nb" style="font-size:2.2vw">CVR<span class="stat-unit" style="font-size:.78vw">%</span></div>
+        <div class="stat-note" style="font-size:.78vw; line-height:1.35; margin-top:.3vh">健檢用，<em>低於警戒線標紅</em></div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:2vh; padding:1.4vh 1.8vw; font-size:max(13px,.95vw); line-height:1.45" data-anim>
+      <strong>規則：</strong>Scorecard 上方 / 時序圖中段 / 異常事件 red flag 下方。<em>一頁裝完</em>。這頁失手，其他四頁再細緻都沒用。
+      <div class="callout-src" style="margin-top:.6vh">10-2 · 總覽頁</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 10 · Executive Summary</div>
+    <div>★ scorecard 8 件 · 講義含完整規格</div>
+  </div>
+</section>
+
+<!-- ============ 11 / 22 · Funnel / Audience / Campaign rowline ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Pages 3-5 · 細節頁分工</div>
+    <div>11 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-2-template.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>The Other Four · 來源 / 漏斗 / 受眾 / 廣告</div>
+    <h2 class="h-xl" data-anim>四頁細節 · <em>每頁回答一個問題</em></h2>
+
+    <div style="margin-top:4vh">
+      <div class="rowline" data-anim>
+        <div class="k">P2 來源頁 · Source</div>
+        <div class="v">問：「錢應該從哪個 channel 轉去哪個？」按 6 大 channel 看流量 × 營收 × ROAS × CVR。<em>Last-click vs Data-driven 兩欄並列</em>，讓老闆看得到歸因差異。</div>
+        <div class="m">P2 預算決策</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">P3 漏斗頁 · Funnel</div>
+        <div class="v">問：「客戶卡在哪一層？」TOFU / MOFU / BOFU 三層 funnel chart + 每層 CVR + 環比。<em>cart → checkout 掉 70% 就知道優化結帳</em>。</div>
+        <div class="m">P3 找缺口</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">P4 受眾頁 · Audience</div>
+        <div class="v">問：「哪群人值得加碼？」新 vs 老客 × 年齡性別 × 裝置 × 地區看 ARPU / CVR / LTV。<em>客戶最愛改 insights</em>——「年輕人 CVR 高？加 TikTok 預算」。</div>
+        <div class="m">P4 受眾洞察</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">P5 廣告頁 · Campaign</div>
+        <div class="v">問：「哪個 campaign 該砍？」每 campaign × 每平台 × spend / revenue / ROAS / CPC / CPM / CTR / CVR。<em>Top/Bottom 5 凸顯</em>。行銷團隊每日看，客戶看少。</div>
+        <div class="m">P5 日常優化</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>模板核心：</strong>每頁一個問題、一張主圖、3 個 KPI、一段建議。<em>不是把所有 metric 倒上去</em>。北極星指標放最顯眼——CEO 五秒內要能看到「公司行銷健康嗎」。
+      <div class="callout-src">10-2 · 四頁細節分工</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 11 · Detail Pages</div>
+    <div>P2 來源 / P3 漏斗 / P4 受眾 / P5 廣告</div>
+  </div>
+</section>
+
+<!-- ============ 12 / 22 · 代理商月費+50% 案例 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Case · 模板換月費 +50%</div>
+    <div>12 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-2-template.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Real Case · 某數位代理商月報改版</div>
+    <h2 class="h-xl" data-anim>從 PPT 30 頁 到 <em>Looker 5 頁</em></h2>
+
+    <div class="grid-4" style="margin-top:5vh; gap:3vh 3vw">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">舊版製作時間</div>
+        <div class="stat-nb">5<span class="stat-unit">天 / 月</span></div>
+        <div class="stat-note">PPT 30 頁人工拼，每月一週</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">新版製作時間</div>
+        <div class="stat-nb">0<span class="stat-unit">天</span></div>
+        <div class="stat-note">Looker 自動更新，每月零工時</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">客戶看的時間</div>
+        <div class="stat-nb">9<span class="stat-unit">× 增加</span></div>
+        <div class="stat-note">5 分鐘 → 45 分鐘（互動性）</div>
+      </div>
+      <div class="stat-card" data-anim style="border-color:rgba(127,127,127,.6)">
+        <div class="stat-label">月費漲價</div>
+        <div class="stat-nb">+50<span class="stat-unit">%</span></div>
+        <div class="stat-note">接受度 80%，<em>看得懂才願意加碼</em></div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>客戶不續約常常不是品質差，是看不懂。</strong>把月報從「我做了多少」改成「現在好不好 · 該怎麼動」——<em>客戶從被動讀者變成主動操盤手</em>。月費也跟著漲。
+      <div class="callout-src">10-2 · 實戰案例</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 12 · Pricing Power</div>
+    <div>10-2 · 結束 · 接 10-3 客戶案 SOP</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     UNIT 10-3 · 期末客戶案 5 步 SOP（slides 13-16）
+     ============================================================ -->
+
+<!-- ============ 13 / 22 · Unit 10-3 幕封 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Unit 10-3 · 期末客戶案 SOP</div>
+    <div>Unit III · 13 / 22</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Unit 10-3 · 1 hr · 端到端走一次</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>五步 · 一張<br><em>能簽字的交付</em></h1>
+    <h2 class="h-sub" data-anim>訪談 · 規格 · 佈建 · 驗證 · 交付。每階段都要有「客戶看得懂的產出」。</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      訪談的死穴 · 規格簽字的力量 · 進度透明化 · 驗證 checklist · 交付五件套 + 30 天 SLA
+    </p>
+  </div>
+  <div class="foot">
+    <div>Unit 10-3 開幕</div>
+    <div>— 期末專案不是練手，是能放履歷的真實成果 —</div>
+  </div>
+</section>
+
+<!-- ============ 14 / 22 · 5 步 SOP pipeline（starred） ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>The Five Steps · 端到端 SOP</div>
+    <div>14 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-3-capstone.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Pipeline · 五段 · 約 4 週 · 逐步點亮</div>
+    <h2 class="h-xl" data-anim>客戶案 5 步 · <em>每步都要有產出</em></h2>
+
+    <div style="margin-top:5vh; display:grid; gap:2vh">
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 14vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.5vw; opacity:.7">Step 1</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">訪談 · 1 週</div>
+          <div style="font-size:max(13px,1vw); opacity:.8; margin-top:.6vh">客戶訪談紀錄 + 漏斗草圖 + 8 欄事件對應草稿。<em>至少 60 分鐘</em>。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">從痛點反推</div>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 14vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.5vw; opacity:.7">Step 2</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">規格 · 3 天</div>
+          <div style="font-size:max(13px,1vw); opacity:.8; margin-top:.6vh">8 欄事件表正式版 + dataLayer schema + Tag 清單 + Dashboard wireframe 5 頁。<em>客戶簽字</em>。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">簽字防噩夢</div>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 14vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.5vw; opacity:.7">Step 3</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">佈建 · 2 週</div>
+          <div style="font-size:max(13px,1vw); opacity:.8; margin-top:.6vh">GTM 從零、GA4 property、Meta/Ads/LINE/TikTok Pixel、Consent CMP。<em>每週中段更新</em>。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">不要黑盒</div>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 14vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.5vw; opacity:.7">Step 4</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">驗證 · 1 週</div>
+          <div style="font-size:max(13px,1vw); opacity:.8; margin-top:.6vh">M8.3 的 10 項 checklist。每事件 DebugView + Events Manager 兩地驗。<em>bug 列表給客戶看</em>。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">公開 bug 反而加分</div>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 2.4vw; border:1px solid currentColor; border-radius:6px; display:grid; grid-template-columns:8vw 1fr 14vw; gap:2vw; align-items:center">
+        <div style="font-family:var(--mono); font-size:1.5vw; opacity:.7">Step 5</div>
+        <div>
+          <div class="h-md" style="font-size:1.8vw">交付 · 3 天</div>
+          <div style="font-size:max(13px,1vw); opacity:.8; margin-top:.6vh">治理手冊 + GTM admin + Dashboard 連結 + 30 分鐘錄影 + 30 天 SLA。<em>錄影是放大器</em>。</div>
+        </div>
+        <div style="font-family:var(--mono); font-size:.85vw; text-align:right; opacity:.6">五件套 + SLA</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 14 · 5-Step SOP</div>
+    <div>★ SOP 照做區 · 講義含每步檢核表</div>
+  </div>
+</section>
+
+<!-- ============ 15 / 22 · 交付物 stat-card grid-4（starred） ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Deliverables · 交付五件套</div>
+    <div>15 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-3-capstone.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Five Items · 缺一不可的交付清單</div>
+    <h2 class="h-xl" data-anim>交付五件套 · <em>客戶記得住的承諾</em></h2>
+
+    <div class="grid-4" style="margin-top:5vh; gap:3vh 3vw">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Item 1</div>
+        <div class="stat-nb" style="font-size:3.4vw">治理<span class="stat-unit">手冊</span></div>
+        <div class="stat-note">命名規範 + 版本流程 + 權限矩陣 + Tag 清單。一份 PDF 收所有規則。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Item 2</div>
+        <div class="stat-nb" style="font-size:3.4vw">GTM<span class="stat-unit">admin</span></div>
+        <div class="stat-note">GTM 容器 admin 權限轉移到客戶帳號。<em>不留後門</em>，可審計。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Item 3</div>
+        <div class="stat-nb" style="font-size:3.4vw">Dashboard<span class="stat-unit">連結</span></div>
+        <div class="stat-note">Looker Studio 五頁模板，客戶 Viewer 權限分享連結。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Item 4</div>
+        <div class="stat-nb" style="font-size:3.4vw">30 min<span class="stat-unit">錄影</span></div>
+        <div class="stat-note">客戶簡報錄影。<em>客戶回看一遍就懂</em>，不再每次問你。</div>
+      </div>
+      <div class="stat-card" data-anim style="border-color:rgba(127,127,127,.6); grid-column:span 4; max-width:46%; margin:0 auto">
+        <div class="stat-label">Item 5</div>
+        <div class="stat-nb" style="font-size:3.4vw">30 天<span class="stat-unit">SLA</span></div>
+        <div class="stat-note">後續 30 天免費修小問題。<em>建立信任、增加續約機率</em>。</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>缺一個，案子就半成品。</strong>治理手冊讓客戶之後能自己接手；admin 轉移避免綁架嫌疑；錄影簡報是<em>價值放大器</em>；SLA 把續約鋪好。<em>把交付當產品做，不是當作業交</em>。
+      <div class="callout-src">10-3 · 五件套交付</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 15 · Five Deliverables</div>
+    <div>★ 交付規格區 · 講義含每件範本</div>
+  </div>
+</section>
+
+<!-- ============ 16 / 22 · 麵包店 capstone 案例 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Real Capstone · 麵包店真實案</div>
+    <div>16 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/m10-3-capstone.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 10-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Real Case · 上屆學員 capstone</div>
+    <h2 class="h-xl" data-anim>北部麵包店 · <em>2 個月後的真實成果</em></h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh; margin-top:4vh">
+      <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor; opacity:.85">
+        <div class="kicker">Before · 起點</div>
+        <ul style="margin-top:2vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.2vh; font-family:var(--sans-zh); font-size:max(14px,1.05vw); line-height:1.5">
+          <li>WordPress + WooCommerce 已上線</li>
+          <li>0 GTM · 0 CAPI · 0 廣告</li>
+          <li>線上營收靠口碑 + Google 搜尋</li>
+          <li>老闆對廣告抱持懷疑態度</li>
+        </ul>
+      </div>
+      <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">After · 5 步走完後</div>
+        <ul style="margin-top:2vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.2vh; font-family:var(--sans-zh); font-size:max(14px,1.05vw); line-height:1.5">
+          <li>GTM 容器 + GA4 電商事件</li>
+          <li>Meta Pixel + CAPI（Make.com 路徑）</li>
+          <li>Google Ads Enhanced Conversions</li>
+          <li>Looker Studio 月報表 + Consent v2</li>
+          <li><em>線上營收 +180% · CAC −34%</em></li>
+          <li><em>第一筆 ROAS 6.5 廣告活動</em></li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>Capstone 不用追大品牌。</strong>挑身邊親戚朋友的小店（餐廳、工作室、補習班），做完整端到端最有學習價值——<em>客戶感恩、履歷有真實案例、未來接案有作品集</em>。
+      <div class="callout-src">10-3 · 學員實案</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 16 · Capstone Case</div>
+    <div>10-3 · 結束 · 接 30hr 全課程畢業收束</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     30 HR · 全課程畢業收束（slides 17-22）
+     ============================================================ -->
+
+<!-- ============ 17 / 22 · 畢業收束幕封 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>30hr Capstone · 畢業收束</div>
+    <div>Capstone · 17 / 22</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>30 hr · 10 modules · 30 units · 走完了</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>30 小時<br>走過的<em>整條弧線</em></h1>
+    <h2 class="h-sub" data-anim>從 GTM 銜接到 Looker 交付。從學工具到能交付一份簽字的客戶案。</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      下面四頁回望整套課程：學習弧線 · 結業數字 · 結業金句 · 自學延伸路線
+    </p>
+  </div>
+  <div class="foot">
+    <div>30hr Capstone · 開幕</div>
+    <div>— 不是十個獨立模組，是一條從 GTM 到交付的路徑 —</div>
+  </div>
+</section>
+
+<!-- ============ 18 / 22 · 10 Modules 學習弧線 rowline（starred） ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>The 30hr Arc · 10 模組弧線</div>
+    <div>18 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/index.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 全課程</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Look Back · 從 M1 走到 M10</div>
+    <h2 class="h-xl" data-anim>30 小時走過的<em>五段弧線</em></h2>
+
+    <div style="margin-top:4vh">
+      <div class="rowline" data-anim>
+        <div class="k">M1-M2 · 銜接與地圖</div>
+        <div class="v">GTM 銜接上學期 · 容器 / 觸發 / 變數 / 版本 · 行銷漏斗 TOFU/MOFU/BOFU · 8 欄事件對應表 · 命名 + UTM 治理。</div>
+        <div class="m">基礎 6h</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">M3-M4 · GTM 進階 + dataLayer</div>
+        <div class="v">8 種觸發 · DLV / Lookup Table / RegEx · Debug 五層排查 · dataLayer 進階 · dataLayer.push 自訂事件 · SPA / AJAX virtual_page_view。</div>
+        <div class="m">6h · 動手最多</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">M5-M6 · Ecommerce + Meta</div>
+        <div class="v">items array 十大事件 · WooCommerce dataLayer · purchase 去重 · Meta Pixel 九大標準事件 · CAPI 三種部署 · event_id 去重 + Match Quality。</div>
+        <div class="m">6h · 電商與 Meta</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">M7-M8 · 廣告平台 + 治理</div>
+        <div class="v">Google Ads Enhanced Conversions · LINE LAP + Cross Tag · TikTok Pixel + Events API · Consent Mode v2 · GTM 治理 · 10 項驗收 checklist。</div>
+        <div class="m">6h · 多平台 + 合規</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">M9-M10 · 指標與整合交付</div>
+        <div class="v">ROAS / CPA / LTV / MER · 六種歸因模型 · GA4 受眾建模 · Looker Studio 整合 · 五頁交付模板 · 期末客戶案 5 步 SOP。</div>
+        <div class="m">6h · 收束</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>看完整條弧線：</strong>不是十個獨立模組，是一條<em>從「會埋碼」到「能交付一份客戶簽字成品」</em>的路徑。每個模組都在補前一個模組的缺口。
+      <div class="callout-src">M10 · 課程完成回望</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 18 · The Arc</div>
+    <div>★ 弧線速查 · 30hr · 5 段 · 10 模組 · 30 單元</div>
+  </div>
+</section>
+
+<!-- ============ 19 / 22 · 30hr 數字 stat-card grid-4 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>By the Numbers · 30hr 課程量</div>
+    <div>19 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/index.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 全課程</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>The Numbers · 你完成了多少</div>
+    <h2 class="h-xl" data-anim>數字看一下，<em>確認自己走了多遠</em></h2>
+
+    <div class="grid-4" style="margin-top:5vh; gap:3vh 3vw">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Total Hours</div>
+        <div class="stat-nb">30<span class="stat-unit">小時</span></div>
+        <div class="stat-note">每週 3 小時 × 10 週。半學期密集走完從 GTM 到 Looker。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Modules</div>
+        <div class="stat-nb">10<span class="stat-unit">模組</span></div>
+        <div class="stat-note">M1 GTM 銜接 → M10 整合交付。每模組 3 小時 + 自學延伸。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Units</div>
+        <div class="stat-nb">30<span class="stat-unit">單元</span></div>
+        <div class="stat-note">每模組 3 個小單元，每單元一份可獨立讀完的講義頁。</div>
+      </div>
+      <div class="stat-card" data-anim style="border-color:rgba(127,127,127,.6)">
+        <div class="stat-label">Capstone</div>
+        <div class="stat-nb">1<span class="stat-unit">期末案</span></div>
+        <div class="stat-note">端到端真實客戶案。訪談 → 規格 → 佈建 → 驗證 → 交付五件套。</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>把這些寫進履歷：</strong>「曾完成兩學期 60 小時數位行銷實務培訓，<em>實作 GTM + GA4 + Meta CAPI + Google Ads + LINE + TikTok + Consent v2 + Looker Studio</em>，獨立交付一個含 30 天 SLA 的客戶案。」這比寫「修過數位行銷實務」有力一百倍。
+      <div class="callout-src">M10 · 結業意義</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 19 · By the Numbers</div>
+    <div>30hr · 10 · 30 · 1 capstone</div>
+  </div>
+</section>
+
+<!-- ============ 20 / 22 · 結業金句 quote ============ -->
+<section class="slide hero light" data-animate="quote">
+  <div class="chrome">
+    <div>The Graduation Note · 畢業這句話</div>
+    <div>20 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/index.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 全課程</a></div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Course Complete · 課程完成</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:5.2vw; line-height:1.22; letter-spacing:-.01em; max-width:82vw">
+      <span data-anim="line" style="display:block">GTM 不是<em>魔法盒</em>，</span>
+      <span data-anim="line" style="display:block">CAPI 不是<em>救星</em>，</span>
+      <span data-anim="line" style="display:block">Looker 不是<em>水晶球</em>。</span>
+      <span data-anim="line" style="display:block">是你<em>提案</em> · <em>埋碼</em> · <em>驗證</em> · <em>交付</em>的紀律。</span>
+    </blockquote>
+    <p class="lead" style="max-width:62vw; opacity:.72" data-anim>
+      平台會改 API、Cookie 會被棄用、AI 會接管部分歸因，<br>
+      但「把資料縫起來、用閉環優化、能對客戶簽字交付」這套<em>工作習慣</em>不會過期。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— 弄一下工作室 × 台北商業大學</span><span>·</span><span>2026 秋</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 20 · Graduation</div>
+    <div>— 工具會變，紀律不變 —</div>
+  </div>
+</section>
+
+<!-- ============ 21 / 22 · 自學延伸 rowline ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Next Steps · 自學延伸路線</div>
+    <div>21 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/ntub-gtm-adtech/index.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 全課程</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Beyond 30hr · 結業之後接哪一條</div>
+    <h2 class="h-xl" data-anim>三條延伸路線 · <em>挑一條深化</em></h2>
+
+    <div style="margin-top:4vh">
+      <div class="rowline" data-anim>
+        <div class="k">dm70h M7 · 廣告操盤</div>
+        <div class="v">本課重「埋碼 + 交付」、dm70h M7 重「投放 + 操盤」。互補關係——把媒體採購、出價策略、素材測試補齊。<em>適合想做廣告投手的同學</em>。</div>
+        <div class="m">投放深化</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">gtm-decks · GTM 密集回顧</div>
+        <div class="v">12hr 進修推廣版 GTM 教材。M1-M4 的 GTM 部分濃縮回顧、補進階觸發場景。<em>適合複習與快速回顧</em>，可當教練筆記。</div>
+        <div class="m">GTM 複習</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">ntub-seo-ga4-decks · 上學期回顧</div>
+        <div class="v">上學期 30hr SEO + GA4 完整 decks。修過了？回看一次更踏實。<em>沒修過？跟本課搭配讀，補回 SEO 帶流量這一段</em>。</div>
+        <div class="m">SEO + GA4</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>建議節奏：</strong>(1) 先把<em>本課 capstone 跑一次真實案</em>。(2) 再回看 ntub-seo-ga4-decks 補 SEO/GA4 細節。(3) 想加廣告投放再進 dm70h M7。<em>三個月跑完一輪閉環，比再上 30 小時課有用</em>。
+      <div class="callout-src">M10 · 自學路線建議</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 21 · Beyond 30hr</div>
+    <div>dm70h M7 · gtm-decks · ntub-seo-ga4-decks</div>
+  </div>
+</section>
+
+<!-- ============ 22 / 22 · To Be Continued + 收束 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>To Be Continued · 課後接續</div>
+    <div>22 / 22 · End of Module 10</div>
+  </div>
+  <div class="frame" style="display:grid; gap:2.4vh; align-content:center; min-height:0">
+    <div class="kicker" data-anim>Next Steps · 結業之後可以做什麼</div>
+    <h1 class="h-hero" style="font-size:7.4vw" data-anim>30 小時是<br><em>起點</em></h1>
+    <p class="lead" style="max-width:64vw;font-size:1.5vw" data-anim>
+      把這套方法套到一個<em>真實客戶</em>，連續跑三個月，比再上 30 小時課有用。
+    </p>
+
+    <div style="margin-top:.4vh">
+      <div class="rowline" data-anim>
+        <div class="k">Next 01 · 找一個真實客戶</div>
+        <div class="v">不一定是大公司。社團、打工店家、親戚的小店都行。把整套 GTM + Pixel + CAPI + Looker 套上去。</div>
+        <div class="m">本月</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">Next 02 · 跑三個月閉環</div>
+        <div class="v">每月 2 小時跑 Unit 10-1 的整合表 + 10-2 的五頁模板。連續三個月後你會看見過去看不見的 pattern。</div>
+        <div class="m">3 個月</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">Next 03 · 接觸新題目</div>
+        <div class="v">Server-Side GTM · BigQuery + GA4 進階 · CDP（Customer Data Platform）· AI 受眾建模 · GA4 + Vertex AI 整合。</div>
+        <div class="m">下一階段</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">Next 04 · 把它寫成作品</div>
+        <div class="v">把治理手冊 + Dashboard + 30 分鐘錄影整理成 case study 放進履歷／作品集。<em>面試時最有力的武器</em>。</div>
+        <div class="m">求職用</div>
+      </div>
+    </div>
+
+    <div class="meta-row" style="margin-top:.4vh" data-anim>
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span><span>·</span><span>弄一下工作室</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Module 10 · End · 30hr Capstone Complete</div>
+    <div>— 謝謝十週的陪跑 · 下個專案見 —</div>
+  </div>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>

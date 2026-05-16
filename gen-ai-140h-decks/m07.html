@@ -1,0 +1,2504 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D07 · 工作流自動化（CH3-2 + CH3-3 + PRAC3-3/4）｜生成式 AI 職訓 140hr｜弄一下工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#2a1e13;
+    --ink-rgb:42,30,19;
+    --paper:#eedfc7;
+    --paper-rgb:238,223,199;
+    --paper-tint:#e0d0b6;
+    --ink-tint:#3a2a1d;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.7;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:1.4vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(13px,1.05vw);line-height:1.5;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:1.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:5vw;
+    line-height:1.08;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2.3vw;
+    line-height:1.3;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ============ 1 / 38 · Cover · D07 開場 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>生成式 AI 職訓 140hr · 弄一下工作室</div>
+    <div>Vol.07 · D07 / 20 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/" target="_blank" rel="noopener" title="開啟 Part 3 索引（新分頁）">講義 · Part 3</a></div>
+  </div>
+  <div class="frame" style="display:grid; gap:4vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Day Seven · 10 hours · Part 3 收束</div>
+    <h1 class="h-hero" data-anim>工作流自動化</h1>
+    <h2 class="h-sub" data-anim>把單次任務變成可重複跑的流水線</h2>
+    <p class="lead" style="max-width:62vw" data-anim>
+      D06 我們把資料整理乾淨。<br>
+      D07 把 AI 從「打開來用」變成<em>排程自動跑</em>——表單觸發、Webhook 接住、AI 摘要、通知回傳，今天 10 小時把 Part 3 收完。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>Vol.07</span><span>·</span><span>CH3-2 · CH3-3 · PRAC3-3 · PRAC3-4</span><span>·</span><span>2026</span>
+    </div>
+    <div class="meta-row" style="margin-top:1.6vh;opacity:.78" data-anim>
+      <span>Duration · 10 小時授課 · D07 / 20 · Part 3 收束</span>
+    </div>
+    <div class="meta-row" style="margin-top:1.6vh;opacity:.74" data-anim>
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>D07 為 Part 3「把資料變成流程」收束 deck</div>
+    <div>— D07 / 20 —</div>
+  </div>
+</section>
+
+<!-- ============ 2 / 38 · 大引用：D07 主張 ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome">
+    <div>Part 3 · 收束主張</div>
+    <div>02 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/" target="_blank" rel="noopener" title="開啟 Part 3 索引（新分頁）">講義 · Part 3</a></div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Why Now · 為什麼今天要把它跑起來</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:5vw; line-height:1.22; letter-spacing:-.01em; max-width:80vw">
+      <span data-anim="line" style="display:block">會用 AI 是技能，</span>
+      <span data-anim="line" style="display:block">把 AI <em>每月 1 號自動跑完</em>才是工作流。</span>
+    </blockquote>
+    <p class="lead" style="max-width:60vw; opacity:.72" data-anim>
+      手動每次打開 ChatGPT 貼資料，做一個月就累；<br>
+      把它接成 Webhook → AI → 通知，半年都不用再開那個分頁。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— D07 核心主張</span><span>·</span><span>單次任務 → 可重複工作流</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 02 · The Premise</div>
+    <div>D07 · 開場金句</div>
+  </div>
+</section>
+
+<!-- ============ 3 / 38 · Map · Part 3 全景 + 今日落點 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Part 3 · Map · 全景地圖</div>
+    <div>03 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/" target="_blank" rel="noopener" title="開啟 Part 3 索引（新分頁）">講義 · Part 3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>The Map · Part 3 全景 / 今日落點</div>
+    <h2 class="h-xl" data-anim>31 小時 / 7 單元，<em>今天把 Part 3 收掉</em></h2>
+
+    <div class="grid-4" style="margin-top:5vh">
+      <div class="stat-card" data-anim style="opacity:.45">
+        <div class="stat-label">D06 · 上次</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">資料清理</div>
+        <div class="stat-note">CH3-1 + PRAC3-1 + PRAC3-2 · 8hr。表格清理、混亂資料、客戶意見分類板。</div>
+      </div>
+      <div class="stat-card" data-anim style="border:2px solid currentColor">
+        <div class="stat-label">D07 · 今天</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">工作流自動化</div>
+        <div class="stat-note">CH3-2 + CH3-3 + PRAC3-3 + PRAC3-4 · <em>10hr</em>。輸入→AI→輸出三段、Webhook、表單→AI→通知、SOP 文件化。</div>
+      </div>
+      <div class="stat-card" data-anim style="opacity:.55">
+        <div class="stat-label">D08 · 下次</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">工具生成</div>
+        <div class="stat-note">CH4-1 + CH4-2 + PRAC4-1 + PRAC4-2 · 10hr。AI 生工具、UI 要求、報價試算 / 學習追蹤。</div>
+      </div>
+      <div class="stat-card" data-anim style="opacity:.45">
+        <div class="stat-label">Today · D07</div>
+        <div class="stat-nb">10<span class="stat-unit">hr</span></div>
+        <div class="stat-note">2 章 + 2 個 PRAC，今天結束時要交出一條真的會跑的端到端流程 + 一份 SOP。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>節奏建議：</strong>上午 CH3-2 + CH3-3 把概念說透（共約 4hr），下午 PRAC3-3 + PRAC3-4 動手實戰（共約 6hr）。每段結束前留 10 分鐘把產出貼進「個人模板庫」。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 03 · Today's Map</div>
+    <div>D07 / Part 3 · 4 段</div>
+  </div>
+</section>
+
+<!-- ============ 4 / 38 · Act I 幕封 · CH3-2 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>第一幕 · CH3-2 · 從單次任務到工作流</div>
+    <div>Act I · 04 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act I · CH3-2 · 約 2 hr</div>
+    <h1 class="h-hero" style="font-size:8.6vw" data-anim>輸入 · AI · 輸出</h1>
+    <h2 class="h-sub" data-anim>工作流的黃金三段</h2>
+    <p class="lead" style="max-width:58vw" data-anim>
+      你會不會做一件事，跟你能不能把它寫成「別人也能跑」的流程，是兩回事。<br>
+      今天先學<em>怎麼把腦中的步驟拆成三段</em>。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act I 開幕</div>
+    <div>— CH3-2 —</div>
+  </div>
+</section>
+
+<!-- ============ 5 / 38 · 黃金三段 grid-3 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>The Three · 黃金三段一覽</div>
+    <div>05 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>The Three · 一張圖記住</div>
+    <h2 class="h-xl" data-anim>三個問題，<em>每條工作流都要回答</em></h2>
+
+    <div class="grid-3" style="margin-top:5vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">01 · Input</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">資料從哪來</div>
+        <div class="stat-note">表單、CSV、Webhook、排程、人工貼上。每段流程的起點，必須說得出「來源、格式、頻次、必要欄位」。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">02 · Process</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">AI 做什麼</div>
+        <div class="stat-note">分類 / 摘要 / 改寫 / 抽取。一段流程一個 AI 動作，prompt + model + 期望輸出格式三件套要寫死。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">03 · Output</div>
+        <div class="stat-nb" style="font-size:3.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.1">結果放哪</div>
+        <div class="stat-note">Sheets、Notion、Slack、Email。終點是「會被人或下一段流程接住」的地方，不是控制台。</div>
+      </div>
+    </div>
+
+    <p class="lead" style="margin-top:3vh; max-width:62vw; opacity:.74" data-anim>
+      工作流的核心問題不是「AI 能不能做」，而是<em>你能不能把這件事說清楚</em>。能寫成文件的，就能被標準化。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 05 · The Three Sections</div>
+    <div>CH3-2 · Unit 3-2</div>
+  </div>
+</section>
+
+<!-- ============ 6 / 38 · 適合 vs 不適合 directional ============ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome">
+    <div>Worth Automating? · 哪些任務適合工作流</div>
+    <div>06 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Common Mistake · 學員最常踩的雷</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>選錯任務做自動化，<em>越做越累</em></h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh">
+      <div data-anim="left" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">適合 · 入選</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.6vw">高頻 · 格式固定 · 失敗成本低</h3>
+        <ul style="margin-top:3vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.4vh; font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.55">
+          <li>每週 / 每月固定要做</li>
+          <li>輸入是 CSV / 表單 / 結構化欄位</li>
+          <li>AI 跑錯不會立刻爆事故</li>
+          <li>例：社群留言情緒分類</li>
+        </ul>
+      </div>
+      <div data-anim="right" style="padding:3vh 2vw; border-left:3px solid currentColor; opacity:.65">
+        <div class="kicker" style="opacity:.9">不適合 · 暫緩</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.6vw">每次都要看情況 · 錯了代價大</h3>
+        <ul style="margin-top:3vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.4vh; font-family:var(--sans-zh); font-size:max(14px,1.1vw); line-height:1.55">
+          <li>合約校稿（錯一字賠錢）</li>
+          <li>感謝信（一年寫一次）</li>
+          <li>活動挑圖（高度主觀）</li>
+          <li>需要看臉色判斷的事</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="lead" style="margin-top:3vh; max-width:62vw; opacity:.78" data-anim>
+      判斷捷徑：<em>能寫出別人能照做的 SOP</em>，就能標準化。每次都要「看情況」，先別自動化。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 06 · Filter</div>
+    <div>CH3-2 · 任務篩選器</div>
+  </div>
+</section>
+
+<!-- ============ 7 / 38 · 任務打分案例 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Scoring · 5 個候選任務打分</div>
+    <div>07 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Worked Example · 課堂示範</div>
+    <h2 class="h-xl" data-anim>5 候選 → 1 入選，<em>打分要會打</em></h2>
+
+    <div style="margin-top:3vh; font-family:var(--mono); font-size:max(13px,1.05vw); line-height:1.7" data-anim>
+      <div style="display:grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1fr 1fr 1fr; gap:.6em 1.2em; padding:1vh 0; border-bottom:2px solid currentColor; font-weight:600">
+        <div>任務</div><div>頻次</div><div>結構</div><div>能力</div><div>容錯</div><div>合計</div><div>裁決</div>
+      </div>
+      <div style="display:grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1fr 1fr 1fr; gap:.6em 1.2em; padding:1.2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.18)"><div>A 社群留言分類</div><div>3</div><div>3</div><div>3</div><div>3</div><div><em>12</em></div><div>★ 入選</div></div>
+      <div style="display:grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1fr 1fr 1fr; gap:.6em 1.2em; padding:1.2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.18); opacity:.7"><div>B 感謝信</div><div>2</div><div>2</div><div>2</div><div>2</div><div>8</div><div>否</div></div>
+      <div style="display:grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1fr 1fr 1fr; gap:.6em 1.2em; padding:1.2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.18); opacity:.7"><div>C 廣告報表</div><div>3</div><div>2</div><div>2</div><div>1</div><div>8</div><div>否（代價高）</div></div>
+      <div style="display:grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1fr 1fr 1fr; gap:.6em 1.2em; padding:1.2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.18); opacity:.7"><div>D 合約校稿</div><div>1</div><div>1</div><div>1</div><div>1</div><div>4</div><div>否</div></div>
+      <div style="display:grid; grid-template-columns: 2.4fr 1fr 1fr 1fr 1fr 1fr 1fr; gap:.6em 1.2em; padding:1.2vh 0; opacity:.7"><div>E 活動挑圖</div><div>2</div><div>1</div><div>1</div><div>3</div><div>7</div><div>否</div></div>
+    </div>
+
+    <p class="lead" style="margin-top:3vh; max-width:64vw; opacity:.78" data-anim>
+      A 入選理由：<em>格式固定（CSV）+ 失敗代價低</em>。即使 AI 偶爾分錯，也能人工抽查補正——適合做為第一條驗證流程。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 07 · Score & Pick</div>
+    <div>CH3-2 · 工作流候選</div>
+  </div>
+</section>
+
+<!-- ============ 8 / 38 · 工作流四要素 dark ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>The Four Elements · 工作流文件四要素</div>
+    <div>08 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>The Four · 寫一次 / 用半年</div>
+    <h2 class="h-xl" data-anim>四個要素，<em>三個月後的自己看得懂</em></h2>
+
+    <div class="rowline" style="margin-top:4vh">
+      <div class="row" data-anim>
+        <div class="row-num">01</div>
+        <div class="row-body">
+          <h3 class="row-title">輸入規格</h3>
+          <p class="row-desc">來源（粉專後台 / 表單 / API）、觸發（每週一 09:00 排程 / Webhook）、欄位定義（timestamp · string · url）、驗證規則（必填欄缺 → 拒收）。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">02</div>
+        <div class="row-body">
+          <h3 class="row-title">處理邏輯</h3>
+          <p class="row-desc">完整 prompt（含角色 / 任務 / 輸出格式）、模型（gpt-4.1）、temperature（0.2）、max_tokens（200）。<em>能複製貼上就跑得起來</em>的程度。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">03</div>
+        <div class="row-body">
+          <h3 class="row-title">輸出格式</h3>
+          <p class="row-desc">目的地（Google Sheet「已分類」分頁）、欄位對應（A=原留言、B=sentiment、C=topic）、命名規則、版本標記。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">04</div>
+        <div class="row-body">
+          <h3 class="row-title">例外處理</h3>
+          <p class="row-desc">空訊息 → 落 other / neu；客訴比例 &gt; 20% → Email 通知主管；token 超量 → 分批重跑。<em>不能整個崩掉</em>。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 08 · Four Elements</div>
+    <div>CH3-2 · 文件範本</div>
+  </div>
+</section>
+
+<!-- ============ 9 / 38 · 情境演練：週報 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Scenario A · 週報自動產出</div>
+    <div>09 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Scenario A · 課堂演練 · 約 10 min</div>
+    <h2 class="h-xl" data-anim>每週五的<em>週報</em>，能不能自動產？</h2>
+
+    <div class="grid-2-6-6" style="gap:4vw 3vh; margin-top:4vh">
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--ink-rgb),.06); border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">輸入</div>
+        <p class="body-zh" style="margin-top:1.2vh">行事曆 CSV / Notion 完成視圖 / 4 平台廣告截圖 / 卡關一行字</p>
+      </div>
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--ink-rgb),.06); border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">處理</div>
+        <p class="body-zh" style="margin-top:1.2vh">AI 抓本週成果、下週計畫、卡關項，壓 300 字草稿</p>
+      </div>
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--ink-rgb),.06); border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">輸出</div>
+        <p class="body-zh" style="margin-top:1.2vh">Google Doc《YYYYMMDD_週報_行銷組》、週五 17:00 寄總監</p>
+      </div>
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--ink-rgb),.06); border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">例外</div>
+        <p class="body-zh" style="margin-top:1.2vh">廣告數字缺 → 標「待補」；雷同 &gt; 80% → 重生成；16:00 未齊 → Slack 提醒</p>
+      </div>
+    </div>
+
+    <p class="lead" style="margin-top:3vh; max-width:64vw; opacity:.78" data-anim>
+      四要素填完，這份週報 SOP 就<em>可以交給 Alex 跑</em>——而不是你每週五傍晚自己熬。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 09 · Scenario A</div>
+    <div>CH3-2 · 週報工作流</div>
+  </div>
+</section>
+
+<!-- ============ 10 / 38 · 情境演練：客服 FAQ pipeline ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>Scenario B · 客服 FAQ 自動回覆</div>
+    <div>10 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Scenario B · 課堂演練 · 約 10 min</div>
+    <h2 class="h-xl" data-anim>客戶來訊，<em>AI 比對 FAQ 回</em>，但人類最後審</h2>
+
+    <div class="pipeline" style="margin-top:5vh; display:grid; grid-template-columns: repeat(5, 1fr); gap:1.6vw; align-items:start">
+      <div data-anim="step" style="padding:2.4vh 1.2vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 1</div>
+        <h3 class="h-md" style="font-size:1.6vw; margin-top:1vh">收訊</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(12px,.95vw)">FB Messenger / Email Webhook 進來</p>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 1.2vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 2</div>
+        <h3 class="h-md" style="font-size:1.6vw; margin-top:1vh">FAQ 比對</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(12px,.95vw)">AI 找最相近的 Q + 信心分數</p>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 1.2vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 3</div>
+        <h3 class="h-md" style="font-size:1.6vw; margin-top:1vh">生成回覆</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(12px,.95vw)">JSON 含 reply_text + needs_human</p>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 1.2vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 4</div>
+        <h3 class="h-md" style="font-size:1.6vw; margin-top:1vh">分流</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(12px,.95vw)">信心 &lt; 70 → 人類；其餘進草稿匣</p>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 1.2vw; border:1px solid currentColor; background:rgba(var(--paper-rgb),.08)">
+        <div class="kicker" style="opacity:.85">Step 5</div>
+        <h3 class="h-md" style="font-size:1.6vw; margin-top:1vh">人審 + 發出</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(12px,.95vw)">客服按確認鍵後送出</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>關鍵設計：</strong>第 4 步「信心分數分流」是 AI 工作流的安全閥——<em>AI 不確定的事，自動丟給人</em>，不要硬回。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 10 · Scenario B</div>
+    <div>CH3-2 · 客服 FAQ pipeline</div>
+  </div>
+</section>
+
+<!-- ============ 11 / 38 · 失敗路徑設計 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Failure Modes · 失敗路徑要先想</div>
+    <div>11 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Pre-mortem · 工作流上線前必做</div>
+    <h2 class="h-xl" data-anim>AI 出錯時，<em>整條鏈不能跟著崩</em></h2>
+
+    <div class="grid-3" style="margin-top:5vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">情境 1</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">分到不存在的類</div>
+        <div class="stat-note">偵測：分類不在白名單；備案：標記 unknown，落人工分頁，每日 Email 給負責人。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">情境 2</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">漏分某客戶</div>
+        <div class="stat-note">偵測：輸入筆數 ≠ 輸出筆數；備案：缺的批次自動重跑一次，仍缺 → 告警 + 該客戶標 manual。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">情境 3</div>
+        <div class="stat-nb" style="font-size:2.6vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">token 中途用完</div>
+        <div class="stat-note">偵測：API 回 429 / context_length；備案：分批切半 + 從上次斷點續跑，不能整批重來。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>原則：</strong>每個失敗情境都要有「<em>怎麼自動偵測 + 怎麼回退到上一步</em>」，不能整條流程崩潰重來。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 11 · Failure by Design</div>
+    <div>CH3-2 · 例外處理</div>
+  </div>
+</section>
+
+<!-- ============ 12 / 38 · CH3-2 課後作業 Eric ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Eric's Brief · CH3-2 課後作業</div>
+    <div>12 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Brief from Eric · 真實情境委託</div>
+    <h2 class="h-xl" style="margin-bottom:3vh" data-anim>為 Eric 設計<em>客戶分群工作流</em>（含失敗備案）</h2>
+
+    <blockquote style="font-family:var(--serif-zh); font-size:1.7vw; line-height:1.55; padding:3vh 3vw; border-left:3px solid currentColor; max-width:74vw; opacity:.9" data-anim>
+      「兄弟，老闆現在每月底都要『客戶分群報告』 — 把客戶分成『健康 / 風險 / 流失』三類給 CSM 團隊。我每月手動跑一次要 4 小時，能不能<em>變成可重複跑的工作流</em>？而且 AI 出錯時不能整條崩掉。」
+      <div class="kicker" style="margin-top:2vh; opacity:.7">— Eric</div>
+    </blockquote>
+
+    <div class="grid-2-6-6" style="gap:4vw 3vh; margin-top:3vh">
+      <div data-anim style="padding:2.4vh 2vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">核心 25 min</div>
+        <ul style="margin-top:1.4vh; padding-left:1.2em; font-size:max(13px,1.05vw); line-height:1.7">
+          <li>盤點 3 候選 / 選 1（5 min）</li>
+          <li>四要素文件（15 min）</li>
+          <li>失敗備案路徑（5 min）</li>
+        </ul>
+      </div>
+      <div data-anim style="padding:2.4vh 2vw; border:1px solid currentColor; opacity:.85">
+        <div class="kicker" style="opacity:.85">進階 15 min · 二選一</div>
+        <ul style="margin-top:1.4vh; padding-left:1.2em; font-size:max(13px,1.05vw); line-height:1.7">
+          <li>路線 A：轉成 Make / n8n 流程圖描述</li>
+          <li>路線 B：設計工作流監控指標</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 12 · CH3-2 Assignment</div>
+    <div>CH3-2 · 給 Eric 的 SOP</div>
+  </div>
+</section>
+
+<!-- ============ 13 / 38 · CH3-2 收束 + 過場 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Bridge · CH3-2 → CH3-3</div>
+    <div>13 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-2.html" target="_blank" rel="noopener" title="開啟 CH3-2 詳細講義（新分頁）">講義 · CH3-2</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Bridge · 過場</div>
+    <h2 class="h-xl" data-anim>知道<em>怎麼拆</em>了，下一步學<em>怎麼接</em></h2>
+
+    <div class="rowline" style="margin-top:4vh">
+      <div class="row" data-anim>
+        <div class="row-num">CH3-2</div>
+        <div class="row-body">
+          <h3 class="row-title">寫得出文件</h3>
+          <p class="row-desc">輸入 / 處理 / 輸出 / 例外四要素，把工作流從「腦中」搬到「紙上」。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">CH3-3</div>
+        <div class="row-body">
+          <h3 class="row-title">接得起來</h3>
+          <p class="row-desc">用 Make / n8n + Webhook 把「紙上的工作流」變成「真的會自己跑」的鏈。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">PRAC3-3 / 4</div>
+        <div class="row-body">
+          <h3 class="row-title">跑得出成品</h3>
+          <p class="row-desc">下午動手做兩件：表單 → AI → 通知 端到端 + 把這條流程寫成 SOP 文件。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 13 · Bridge</div>
+    <div>CH3-2 收束 / CH3-3 開場</div>
+  </div>
+</section>
+
+<!-- ============ 14 / 38 · Act II 幕封 · CH3-3 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>第二幕 · CH3-3 · 表單、自動化、Webhook</div>
+    <div>Act II · 14 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act II · CH3-3 · 約 2 hr</div>
+    <h1 class="h-hero" style="font-size:8.6vw" data-anim>把鏈接起來</h1>
+    <h2 class="h-sub" data-anim>表單 · 自動化 · Webhook</h2>
+    <p class="lead" style="max-width:58vw" data-anim>
+      工作流文件寫得再漂亮，沒有一條真的會跑的鏈也是白搭。<br>
+      這一段學<em>三步驟流程邏輯 + Webhook 接入</em>。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act II 開幕</div>
+    <div>— CH3-3 —</div>
+  </div>
+</section>
+
+<!-- ============ 15 / 38 · Google 表單為什麼是起點 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Why Forms · 為什麼從表單開始</div>
+    <div>15 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-3.html" target="_blank" rel="noopener" title="開啟 CH3-3 詳細講義（新分頁）">講義 · CH3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>The Entry · 自動化的最佳起點</div>
+    <h2 class="h-xl" data-anim>Google 表單 + Sheets，<em>結構化得近乎免費</em></h2>
+
+    <div class="grid-3" style="margin-top:5vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">01 · 結構固定</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">每題一欄</div>
+        <div class="stat-note">使用者填的瞬間就被排成 Sheets row，不用再清資料。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">02 · 觸發容易</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">Watch Rows</div>
+        <div class="stat-note">Make / n8n 內建模組，新增一列就觸發，不用寫 polling。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">03 · 學員都會</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">零學習成本</div>
+        <div class="stat-note">不用教使用者裝 app、不用教填欄位——一個連結就解決。</div>
+      </div>
+    </div>
+
+    <p class="lead" style="margin-top:3vh; max-width:64vw; opacity:.78" data-anim>
+      原則：<em>用你最熟、最常用的格式當輸入</em>。Google Sheets 是絕大多數零代碼自動化的最佳起點。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 15 · Forms as Entry</div>
+    <div>CH3-3 · 自動化起點</div>
+  </div>
+</section>
+
+<!-- ============ 16 / 38 · Make / n8n 三步驟邏輯 pipeline ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>The Logic · Make / n8n 三步驟</div>
+    <div>16 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-3.html" target="_blank" rel="noopener" title="開啟 CH3-3 詳細講義（新分頁）">講義 · CH3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Three Steps · 學一個，另一個就會</div>
+    <h2 class="h-xl" data-anim>Make / n8n 都是這<em>三個問題</em></h2>
+
+    <div class="pipeline" style="margin-top:5vh; display:grid; grid-template-columns: repeat(3, 1fr); gap:2vw; align-items:start">
+      <div data-anim="step" style="padding:3vh 1.6vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Trigger · 觸發</div>
+        <h3 class="h-md" style="font-size:2vw; margin-top:1.4vh">什麼<em>事件</em>讓流程開始</h3>
+        <ul style="margin-top:2vh; padding-left:1.2em; font-size:max(12px,.95vw); line-height:1.6">
+          <li>Watch Rows（Sheets 新列）</li>
+          <li>Webhook（外部系統 POST）</li>
+          <li>Schedule（每天 09:00）</li>
+        </ul>
+      </div>
+      <div data-anim="step" style="padding:3vh 1.6vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Action · 處理</div>
+        <h3 class="h-md" style="font-size:2vw; margin-top:1.4vh">要做<em>什麼動作</em></h3>
+        <ul style="margin-top:2vh; padding-left:1.2em; font-size:max(12px,.95vw); line-height:1.6">
+          <li>OpenAI（呼叫 prompt）</li>
+          <li>Set / Transformer（清資料）</li>
+          <li>Router / Filter（條件分支）</li>
+        </ul>
+      </div>
+      <div data-anim="step" style="padding:3vh 1.6vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Output · 輸出</div>
+        <h3 class="h-md" style="font-size:2vw; margin-top:1.4vh">結果<em>放哪</em></h3>
+        <ul style="margin-top:2vh; padding-left:1.2em; font-size:max(12px,.95vw); line-height:1.6">
+          <li>Sheets（Add Row）</li>
+          <li>Slack / Email</li>
+          <li>Notion（建立卡片）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>選哪個？</strong>初學者先 Make.com（拖拉直觀）；有 IT 基礎或想自架的選 n8n。<em>邏輯一樣，學一個就會兩個</em>。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 16 · Three-Step Logic</div>
+    <div>CH3-3 · Make / n8n</div>
+  </div>
+</section>
+
+<!-- ============ 17 / 38 · 留言分類流程實作 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Worked Flow · 留言分類完整流程</div>
+    <div>17 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-3.html" target="_blank" rel="noopener" title="開啟 CH3-3 詳細講義（新分頁）">講義 · CH3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Worked Example · 把 CH3-2 文件接成真鏈</div>
+    <h2 class="h-xl" data-anim>留言分類流程，<em>從 Sheets 到 Slack</em></h2>
+
+    <div style="margin-top:3vh; font-family:var(--mono); font-size:max(12px,1vw); line-height:1.7" data-anim>
+      <div style="display:grid; grid-template-columns: 1fr 2fr 2fr 2.4fr; gap:.6em 1.2em; padding:1vh 0; border-bottom:2px solid currentColor; font-weight:600">
+        <div>段</div><div>Module</div><div>動作</div><div>設定</div>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 2fr 2fr 2.4fr; gap:.6em 1.2em; padding:1.2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.18)"><div>觸發</div><div>Google Sheets</div><div>Watch Rows</div><div>監聽「留言匯入」分頁，每週一 09:00 排程</div></div>
+      <div style="display:grid; grid-template-columns: 1fr 2fr 2fr 2.4fr; gap:.6em 1.2em; padding:1.2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.18)"><div>處理</div><div>OpenAI API</div><div>Chat Completion</div><div>model=gpt-4.1, temperature=0.2, 輸出 JSON（sentiment / topic）</div></div>
+      <div style="display:grid; grid-template-columns: 1fr 2fr 2fr 2.4fr; gap:.6em 1.2em; padding:1.2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.18)"><div>輸出</div><div>Google Sheets</div><div>Add Row</div><div>寫入「已分類」分頁，欄位 A–D 對應</div></div>
+      <div style="display:grid; grid-template-columns: 1fr 2fr 2fr 2.4fr; gap:.6em 1.2em; padding:1.2vh 0"><div>分支</div><div>Router + Slack</div><div>Filter + Notify</div><div>complaint+product 比例 &gt; 20% → 通知 #marketing-alerts</div></div>
+    </div>
+
+    <p class="lead" style="margin-top:3vh; max-width:64vw; opacity:.78" data-anim>
+      看到沒？這就是 CH3-2 的「四要素文件」<em>一對一翻譯成 Make 模組</em>，沒有魔術。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 17 · Worked Flow</div>
+    <div>CH3-3 · Sheets 到 Slack</div>
+  </div>
+</section>
+
+<!-- ============ 18 / 38 · Webhook 是什麼 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Webhook · 讓外部事件直接通知你</div>
+    <div>18 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-3.html" target="_blank" rel="noopener" title="開啟 CH3-3 詳細講義（新分頁）">講義 · CH3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Webhook · 工作流的接線盒</div>
+    <h2 class="h-xl" data-anim>Webhook 不是技術，<em>是一條 URL</em></h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh; margin-top:4vh">
+      <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">概念</div>
+        <p class="body-zh" style="margin-top:1.4vh">
+          Make / n8n 給你一條 <em>專屬 URL</em>，外部系統（表單、付款、CRM）把資料 POST 到這條 URL，你的流程就會醒過來開始跑。
+        </p>
+        <p class="body-zh" style="margin-top:1.4vh">
+          不用 polling、不用排程、不用問「資料來了沒」——<em>來了它會敲你的門</em>。
+        </p>
+      </div>
+      <div data-anim style="padding:3vh 2vw; background:rgba(var(--paper-rgb),.06); font-family:var(--mono); font-size:max(11px,.92vw); line-height:1.65">
+        <div class="kicker" style="opacity:.85">最小範例 · curl 測試</div>
+        <pre style="margin-top:1.4vh; white-space:pre-wrap; opacity:.92">curl -X POST [YOUR_WEBHOOK_URL] \
+  -H "Content-Type: application/json" \
+  -d '{
+    "submission_id":"FM-20260420-0031",
+    "customer":{
+      "name":"王小姐",
+      "email":"x@example.com"
+    },
+    "issue":{
+      "priority":"high",
+      "content":"訂單未到"
+    }
+  }'</pre>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>第一步：</strong>在 Make / n8n 建好 Webhook 模組 → 複製 URL → 貼到觸發來源（表單通知 / 付款 webhook 設定頁）→ <em>這條路就通了</em>。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 18 · Webhook 101</div>
+    <div>CH3-3 · 接線盒</div>
+  </div>
+</section>
+
+<!-- ============ 19 / 38 · Webhook checklist ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Webhook Checklist · 收得起來才叫接通</div>
+    <div>19 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-3.html" target="_blank" rel="noopener" title="開啟 CH3-3 詳細講義（新分頁）">講義 · CH3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Acceptance Criteria · 5 項驗收</div>
+    <h2 class="h-xl" data-anim>每接一條 Webhook，<em>跑一次這份清單</em></h2>
+
+    <div class="rowline" style="margin-top:4vh">
+      <div class="row" data-anim>
+        <div class="row-num">01</div>
+        <div class="row-body">
+          <h3 class="row-title">狀態碼 200</h3>
+          <p class="row-desc">Webhook 顯示「Accepted」，沒回 200 代表外部系統根本沒成功送進來。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">02</div>
+        <div class="row-body">
+          <h3 class="row-title">必填欄位有值</h3>
+          <p class="row-desc">customer.name / issue.priority / submitted_at <em>不能是 undefined / null / 空字串</em>。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">03</div>
+        <div class="row-body">
+          <h3 class="row-title">枚舉值正確</h3>
+          <p class="row-desc">issue.priority 必須是 high / medium / low 其中之一，不能是「緊急」「很急」「！！！」。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">04</div>
+        <div class="row-body">
+          <h3 class="row-title">時間能解析</h3>
+          <p class="row-desc">submitted_at 是有效 ISO 8601（2026-04-20T09:12:33+08:00），<em>不是「4/20 早上」</em>。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">05</div>
+        <div class="row-body">
+          <h3 class="row-title">secret token 驗證</h3>
+          <p class="row-desc">payload 含 secret 欄位，流程第一步驗 token，<em>不對就丟棄</em>。Webhook URL 一旦洩漏任何人都能 trigger。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 19 · Webhook Checklist</div>
+    <div>CH3-3 · 5 項驗收</div>
+  </div>
+</section>
+
+<!-- ============ 20 / 38 · 流程失敗的三種原因 ============ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome">
+    <div>Debug · 流程失敗的三種原因</div>
+    <div>20 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-3.html" target="_blank" rel="noopener" title="開啟 CH3-3 詳細講義（新分頁）">講義 · CH3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Debug Heuristics · 學員最常卡的三個地方</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>跑不動時，<em>先別怪 AI</em></h2>
+
+    <div class="grid-3" style="margin-top:3vh">
+      <div data-anim="left" class="stat-card">
+        <div class="stat-label">原因 1</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">資料對不上</div>
+        <div class="stat-note">欄位名拼錯、JSON 結構與想像不同、Sheets 第一列沒當欄名。先到 Run History 看 module 1 的輸出長什麼樣。</div>
+      </div>
+      <div data-anim class="stat-card">
+        <div class="stat-label">原因 2</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">API 回非 JSON</div>
+        <div class="stat-note">prompt 沒鎖死格式，AI 偶爾回「好的，以下是分類結果...」。加 response_format=json_object 或在 prompt 寫死範本。</div>
+      </div>
+      <div data-anim="right" class="stat-card">
+        <div class="stat-label">原因 3</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">限流 / 超時</div>
+        <div class="stat-note">短時間打太多次 OpenAI、batch 太大 token 爆。加 Retry 模組（最多 3 次，exponential backoff）+ 分批。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>除錯心態：</strong><em>一次只改一個地方</em>，確認後再改下一個。同時改多處，下次遇到同樣問題還是不會。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 20 · Debug 3 Causes</div>
+    <div>CH3-3 · 失敗排查</div>
+  </div>
+</section>
+
+<!-- ============ 21 / 38 · CH3-3 課後作業 Eric 端到端 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Eric's Brief · CH3-3 端到端自動化</div>
+    <div>21 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/CH3-3.html" target="_blank" rel="noopener" title="開啟 CH3-3 詳細講義（新分頁）">講義 · CH3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Brief from Eric · 接續上一段委託</div>
+    <h2 class="h-xl" style="margin-bottom:3vh" data-anim>把 Eric 的工作流文件，<em>接成真的會跑</em>的鏈</h2>
+
+    <blockquote style="font-family:var(--serif-zh); font-size:1.65vw; line-height:1.55; padding:3vh 3vw; border-left:3px solid currentColor; max-width:74vw; opacity:.9" data-anim>
+      「老闆現在每月 1 號就要看到 Email。能不能用 Make 或 n8n 把它真的串起來？我自己摸過介面但不確定 Webhook 怎麼用。請給我<em>最小可行</em>端到端設計：CRM → AI 分群 → Email 通知 CSM 主管。」
+      <div class="kicker" style="margin-top:2vh; opacity:.7">— Eric</div>
+    </blockquote>
+
+    <div class="grid-2-6-6" style="gap:4vw 3vh; margin-top:3vh">
+      <div data-anim style="padding:2.4vh 2vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">核心 25 min</div>
+        <ul style="margin-top:1.4vh; padding-left:1.2em; font-size:max(13px,1.05vw); line-height:1.7">
+          <li>畫自動化鏈草圖（5 節點 ± 1）</li>
+          <li>設計 Webhook + secret token</li>
+          <li>3 節點各 1 個失敗情境 + 備案</li>
+        </ul>
+      </div>
+      <div data-anim style="padding:2.4vh 2vw; border:1px solid currentColor; opacity:.85">
+        <div class="kicker" style="opacity:.85">驗收 4 條</div>
+        <ul style="margin-top:1.4vh; padding-left:1.2em; font-size:max(13px,1.05vw); line-height:1.7">
+          <li>三段結構齊全（觸發 / 處理 / 輸出）</li>
+          <li>Webhook 必須有 secret token</li>
+          <li>例外處理可回退、不會整體崩潰</li>
+          <li>Make 操作數估算 &lt; $50/月</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 21 · CH3-3 Assignment</div>
+    <div>CH3-3 · 端到端鏈</div>
+  </div>
+</section>
+
+<!-- ============ 22 / 38 · CH3-3 收束金句 quote ============ -->
+<section class="slide dark" data-animate="quote">
+  <div class="chrome">
+    <div>Wrap · CH3-3 收束</div>
+    <div>22 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Mid-Day Wrap · 上午結束</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:5vw; line-height:1.22; letter-spacing:-.01em; max-width:78vw">
+      <span data-anim="line" style="display:block">寫得出文件 + 接得起來，</span>
+      <span data-anim="line" style="display:block">下午把它<em>真的跑出第一個成品</em>。</span>
+    </blockquote>
+    <p class="lead" style="max-width:60vw; opacity:.72" data-anim>
+      上午學概念 + 看示範，下午就要動手——<br>
+      PRAC3-3 把表單 → AI → 通知這條鏈跑通，PRAC3-4 把它變成 SOP 文件留下來。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Page 22 · Mid-Day Wrap</div>
+    <div>下午進 PRAC 段</div>
+  </div>
+</section>
+
+<!-- ============ 23 / 38 · 上午總覽工具卡 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Toolkit · 上午學的工具一覽</div>
+    <div>23 / 38</div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Toolkit · 把上午產出貼進個人模板庫</div>
+    <h2 class="h-xl" data-anim>上午產出<em>三件帶得走的</em></h2>
+
+    <div class="grid-3" style="margin-top:5vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">A · 工作流四要素範本</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">CH3-2 文件</div>
+        <div class="stat-note">輸入 / 處理 / 輸出 / 例外四欄。下次評估新任務值不值得自動化，先填這份。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">B · 任務打分表</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">頻次 / 結構 / 能力 / 容錯</div>
+        <div class="stat-note">5 個候選任務排序，總分 ≥ 10 才入選做自動化，免得越做越累。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">C · Webhook 5 項驗收</div>
+        <div class="stat-nb" style="font-size:2.4vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">CH3-3 checklist</div>
+        <div class="stat-note">200 / 必填 / 枚舉 / 時間 / secret——每接一條新 Webhook 跑一次。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>午休後動作：</strong>把這三份文件貼進你的「個人模板庫」（Notion / Drive 都行）。<em>下午 PRAC 直接調用</em>，不用重寫。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 23 · Morning Toolkit</div>
+    <div>上午 → 下午過場</div>
+  </div>
+</section>
+
+<!-- ============ 24 / 38 · Act III 幕封 · PRAC3-3 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>第三幕 · PRAC3-3 · 表單 → AI → 通知</div>
+    <div>Act III · 24 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act III · PRAC3-3 · 約 3 hr</div>
+    <h1 class="h-hero" style="font-size:8.6vw" data-anim>跑出第一條鏈</h1>
+    <h2 class="h-sub" data-anim>表單送件 · AI 摘要 · 通知回傳</h2>
+    <p class="lead" style="max-width:58vw" data-anim>
+      下午第一個動手任務：把上午學的<em>三段結構 + Webhook</em>，做成一條真的能跑的端到端流程。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act III 開幕</div>
+    <div>— PRAC3-3 —</div>
+  </div>
+</section>
+
+<!-- ============ 25 / 38 · PRAC3-3 五步驟 pipeline ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>The Five Steps · 依序完成這 5 個步驟</div>
+    <div>25 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-3.html" target="_blank" rel="noopener" title="開啟 PRAC3-3 詳細講義（新分頁）">講義 · PRAC3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Pipeline · 從零到通知送出</div>
+    <h2 class="h-xl" data-anim>五個步驟，<em>每一個都要打勾</em></h2>
+
+    <div class="pipeline" style="margin-top:5vh; display:grid; grid-template-columns: repeat(5, 1fr); gap:1.4vw; align-items:start">
+      <div data-anim="step" style="padding:2.4vh 1vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 1</div>
+        <h3 class="h-md" style="font-size:1.5vw; margin-top:1vh">建表單</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(11px,.9vw)">Google 表單收件，必填欄位先設好（名字、Email、訊息）</p>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 1vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 2</div>
+        <h3 class="h-md" style="font-size:1.5vw; margin-top:1vh">建流程</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(11px,.9vw)">Make / n8n 開新流程，第一個模組 Watch Rows</p>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 1vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 3</div>
+        <h3 class="h-md" style="font-size:1.5vw; margin-top:1vh">加 AI</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(11px,.9vw)">OpenAI 模組做摘要 / 分類，輸出結構化 JSON</p>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 1vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 4</div>
+        <h3 class="h-md" style="font-size:1.5vw; margin-top:1vh">設輸出</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(11px,.9vw)">Slack / Email / Notion 任挑一個，先把通知送出</p>
+      </div>
+      <div data-anim="step" style="padding:2.4vh 1vw; border:1px solid currentColor; background:rgba(var(--paper-rgb),.08)">
+        <div class="kicker" style="opacity:.85">Step 5</div>
+        <h3 class="h-md" style="font-size:1.5vw; margin-top:1vh">跑測試</h3>
+        <p class="body-zh" style="margin-top:1vh; font-size:max(11px,.9vw)">提交一筆假資料，看通知是否到位、欄位是否對</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>卡關時：</strong>不要硬往下衝。回 CH3-3 第 20 頁「失敗的三種原因」對照——<em>資料對不上 / 非 JSON / 限流</em>，九成中一個。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 25 · PRAC3-3 Pipeline</div>
+    <div>PRAC3-3 · 5 步驟</div>
+  </div>
+</section>
+
+<!-- ============ 26 / 38 · PRAC3-3 鏈 1 · 業務開發表單 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Chain 1 · 業務開發表單 → Slack #sales</div>
+    <div>26 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-3.html" target="_blank" rel="noopener" title="開啟 PRAC3-3 詳細講義（新分頁）">講義 · PRAC3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Chain 1 · 真實觸發鏈一</div>
+    <h2 class="h-xl" data-anim>新客戶填表，<em>30 秒內 Slack 通知業務</em></h2>
+
+    <div class="grid-2-6-6" style="gap:4vw 3vh; margin-top:3vh">
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--ink-rgb),.06); border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">流程設計</div>
+        <ul style="margin-top:1.4vh; padding-left:1.2em; font-size:max(13px,1.05vw); line-height:1.7">
+          <li>表單欄位：name / company / phone / message / source</li>
+          <li>AI 抽：intent（詢價 / 合作 / 客訴 / 其他）+ urgency</li>
+          <li>Slack 通知 #sales，含「我來處理」按鈕</li>
+        </ul>
+      </div>
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--ink-rgb),.06); font-family:var(--mono); font-size:max(11px,.92vw); line-height:1.6">
+        <div class="kicker" style="opacity:.85">期望通知（Slack）</div>
+        <pre style="margin-top:1vh; white-space:pre-wrap">[NEW] 新報名：某學員（2 人）
+Email · x@example.com
+電話 · 0912-xxx-xxx
+是否曾上過課 · 是
+備註 · 需要素食便當
+
+[ → 我來處理 ]</pre>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:2.4vh" data-anim>
+      <strong>易漏點：</strong>phone 沒規範格式（09xx vs +886）要在 Set 節點先 normalize；message 是空字串時<em>要 skip 不要送 AI 浪費 token</em>。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 26 · Chain 1</div>
+    <div>PRAC3-3 · 業務鏈</div>
+  </div>
+</section>
+
+<!-- ============ 27 / 38 · PRAC3-3 鏈 2 · 請假交接 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Chain 2 · 請假申請 → 代理人 Email</div>
+    <div>27 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-3.html" target="_blank" rel="noopener" title="開啟 PRAC3-3 詳細講義（新分頁）">講義 · PRAC3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Chain 2 · 真實觸發鏈二</div>
+    <h2 class="h-xl" data-anim>員工請假，<em>AI 整理交接重點</em>給代理人</h2>
+
+    <div class="grid-2-6-6" style="gap:4vw 3vh; margin-top:3vh">
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--paper-rgb),.06); border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">流程設計</div>
+        <ul style="margin-top:1.4vh; padding-left:1.2em; font-size:max(13px,1.05vw); line-height:1.7">
+          <li>表單欄位：請假人 / 起迄日 / 類型 / 待辦清單</li>
+          <li>AI 抽：key_tasks / urgency_note / 代理人姓名</li>
+          <li>Email 寄代理人，附本週交接 Notion 連結</li>
+        </ul>
+      </div>
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--paper-rgb),.06); font-family:var(--mono); font-size:max(11px,.92vw); line-height:1.6">
+        <div class="kicker" style="opacity:.85">期望通知（Email）</div>
+        <pre style="margin-top:1vh; white-space:pre-wrap">主旨：[代理請求] 林曉芬
+4/24-4/26 事假 3 天
+
+你好 俊傑，
+曉芬請事假 3 天（4/24–4/26），
+以下是交接重點：
+1. ...
+2. ...
+
+附件：本週交接 Notion 連結</pre>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:2.4vh" data-anim>
+      <strong>易漏點：</strong>代理人欄位是「<em>姓名</em>」而非 email，要先用<em>員工名冊對照表</em>查出來；同部門兩人同天請假要加 conflict 警告。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 27 · Chain 2</div>
+    <div>PRAC3-3 · 請假鏈</div>
+  </div>
+</section>
+
+<!-- ============ 28 / 38 · PRAC3-3 鏈 3 · VIP 客訴升級 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Chain 3 · VIP 客訴 → 主管電話 + Slack</div>
+    <div>28 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-3.html" target="_blank" rel="noopener" title="開啟 PRAC3-3 詳細講義（新分頁）">講義 · PRAC3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Chain 3 · 真實觸發鏈三</div>
+    <h2 class="h-xl" data-anim>VIP 重複客訴，<em>升級電話告警 + 主管視角</em></h2>
+
+    <div class="grid-2-6-6" style="gap:4vw 3vh; margin-top:3vh">
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--ink-rgb),.06); border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">流程設計</div>
+        <ul style="margin-top:1.4vh; padding-left:1.2em; font-size:max(13px,1.05vw); line-height:1.7">
+          <li>表單欄位：客戶等級 / 訊息 / 過往客訴次數</li>
+          <li>AI 抽：is_repeat_complaint / churn_risk / P1-P3</li>
+          <li>VIP + 重複 → <em>電話語音 + Slack #escalation</em></li>
+          <li>Notion 開工單，原文全文不可截斷</li>
+        </ul>
+      </div>
+      <div data-anim style="padding:2.4vh 2vw; background:rgba(var(--ink-rgb),.06); font-family:var(--mono); font-size:max(11px,.92vw); line-height:1.6">
+        <div class="kicker" style="opacity:.85">期望通知（電話 + Slack）</div>
+        <pre style="margin-top:1vh; white-space:pre-wrap">[CALL] 電話告警：
+P1 客訴警報。VIP 會員 黃姐
+來訊投訴產品瑕疵 已重複客訴
+請立即處理。
+
+[ALERT] Slack #escalation
+P1 · 產品瑕疵 · 重複客訴
+churn_risk: high</pre>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:2.4vh" data-anim>
+      <strong>關鍵設計：</strong>LINE Reply（給客人看的）<em>必須放在最後</em>，不能跟主管通知同路徑——否則客人看到「已通知主管」會以為被已讀不回。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 28 · Chain 3</div>
+    <div>PRAC3-3 · VIP 升級鏈</div>
+  </div>
+</section>
+
+<!-- ============ 29 / 38 · PRAC3-3 完成驗收 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Done? · PRAC3-3 完成的 5 項驗收</div>
+    <div>29 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-3.html" target="_blank" rel="noopener" title="開啟 PRAC3-3 詳細講義（新分頁）">講義 · PRAC3-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Acceptance · 完成所有項目才算過關</div>
+    <h2 class="h-xl" data-anim>PRAC3-3 收工前，<em>跑這份清單</em></h2>
+
+    <div class="rowline" style="margin-top:4vh">
+      <div class="row" data-anim>
+        <div class="row-num">01</div>
+        <div class="row-body">
+          <h3 class="row-title">表單能收件</h3>
+          <p class="row-desc">送一筆假資料，Sheets 出現新列、Make / n8n Run History 有 trigger 紀錄。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">02</div>
+        <div class="row-body">
+          <h3 class="row-title">AI 輸出可用</h3>
+          <p class="row-desc">回的 JSON <em>可以被下一段直接讀</em>，不是「好的，以下是分類結果...」這種對話格式。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">03</div>
+        <div class="row-body">
+          <h3 class="row-title">通知有送到</h3>
+          <p class="row-desc">Slack / Email / Notion 任一個目的地<em>真的看到訊息</em>，不是只有 Run History 顯示成功。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">04</div>
+        <div class="row-body">
+          <h3 class="row-title">欄位對得上</h3>
+          <p class="row-desc">通知裡的客戶名 / 公司 / urgency <em>跟原表單一致</em>，沒有 undefined / null。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">05</div>
+        <div class="row-body">
+          <h3 class="row-title">失敗會告警</h3>
+          <p class="row-desc">AI 節點包 Retry（最多 3 次），第 3 次失敗就寫進 failure log Sheets——<em>沒告警的自動化等於沒做</em>。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 29 · PRAC3-3 Acceptance</div>
+    <div>PRAC3-3 · 收工驗收</div>
+  </div>
+</section>
+
+<!-- ============ 30 / 38 · Act IV 幕封 · PRAC3-4 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>第四幕 · PRAC3-4 · SOP 文件化</div>
+    <div>Act IV · 30 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act IV · PRAC3-4 · 約 3 hr</div>
+    <h1 class="h-hero" style="font-size:8.6vw" data-anim>留下 SOP</h1>
+    <h2 class="h-sub" data-anim>把重複任務變成<em>能交接</em>的文件</h2>
+    <p class="lead" style="max-width:58vw" data-anim>
+      跑得起來只是第一步。<br>
+      Part 3 收尾要做的是：<em>把流程寫成別人能接手的 SOP</em>，未來請假、轉職、擴編都不會死掉。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act IV 開幕</div>
+    <div>— PRAC3-4 —</div>
+  </div>
+</section>
+
+<!-- ============ 31 / 38 · PRAC3-4 SOP 三步驟 ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>SOP in 3 Steps · 三步驟生 SOP</div>
+    <div>31 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-4.html" target="_blank" rel="noopener" title="開啟 PRAC3-4 詳細講義（新分頁）">講義 · PRAC3-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>The Method · 用 AI 把口語做法變 SOP</div>
+    <h2 class="h-xl" data-anim>不用先整理，<em>用講的就好</em></h2>
+
+    <div class="pipeline" style="margin-top:5vh; display:grid; grid-template-columns: repeat(3, 1fr); gap:2vw; align-items:start">
+      <div data-anim="step" style="padding:3vh 1.6vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 1 · 選任務</div>
+        <h3 class="h-md" style="font-size:1.8vw; margin-top:1vh">最熟、重複最多次</h3>
+        <p class="body-zh" style="margin-top:1.4vh; font-size:max(13px,1vw)">不要選「最重要的」——選「<em>閉著眼睛都會做的</em>」。重複性越高，SOP 價值越大。</p>
+      </div>
+      <div data-anim="step" style="padding:3vh 1.6vw; border:1px solid currentColor">
+        <div class="kicker" style="opacity:.85">Step 2 · 口語給 AI</div>
+        <h3 class="h-md" style="font-size:1.8vw; margin-top:1vh">直接說 / 不要先整理</h3>
+        <p class="body-zh" style="margin-top:1.4vh; font-size:max(13px,1vw)">「我每週五要做 XXX，步驟大概是這樣⋯」<em>口語比填表更完整</em>，AI 會幫你結構化。</p>
+      </div>
+      <div data-anim="step" style="padding:3vh 1.6vw; border:1px solid currentColor; background:rgba(var(--ink-rgb),.06)">
+        <div class="kicker" style="opacity:.85">Step 3 · 補覆核 + 備案</div>
+        <h3 class="h-md" style="font-size:1.8vw; margin-top:1vh">「請補出人工覆核節點」</h3>
+        <p class="body-zh" style="margin-top:1.4vh; font-size:max(13px,1vw)">初版 SOP 通常只有步驟。<em>加一句</em>讓 AI 補覆核點 + 失敗備案——這是 SOP 真正可用的關鍵。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>核心心法：</strong>SOP 不是寫給自己看，<em>是讓別人能接手</em>。判斷標準：把這份交給剛進公司的人，他能不能照做？
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 31 · SOP Method</div>
+    <div>PRAC3-4 · 三步驟</div>
+  </div>
+</section>
+
+<!-- ============ 32 / 38 · PRAC3-4 SOP 範本：週報 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>SOP Sample A · 週報 SOP v1.0</div>
+    <div>32 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-4.html" target="_blank" rel="noopener" title="開啟 PRAC3-4 詳細講義（新分頁）">講義 · PRAC3-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Sample A · 課堂範例 · 行銷組週報</div>
+    <h2 class="h-xl" data-anim>週報 SOP，<em>4 段 + 異常處理</em></h2>
+
+    <div style="margin-top:3vh; padding:3vh 2.4vw; background:rgba(var(--paper-rgb),.06); font-family:var(--mono); font-size:max(11px,.92vw); line-height:1.7" data-anim>
+<pre style="white-space:pre-wrap; margin:0">── 週報 SOP v1.0 · 2026-04-20 · 建立者 你 ──
+
+【角色】執行：Alex / 覆核：組長 / 閱讀者：總監
+【輸入】行事曆 CSV / Notion 完成視圖 / 4 平台廣告截圖 / 卡關一行
+【輸出】Google Doc《YYYYMMDD_週報_行銷組》／週五 17:00 前寄總監
+
+段 1  資料蒐集 │ Alex │ GCal+Notion+4 平台 │ 一份彙整 md │ 20 min │ 組長快速掃 5 分
+段 2  AI 草稿  │ Alex │ ChatGPT+下方 Prompt │ 300 字草稿  │ 10 min │ —
+段 3  人工審校 │ Alex │ 肉眼＋檢查清單     │ 終稿        │ 10 min │ 組長抽檢 3 處
+段 4  發送     │ Alex │ Gmail              │ 寄件紀錄    │  5 min │ —
+
+異常處理：
+  廣告數字缺  → 標「待補」
+  雷同 > 80%  → 重生成
+  16:00 未齊  → Slack 提醒
+測試紀錄：2026-04-25 首次交接 Alex，卡在廣告截圖命名不一致，v1.1 補命名規則</pre>
+    </div>
+
+    <div class="callout" style="margin-top:2.4vh" data-anim>
+      <strong>關鍵欄位：</strong>每段都有「<em>覆核者</em>」與「<em>異常處理</em>」——這兩欄就是初版 SOP 跟可用 SOP 的差別。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 32 · Sample SOP A</div>
+    <div>PRAC3-4 · 週報</div>
+  </div>
+</section>
+
+<!-- ============ 33 / 38 · PRAC3-4 SOP 範本：新人 onboarding ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>SOP Sample B · 新人第一週任務包</div>
+    <div>33 / 38 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-4.html" target="_blank" rel="noopener" title="開啟 PRAC3-4 詳細講義（新分頁）">講義 · PRAC3-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Sample B · 課堂範例 · onboarding SOP</div>
+    <h2 class="h-xl" data-anim>新人第一週，<em>10 步任務包</em></h2>
+
+    <div style="margin-top:3vh; padding:3vh 2.4vw; background:rgba(var(--ink-rgb),.05); font-family:var(--mono); font-size:max(11px,.92vw); line-height:1.7" data-anim>
+<pre style="white-space:pre-wrap; margin:0">── 新人第一週任務包 SOP v1.0 ──
+
+第  1 步 │ 週一 09:00 │ 人資 │ 交付筆電+門禁卡+歡迎包  │ 已備齊清單 │ 簽收單完成 │ 15 min │ 設備未齊→14:00 前補齊
+第  2 步 │ 週一 10:00 │ 新人 │ 登入筆電並改密碼        │ IT 初始密碼 │ 進入桌面    │ 30 min │ 密碼無效→IT 重置
+   ...
+第 10 步 │ 週五 16:00 │ 主管 │ 1 小時對齊 + 留 v1.1 回饋│ 一週筆記   │ 回饋表填畢  │ 60 min │ 主管臨時有事→週一補做
+
+── 測試 SOP 的方法 ──
+找行銷組 Bob（沒做過 onboarding）週六照跑一次，記錄卡點，週日補文件。</pre>
+    </div>
+
+    <div class="callout" style="margin-top:2.4vh" data-anim>
+      <strong>SOP 驗證的唯一方法：</strong><em>找一個沒做過的人試跑</em>。他卡住的地方就是你沒寫出來的隱性知識。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 33 · Sample SOP B</div>
+    <div>PRAC3-4 · onboarding</div>
+  </div>
+</section>
+
+<!-- ============ 34 / 38 · PRAC3-4 寫 SOP 的常見漏點 ============ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome">
+    <div>Common Misses · 寫 SOP 最常漏的兩件事</div>
+    <div>34 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-4.html" target="_blank" rel="noopener" title="開啟 PRAC3-4 詳細講義（新分頁）">講義 · PRAC3-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:4vh">
+    <div class="kicker" data-anim>Pre-mortem · SOP 失敗的兩個地方</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>初版 SOP 的<em>致命兩個缺欄</em></h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh">
+      <div data-anim="left" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">缺 1 · 覆核節點</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.4vw">AI 做完直接往下走</h3>
+        <p class="body-zh" style="margin-top:2vh">最容易出問題的地方：<em>沒人確認 AI 輸出是否正確</em>。把覆核節點寫進 SOP，才是安全可交付的工作流設計。</p>
+        <p class="body-zh" style="margin-top:1.4vh; opacity:.7">補法：每個 AI 節點後加一格「誰看 / 看什麼 / 看完按什麼」。</p>
+      </div>
+      <div data-anim="right" style="padding:3vh 2vw; border-left:3px solid currentColor; opacity:.85">
+        <div class="kicker" style="opacity:.9">缺 2 · 失敗備案</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.4vw">「正常情況下」就完了</h3>
+        <p class="body-zh" style="margin-top:2vh">SOP 只寫快樂路徑，<em>異常一發生就沒人知道下一步</em>。每個可能失敗的點都要補一行備案。</p>
+        <p class="body-zh" style="margin-top:1.4vh; opacity:.7">補法：對 AI 加一句「請在每個可能失敗的步驟後補上備案路徑」。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 34 · Common Misses</div>
+    <div>PRAC3-4 · 致命兩缺</div>
+  </div>
+</section>
+
+<!-- ============ 35 / 38 · PRAC3-4 收工 + 個人模板庫 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Wrap · PRAC3-4 收工 / 模板庫存檔</div>
+    <div>35 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part3/PRAC3-4.html" target="_blank" rel="noopener" title="開啟 PRAC3-4 詳細講義（新分頁）">講義 · PRAC3-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>End of D07 PRAC · 把今天產出歸檔</div>
+    <h2 class="h-xl" data-anim>D07 結束時，<em>你的模板庫多了五件</em></h2>
+
+    <div class="rowline" style="margin-top:4vh">
+      <div class="row" data-anim>
+        <div class="row-num">01</div>
+        <div class="row-body">
+          <h3 class="row-title">工作流四要素文件 · CH3-2</h3>
+          <p class="row-desc">客戶分群任務的輸入 / 處理 / 輸出 / 例外四欄完整版。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">02</div>
+        <div class="row-body">
+          <h3 class="row-title">端到端鏈設計 · CH3-3</h3>
+          <p class="row-desc">CRM → AI 分群 → Email 通知，含 Webhook + secret token。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">03</div>
+        <div class="row-body">
+          <h3 class="row-title">表單 → AI → 通知 真鏈 · PRAC3-3</h3>
+          <p class="row-desc">三條鏈擇一跑通：業務開發 / 請假交接 / VIP 客訴升級。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">04</div>
+        <div class="row-body">
+          <h3 class="row-title">SOP 文件 v1.0 · PRAC3-4</h3>
+          <p class="row-desc">把 PRAC3-3 那條鏈寫成「別人能接手」的 SOP，含覆核 + 備案。</p>
+        </div>
+      </div>
+      <div class="row" data-anim>
+        <div class="row-num">05</div>
+        <div class="row-body">
+          <h3 class="row-title">Webhook 5 項驗收清單</h3>
+          <p class="row-desc">200 / 必填 / 枚舉 / 時間 / secret——下次接新 Webhook 直接用。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 35 · D07 Toolkit</div>
+    <div>PRAC3-4 · 收工歸檔</div>
+  </div>
+</section>
+
+<!-- ============ 36 / 38 · Part 3 收束 hero ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Part 3 · End · 把資料變成流程</div>
+    <div>Wrap · 36 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Part 3 收束 · 31 hr 完成</div>
+    <h1 class="h-hero" style="font-size:8.4vw" data-anim>從亂資料 → 自動流</h1>
+    <h2 class="h-sub" data-anim>D06 + D07 把 Part 3 收掉</h2>
+    <p class="lead" style="max-width:60vw" data-anim>
+      D06 學會把資料整乾淨，D07 把整乾淨的資料<em>接成自動跑的流程</em>。<br>
+      你已經有能力把每月手動 4 小時的任務，<em>變成每月跑一次按鍵</em>。
+    </p>
+  </div>
+  <div class="foot">
+    <div>End of Part 3</div>
+    <div>— Part 3 收束 —</div>
+  </div>
+</section>
+
+<!-- ============ 37 / 38 · 接下來 D08 預告 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>What's Next · D08 預告</div>
+    <div>37 / 38 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/" target="_blank" rel="noopener" title="開啟課程總覽（新分頁）">課程 · 總覽</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Roadmap · 從工作流到工具</div>
+    <h2 class="h-xl" data-anim>Part 4：<em>讓 AI 幫你長出工具</em></h2>
+
+    <div class="grid-3" style="margin-top:5vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">D08 · CH4-1 + CH4-2 + PRAC4-1/2</div>
+        <div class="stat-nb" style="font-size:2.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">AI 生工具</div>
+        <div class="stat-note">從工作流升級到工具：AI 寫前端、UI 要求怎麼下、報價試算 / 學習追蹤。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">D09 · CH4-3 + PRAC4-3/4</div>
+        <div class="stat-nb" style="font-size:2.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">部署上線</div>
+        <div class="stat-note">GitHub Pages / Vercel 把工具搬上網，給同事或客戶用。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">本日帶走</div>
+        <div class="stat-nb" style="font-size:2.2vw; font-family:var(--serif-zh); letter-spacing:0; line-height:1.15">5 件模板</div>
+        <div class="stat-note">四要素文件 / 端到端鏈 / 真鏈跑通 / SOP v1.0 / Webhook 驗收清單。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>下次來上課前：</strong>把今天那條跑通的鏈，<em>多送 5 筆真實資料</em>跑跑看。哪條規則要修、哪個欄位 AI 摘不乾淨，記下來——D08 開場我們會回看。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 37 · What's Next</div>
+    <div>D08 · Part 4 開場</div>
+  </div>
+</section>
+
+<!-- ============ 38 / 38 · End hero · To Be Continued ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>To Be Continued · D08 見</div>
+    <div>End · 38 / 38</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>End of D07 · 10 hours done</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>To Be Continued</h1>
+    <h2 class="h-sub" data-anim>D08 · 工具生成 · 10 hr</h2>
+    <p class="lead" style="max-width:58vw" data-anim>
+      帶著今天的<em>五件模板</em>與<em>第一條真的會自動跑的鏈</em>，<br>
+      下次直接從庫裡拿、不用再重來。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>D07 / 20</span><span>·</span><span>Vol.07</span><span>·</span><span>弄一下工作室</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>End of D07</div>
+    <div>— D08 / 20 —</div>
+  </div>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>

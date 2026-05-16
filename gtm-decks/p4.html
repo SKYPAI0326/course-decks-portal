@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Part 4 · 資料管理與品質控制｜GTM 實務演練｜弄一下工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#0a1f3d;
+    --ink-rgb:10,31,61;
+    --paper:#f1f3f5;
+    --paper-rgb:241,243,245;
+    --paper-tint:#e4e8ec;
+    --ink-tint:#152a4a;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:1.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.02vw);line-height:1.6;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:1.6vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:1.4vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(14px,1.08vw);line-height:1.5;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:0.8vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline .v{line-height:1.45 !important}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:4.8vw;
+    line-height:1.04;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2vw;
+    line-height:1.22;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ============ 1. Cover (hero dark) ============ -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div>Vol.04 · Part Four</div>
+    <div>01 / 22</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3.6vh">
+    <div class="kicker" data-anim>GTM 實務演練 · Part 4 · 資料管理與品質控制</div>
+    <h1 class="h-hero" data-anim>資料治理 × <em>品管紅線</em></h1>
+    <p class="lead" style="max-width:46em;margin:0 auto" data-anim>讓追蹤從「<em>會送資料</em>」進化到<br>「送對、送準、<em>合規不出包</em>」的最後一哩。</p>
+    <div class="meta-row" style="justify-content:center" data-anim>
+      <span>Keyword</span><span>·</span><span>Data Layer</span>
+      <span>·</span><span>Lookup Table</span>
+      <span>·</span><span>Consent v2</span>
+      <span>·</span><span>Debug</span>
+    </div>
+    <div class="meta-row" style="justify-content:center;margin-top:1.2vh" data-anim>
+      <span>Scope</span><span>·</span><span>5 章 + 2 演練</span>
+      <span>·</span><span>~3 小時</span>
+    </div>
+    <div class="meta-row" style="justify-content:center;margin-top:1.6vh;opacity:.74" data-anim>
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>弄一下工作室</span>
+    <span class="title">GTM 實務演練 · 資料管理與品質控制</span>
+    <span>Part 4 of 4</span>
+  </footer>
+</section>
+
+<!-- ============ 2. 開場金句 quote (light) ============ -->
+<section class="slide light" data-animate="quote">
+  <header class="chrome">
+    <div>Opening · Manifesto</div>
+    <div>02 / 22</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Why this part opens here</div>
+    <div class="callout" style="border-left:0;text-align:center;padding:2vh 4vw">
+      <div class="q-big" style="font-size:max(22px,2.6vw);line-height:1.45">
+        <span data-anim="line">會「<em>埋上</em>」的人很多，</span><br>
+        <span data-anim="line">會「<em>埋準</em>、<em>埋穩</em>」的人很少。</span><br>
+        <span data-anim="line">前者灌髒資料，後者<em>給得起報表</em>。</span>
+      </div>
+      <div class="cite" data-anim>—— Part 4 · 把追蹤交給能負責的人</div>
+    </div>
+    <p class="body-zh" style="max-width:42em;margin:0 auto" data-anim>GA4 的數據<em>無法刪除、無法修改</em>，<br>送錯一次就是一輩子的雜訊。</p>
+  </div>
+  <footer class="foot">
+    <span>Part 4 · Opening</span>
+    <span>GTM 實務演練</span>
+  </footer>
+</section>
+
+<!-- ============ 3. 學習目標 grid-3 stat-card (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>This Part · Outcomes</div>
+    <div>03 / 22</div>
+  </header>
+  <div class="frame" style="gap:3vh">
+    <div class="kicker" data-anim>Learning Outcomes · 三小時帶走</div>
+    <h2 class="h-xl" data-anim>三件事，<em>離開教室就能交付</em></h2>
+    <p class="lead" style="max-width:42em" data-anim>不只把代碼<em>埋好</em>，更要<em>說得出怎麼證明它對</em>。</p>
+    <div class="grid-3" style="margin-top:2vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 01</div>
+        <div class="stat-nb">01</div>
+        <div class="stat-note">看懂 <em>Data Layer</em> 與 Lookup Table，把「網址」翻成<em>業務語言</em>。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 02</div>
+        <div class="stat-nb">02</div>
+        <div class="stat-note">建立<em>預覽 → 發布 → 還原</em>的 SOP，並補齊 <em>Consent v2</em> 合規底線。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 03</div>
+        <div class="stat-nb">03</div>
+        <div class="stat-note">用 <em>5 層 Debug</em> 與 GA4 DebugView，把「事件沒進」<em>三分鐘定位</em>。</div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Part 4 · 5 章 + 2 演練</span>
+    <span>4-1 / 4-2 / 4-3 / 4-4 / 4-5 / PRAC</span>
+  </footer>
+</section>
+
+<!-- ============ 4. Act I 幕封 · CH4-1 Data Layer (hero light) ============ -->
+<section class="slide hero light">
+  <header class="chrome">
+    <div>Act I · Unit 4-1</div>
+    <div>04 / 22</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Chapter 4.1 · The Data Layer</div>
+    <h2 class="h-hero" style="font-size:8vw" data-anim>網頁的<em>地下通道</em></h2>
+    <p class="lead" style="max-width:46em;margin:0 auto" data-anim>分水嶺的一節 ——<br>學會這個，才追得到<em>訂單金額</em>、<em>會員等級</em>、<em>商品分類</em>。</p>
+    <div class="meta-row" style="justify-content:center;margin-top:2vh" data-anim>
+      <span>3 Slides</span><span>·</span><span>Concept + Hands-on</span>
+      <span>·</span><span>~30 min</span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Act I · Data Layer</span>
+    <span>Unit 4-1</span>
+  </footer>
+</section>
+
+<!-- ============ 5. 餐廳點餐單比喻 directional (light) ============ -->
+<section class="slide light" data-animate="directional">
+  <header class="chrome">
+    <div>4-1 · The Restaurant Metaphor</div>
+    <div>05 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-1</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Step 01 · 一句話搞懂 Data Layer</div>
+    <h2 class="h-xl" data-anim>GTM 是<em>櫃檯</em>，網頁是<em>外場</em></h2>
+    <div class="split" style="margin-top:1.6vh;align-items:stretch">
+      <div data-anim="left" style="display:flex;flex-direction:column;gap:1.4vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">沒有 Data Layer · 偷看模式</div>
+        <div class="h-md" style="font-size:1.6vw;line-height:1.4">GTM 跑去<em>客人桌上</em>看吃了什麼</div>
+        <div class="body-zh" style="opacity:.78">只追得到<em>看得見</em>的：按鈕文字、頁面網址、Click ID。<em>金額</em>、<em>會員等級</em>、<em>商品分類</em>—— 通通看不到。</div>
+        <div class="meta-row" style="margin-top:auto"><span>Result</span><span>·</span><span>表面點擊</span></div>
+      </div>
+      <div data-anim="right" style="display:flex;flex-direction:column;gap:1.4vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">有 Data Layer · 點餐單模式</div>
+        <div class="h-md" style="font-size:1.6vw;line-height:1.4">外場<em>主動寫一張單</em>送到櫃檯</div>
+        <div class="body-zh" style="opacity:.78">網頁把 <code>price: 1500</code>、<code>item_name: "T-shirt"</code>、<code>user_tier</code> 這些<em>業務欄位</em>一次推給 GTM，櫃檯讀就好。</div>
+        <div class="meta-row" style="margin-top:auto"><span>Result</span><span>·</span><span>業務欄位</span></div>
+      </div>
+    </div>
+    <div data-anim="divider" style="border-top:1px dashed rgba(127,127,127,.4);margin-top:1.4vh"></div>
+    <p class="body-zh" data-anim style="text-align:center;opacity:.82">外場寫得越完整，櫃檯<em>越不用猜</em>—— 報表也就越乾淨。</p>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-1 · The Metaphor</span>
+    <span>Push · Don't Peek</span>
+  </footer>
+</section>
+
+<!-- ============ 6. Data Layer 範例 code (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>4-1 · Real Data Layer Sample</div>
+    <div>06 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-1</a></div>
+  </header>
+  <div class="frame" style="gap:2.2vh">
+    <div class="kicker" data-anim>Step 02 · 預覽模式打開來看</div>
+    <h2 class="h-xl" data-anim>GTM4WP 已經幫你<em>寫好一大堆</em></h2>
+    <p class="lead" style="max-width:46em" data-anim>到測試站<em>文章頁</em>（不是首頁）→ Tag Assistant → <em>Data Layer 分頁</em>。</p>
+    <div class="callout" data-anim style="margin-top:1vh;font-family:var(--mono);font-size:max(13px,1.05vw);line-height:1.6;background:rgba(var(--paper-rgb),.06);padding:2vh 2vw;border-left:3px solid currentColor">
+<span style="opacity:.6">// Data Layer 分頁裡，你會看到：</span><br>
+{<br>
+&nbsp;&nbsp;"pagePostType": <em>"post"</em>,<br>
+&nbsp;&nbsp;"pagePostCategory": <em>"行銷科技"</em>,<br>
+&nbsp;&nbsp;"pagePostAuthor": <em>"admin"</em><br>
+}
+    </div>
+    <div class="callout" data-anim style="margin-top:1vh">
+      <strong>常見地雷</strong>：在<em>首頁</em>看不到 <code>pagePostCategory</code>—— 因為首頁是 WordPress 的 <em>page</em> 而不是 <em>post</em>，沒有分類欄位。<em>請進文章頁</em>。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-1 · Inspect</span>
+    <span>Preview → Data Layer 分頁</span>
+  </footer>
+</section>
+
+<!-- ============ 7. 建立 DLV 五步 pipeline (light) · STARRED ============ -->
+<section class="slide light" data-animate="pipeline">
+  <header class="chrome">
+    <div>4-1 · Build a DLV</div>
+    <div>07 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-1</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Step 03 · 接收暗號 · 建立資料層變數</div>
+    <h2 class="h-xl" data-anim>DLV 五步驟，<em>一次寫對</em></h2>
+    <div class="pipeline-section" style="margin-top:1vh">
+      <div class="pipeline-label" data-anim>Pipeline · 變數 → 對應欄位</div>
+      <div class="pipeline" data-cols="5">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01</div>
+          <div class="step-title">新增變數</div>
+          <div class="step-desc">變數 → 使用者定義 → <em>新增</em>。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02</div>
+          <div class="step-title">選類型</div>
+          <div class="step-desc">變數類型選 <em>資料層變數</em>（Data Layer Variable）。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03</div>
+          <div class="step-title">填名稱</div>
+          <div class="step-desc"><code>pagePostCategory</code> —— <em>大小寫一字不差</em>。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">04</div>
+          <div class="step-title">版本 2</div>
+          <div class="step-desc">Data Layer 版本保持 <em>v2</em>，支援巢狀結構。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">05</div>
+          <div class="step-title">命名儲存</div>
+          <div class="step-desc">命名慣例 <em>DLV - 文章分類</em>，方便事後辨識。</div>
+        </div>
+      </div>
+    </div>
+    <p class="body-zh" data-anim style="opacity:.78;margin-top:.6vh">建好 DLV 後，<em>所有 GA4 事件參數</em>都能直接引用 <code>{{DLV - 文章分類}}</code>。</p>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-1 · DLV Recipe</span>
+    <span>名稱 · 大小寫 · 版本</span>
+  </footer>
+</section>
+
+<!-- ============ 8. Act II 幕封 · CH4-2 Lookup (hero dark) ============ -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div>Act II · Unit 4-2</div>
+    <div>08 / 22</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Chapter 4.2 · The Lookup Table</div>
+    <h2 class="h-hero" style="font-size:8vw" data-anim>把網址<em>翻成人話</em></h2>
+    <p class="lead" style="max-width:46em;margin:0 auto" data-anim>同一份 GA4 報表，<br>讀得懂的人 <em>30 秒抓到重點</em>，讀不懂的人翻半小時。</p>
+    <div class="meta-row" style="justify-content:center;margin-top:2vh" data-anim>
+      <span>3 Slides</span><span>·</span><span>Naming + Setup</span>
+      <span>·</span><span>~25 min</span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Act II · Lookup Table</span>
+    <span>Unit 4-2</span>
+  </footer>
+</section>
+
+<!-- ============ 9. 雜亂 vs 乾淨 directional (light) ============ -->
+<section class="slide light" data-animate="directional">
+  <header class="chrome">
+    <div>4-2 · Messy vs Clean Report</div>
+    <div>09 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-2</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Step 01 · 一份報表 · 兩種命運</div>
+    <h2 class="h-xl" data-anim>網址送進去 vs <em>名稱送進去</em></h2>
+    <div class="split" style="margin-top:1.6vh;align-items:stretch">
+      <div data-anim="left" style="display:flex;flex-direction:column;gap:1.4vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">Bad · 直接丟 Page Path</div>
+        <div class="h-md" style="font-size:1.5vw;line-height:1.45;font-family:var(--mono)">
+          /contact-us-2026-v2/<br>
+          /request-quote-main/<br>
+          /support-center/
+        </div>
+        <div class="body-zh" style="opacity:.78">難讀、難對齊；<em>網址一改</em>歷史報表立刻斷。</div>
+        <div class="meta-row" style="margin-top:auto"><span>Result</span><span>·</span><span>看不懂的雜訊</span></div>
+      </div>
+      <div data-anim="right" style="display:flex;flex-direction:column;gap:1.4vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">Good · 用 Lookup 翻譯</div>
+        <div class="h-md" style="font-size:1.7vw;line-height:1.4">
+          一般聯絡表單<br>
+          報價申請<br>
+          售後服務維修
+        </div>
+        <div class="body-zh" style="opacity:.78">老闆<em>打開即懂</em>；網址改了只要回 GTM 改對照表，<em>不動代碼</em>。</div>
+        <div class="meta-row" style="margin-top:auto"><span>Result</span><span>·</span><span>業務語言報表</span></div>
+      </div>
+    </div>
+    <div data-anim="divider" style="border-top:1px dashed rgba(127,127,127,.4);margin-top:1.4vh"></div>
+    <p class="body-zh" data-anim style="text-align:center;opacity:.82">乾不乾淨，<em>差在一個變數</em>。</p>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-2 · Naming Matters</span>
+    <span>Translate · Don't Dump</span>
+  </footer>
+</section>
+
+<!-- ============ 10. Lookup 對照表範例 (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>4-2 · Lookup Mapping</div>
+    <div>10 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-2</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Step 02 · 對照表長這樣</div>
+    <h2 class="h-xl" data-anim>左邊填<em>網址</em>，右邊填<em>名字</em></h2>
+    <div style="margin-top:1.2vh">
+      <div class="rowline" data-anim>
+        <div class="k">Input · 當 Page Path 是</div>
+        <div class="v">Output · 就把這個變數的值變成</div>
+        <div class="m">說明</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k" style="font-family:var(--mono)">/contact/</div>
+        <div class="v"><em>一般聯絡表單</em></div>
+        <div class="m">主聯絡頁</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k" style="font-family:var(--mono)">/request-quote/</div>
+        <div class="v"><em>報價申請</em></div>
+        <div class="m">前期客</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k" style="font-family:var(--mono)">/support/</div>
+        <div class="v"><em>售後服務維修</em></div>
+        <div class="m">既有客</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k" style="opacity:.7">Default Value</div>
+        <div class="v"><em>其他表單</em></div>
+        <div class="m">兜底值</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:.6vh">
+      <strong>必勾「設定預設值」</strong>：不勾的話，遇到不在清單上的頁面就送<em>空字串</em>，GA4 報表會多一列空白，難看又難解。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-2 · Mapping Table</span>
+    <span>Default · 兜底是基本功</span>
+  </footer>
+</section>
+
+<!-- ============ 11. Lookup 三步設定 pipeline (light) · STARRED ============ -->
+<section class="slide light" data-animate="pipeline">
+  <header class="chrome">
+    <div>4-2 · Setup Recipe</div>
+    <div>11 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-2</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>Step 03 · 三步建立查表變數</div>
+    <h2 class="h-xl" data-anim>Lookup Table <em>三步設定</em></h2>
+    <div class="pipeline-section" style="margin-top:1vh">
+      <div class="pipeline-label" data-anim>Pipeline · Input → Mapping → Plug-in</div>
+      <div class="pipeline" data-cols="3">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01</div>
+          <div class="step-title">選 Input</div>
+          <div class="step-desc">變數類型 → <em>對照表（Lookup Table）</em>，Input Variable 選 <code>{{Page Path}}</code>。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02</div>
+          <div class="step-title">填對照</div>
+          <div class="step-desc">逐列「新增列」，左欄填網址、右欄填可讀名稱。<em>勾預設值</em>。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03</div>
+          <div class="step-title">接 GA4</div>
+          <div class="step-desc">回 GA4 事件代碼，新增參數 <code>form_name</code> = <code>{{Lookup - 表單名稱}}</code>。</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1vh">
+      <strong>命名慣例</strong>：所有 Lookup Table 一律以 <em>Lookup -</em> 開頭，跟 DLV、CSS Selector 區隔。<em>未來找變數</em>不用猜。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-2 · Setup Pipeline</span>
+    <span>Input · Map · Plug-in</span>
+  </footer>
+</section>
+
+<!-- ============ 12. Act III 幕封 · CH4-3 / CH4-4 (hero light) ============ -->
+<section class="slide hero light">
+  <header class="chrome">
+    <div>Act III · Unit 4-3 · 4-4</div>
+    <div>12 / 22</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Chapter 4.3–4.4 · Governance &amp; Compliance</div>
+    <h2 class="h-hero" style="font-size:8vw" data-anim>治理<em>紅線</em></h2>
+    <p class="lead" style="max-width:46em;margin:0 auto" data-anim>發布前的 SOP、寫得清楚的 Release Note、<br>還有 2024/3 後<em>跨境一定要</em>的 Consent Mode v2。</p>
+    <div class="meta-row" style="justify-content:center;margin-top:2vh" data-anim>
+      <span>4 Slides</span><span>·</span><span>SOP + Compliance</span>
+      <span>·</span><span>~50 min</span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Act III · Governance</span>
+    <span>Unit 4-3 · 4-4</span>
+  </footer>
+</section>
+
+<!-- ============ 13. CH4-3 預覽 SOP pipeline (dark) · STARRED ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <header class="chrome">
+    <div>4-3 · Preview Triage</div>
+    <div>13 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-3</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>4-3 · 沒觸發時，三步排查</div>
+    <h2 class="h-xl" data-anim>Tags Not Fired，<em>看紅叉叉</em></h2>
+    <p class="lead" style="max-width:46em" data-anim>Preview 是<em>你的沙盒</em>—— 任何修改先回沙盒跑一次。</p>
+    <div class="pipeline-section" style="margin-top:1vh">
+      <div class="pipeline-label" data-anim>Pipeline · Event → Tag → Trigger</div>
+      <div class="pipeline" data-cols="3">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01</div>
+          <div class="step-title">點 Event</div>
+          <div class="step-desc">在左側時間軸<em>點下你剛剛操作的事件</em>（Click / Form / Page View）。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02</div>
+          <div class="step-title">展 Tags</div>
+          <div class="step-desc">右側切到 Tags 分頁，往下找 <em>Tags Not Fired</em>，點開可疑代碼。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03</div>
+          <div class="step-title">看紅叉叉</div>
+          <div class="step-desc">展開 Firing Triggers，<em>紅色叉叉直接告訴你</em>哪一條過濾條件沒滿足。</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1vh">
+      <strong>最常見原因</strong>：Click Text 設「馬上購買」，但<em>網頁實際寫「立即購買」</em>—— 一字之差就不 fire。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-3 · Triage</span>
+    <span>Event · Tag · Trigger</span>
+  </footer>
+</section>
+
+<!-- ============ 14. CH4-3 Release Note 範本 (light) ============ -->
+<section class="slide light">
+  <header class="chrome">
+    <div>4-3 · Release Note Template</div>
+    <div>14 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-3</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>4-3 · 發布前最後一關</div>
+    <h2 class="h-xl" data-anim>版本說明，<em>絕對不要空白</em></h2>
+    <p class="lead" style="max-width:46em" data-anim>「還原」這個救命按鈕，<em>建立在版本名稱上</em>—— 沒寫名稱，明天炸了你也找不到回家的路。</p>
+    <div class="callout" data-anim style="margin-top:1vh;padding:2vh 2vw;background:rgba(var(--ink-rgb),.05);border-left:3px solid currentColor">
+      <div class="kicker" style="opacity:.7">Release Note · 範本</div>
+      <div class="h-md" style="font-size:1.4vw;line-height:1.55;margin-top:.8vh">
+        <strong>版本名稱</strong>：v1.2 - <em>新增 SureForms 追蹤與對照表</em><br>
+        <strong>說明</strong>：<br>
+        &nbsp;&nbsp;1. 新增 <code>generate_lead</code> 事件<br>
+        &nbsp;&nbsp;2. 加入 Lookup Table 處理表單網址<br>
+        &nbsp;&nbsp;3. 影響範圍：<em>聯絡頁、報價頁、維修頁</em>
+      </div>
+    </div>
+    <div class="rowline" data-anim>
+      <div class="k">三段式</div>
+      <div class="v"><em>動詞 + 對象 + 範圍</em>—— 半年後自己看也讀得懂。</div>
+      <div class="m">Why · What · Where</div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-3 · Release Note</span>
+    <span>Future-self readable</span>
+  </footer>
+</section>
+
+<!-- ============ 15. CH4-4 Consent Mode v2 模式表 (dark) ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>4-4 · Consent Mode v2</div>
+    <div>15 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-4</a></div>
+  </header>
+  <div class="frame" style="gap:2.2vh">
+    <div class="kicker" data-anim>4-4 · 2024/3 之後跨境必補</div>
+    <h2 class="h-xl" data-anim>Advanced vs Basic，<em>差在哪</em></h2>
+    <p class="lead" style="max-width:46em" data-anim>歐盟 GDPR 要求<em>主動同意</em>才追蹤。沒做 Consent v2，廣告再行銷清單<em>不再累積</em>。</p>
+    <div style="margin-top:1vh">
+      <div class="rowline" data-anim>
+        <div class="k">模式 · 階段</div>
+        <div class="v">Tag 行為</div>
+        <div class="m">適用</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k"><em>Advanced</em> · 同意前</div>
+        <div class="v">Tag 仍載入，只送 <em>cookieless ping</em>—— 給 Google 模型估算流量。</div>
+        <div class="m">主流選擇</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k"><em>Advanced</em> · 同意後</div>
+        <div class="v">完整 Tag 行為，帶 cookie 識別 —— 行銷再行銷清單<em>正常累積</em>。</div>
+        <div class="m">同 Tag · 兩階段</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k"><em>Basic</em> · 同意前</div>
+        <div class="v">Tag <em>根本不載入</em>，最保守、但拒絕者完全無數據。</div>
+        <div class="m">合規優先</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">v2 新旗標</div>
+        <div class="v"><em>ad_user_data</em> + <em>ad_personalization</em>—— 兩個都 granted，再行銷才累積。</div>
+        <div class="m">EEA 強制</div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-4 · Consent States</span>
+    <span>v1 ≠ v2 · 跨境必補</span>
+  </footer>
+</section>
+
+<!-- ============ 16. CH4-4 三步曲 + CMP (light) · STARRED ============ -->
+<section class="slide light" data-animate="pipeline">
+  <header class="chrome">
+    <div>4-4 · GTM Setup &amp; CMP</div>
+    <div>16 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-4</a></div>
+  </header>
+  <div class="frame" style="gap:2.2vh">
+    <div class="kicker" data-anim>4-4 · GTM 設定三步曲</div>
+    <h2 class="h-xl" data-anim>Default → Init → <em>Update</em></h2>
+    <div class="pipeline-section" style="margin-top:.8vh">
+      <div class="pipeline-label" data-anim>Pipeline · 三步上線</div>
+      <div class="pipeline" data-cols="3">
+        <div class="step" data-anim="step">
+          <div class="step-nb">01</div>
+          <div class="step-title">開 Overview</div>
+          <div class="step-desc">容器設定 → <em>啟用同意設定覆寫</em>，每個 Tag 多出 Consent Settings 分頁。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">02</div>
+          <div class="step-title">Init Tag</div>
+          <div class="step-desc">Custom HTML，類型 <em>Consent Initialization</em>，預設全部 <code>denied</code>。觸發 All Pages（特殊）。</div>
+        </div>
+        <div class="step" data-anim="step">
+          <div class="step-nb">03</div>
+          <div class="step-title">Update</div>
+          <div class="step-desc">使用者按「接受」時，<code>gtag('consent','update',...)</code> 把四個旗標改 <em>granted</em>。</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:1vh">
+      <div class="rowline" data-anim>
+        <div class="k">不想自己寫</div>
+        <div class="v"><em>CookieYes</em>（中文友善）／ <em>Cookiebot</em>（Google 認證）／ <em>OneTrust</em>（企業級）—— 都有 GTM 範本，貼上就行。</div>
+        <div class="m">CMP</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">⚠ 常見漏洞</div>
+        <div class="v">只設 GA4／Google Ads，<em>忘了 Meta Pixel</em>—— 拒絕者照樣被 Pixel 抓，最高罰營業額 4%。</div>
+        <div class="m">Pixel 也要管</div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-4 · Setup &amp; CMP</span>
+    <span>v2 三旗標 · 別漏 Pixel</span>
+  </footer>
+</section>
+
+<!-- ============ 17. Act IV 幕封 · CH4-5 / PRAC (hero dark) ============ -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div>Act IV · Unit 4-5 · PRAC</div>
+    <div>17 / 22</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3vh">
+    <div class="kicker" data-anim>Chapter 4.5 + PRAC · Debug &amp; Acceptance</div>
+    <h2 class="h-hero" style="font-size:8vw" data-anim>除錯 ×<em>驗收</em></h2>
+    <p class="lead" style="max-width:46em;margin:0 auto" data-anim>事件沒進，<em>三分鐘定位</em>是哪一層出問題。<br>從本機沙盒到 GA4 報表，<em>整段交付</em>給客戶。</p>
+    <div class="meta-row" style="justify-content:center;margin-top:2vh" data-anim>
+      <span>4 Slides</span><span>·</span><span>Debug + Workflow + GA4</span>
+      <span>·</span><span>~50 min</span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Act IV · Debug &amp; Hand-off</span>
+    <span>Unit 4-5 · PRAC4-1 · PRAC4-2</span>
+  </footer>
+</section>
+
+<!-- ============ 18. CH4-5 五層排查 rowline (light) ============ -->
+<section class="slide light">
+  <header class="chrome">
+    <div>4-5 · 5-Layer Debug</div>
+    <div>18 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-5.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-5</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>4-5 · 從瀏覽器逐層往後</div>
+    <h2 class="h-xl" data-anim>五層排查順序，<em>不要亂跳</em></h2>
+    <p class="lead" style="max-width:46em" data-anim>單靠 GTM Preview 不夠 —— 沒收到？trigger、Tag、平台、Request、後端，<em>一層一層剝</em>。</p>
+    <div style="margin-top:1vh">
+      <div class="rowline" data-anim>
+        <div class="k">L1 · dataLayer</div>
+        <div class="v">Console 打 <code>dataLayer</code>—— <em>事件 push 進來了嗎</em>？欄位名對嗎？</div>
+        <div class="m">DevTools</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L2 · GTM</div>
+        <div class="v">Preview / Tag Assistant —— Trigger 觸發？Tag fire？<em>Variable 取值對嗎</em>？</div>
+        <div class="m">GTM</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L3 · 平台接收</div>
+        <div class="v">GA4 DebugView · Meta Pixel Helper · TikTok Events Manager —— <em>平台真的收到了嗎</em>？</div>
+        <div class="m">Platform</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L4 · Request</div>
+        <div class="v">DevTools Network 過濾 <code>collect</code> / <code>tr</code>—— <em>HTTP payload 對嗎</em>？</div>
+        <div class="m">Network</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">L5 · CAPI</div>
+        <div class="v">Server log · Meta Test Events —— <em>後端 API 接到嗎</em>？dedup 配對成功？</div>
+        <div class="m">Server</div>
+      </div>
+    </div>
+    <p class="body-zh" data-anim style="opacity:.78;text-align:center;margin-top:.4vh">原則：<em>L1 沒事就往 L2 找</em>，L3 沒收到就回 L4 看 request—— 不要跳。</p>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-5 · 5 Layers</span>
+    <span>由近到遠 · 逐層往後</span>
+  </footer>
+</section>
+
+<!-- ============ 19. CH4-5 平台層 + Network grid-3 (dark) · STARRED ============ -->
+<section class="slide dark">
+  <header class="chrome">
+    <div>4-5 · Platform &amp; Network Tools</div>
+    <div>19 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/CH4-5.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 4-5</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>4-5 · 平台層 · Network 過濾速查</div>
+    <h2 class="h-xl" data-anim>L3 / L4 工具，<em>對症下藥</em></h2>
+    <div class="grid-3" style="margin-top:1.2vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">L3 · GA4 DebugView</div>
+        <div class="stat-nb" style="font-size:2.4vw;line-height:1.1"><em>debug_mode</em></div>
+        <div class="stat-note">Preview 模式自動加 debug flag —— Preview 期間的事件<em>幾秒內</em>會出現在 DebugView。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">L3 · Meta Pixel Helper</div>
+        <div class="stat-nb" style="font-size:2.4vw;line-height:1.1"><em>red / yellow / green</em></div>
+        <div class="stat-note">紅 = 錯，黃 = 警告（常見 AEM 未設定），綠 = OK。<em>match quality</em> 一眼看完。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">L4 · DevTools Network</div>
+        <div class="stat-nb" style="font-size:2.4vw;line-height:1.1"><em>collect · tr?</em></div>
+        <div class="stat-note">GA4 過濾 <code>collect</code> 看 <code>en</code> / <code>ep.xxx</code> / <code>tid</code>；Meta 過濾 <code>tr?</code> 看 <code>ev</code> / <code>cd[value]</code> / <code>eid</code>。</div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:1vh">
+      <strong>疑難雜症四連</strong>：(1) GA4 沒進 → 對 <code>tid</code>；(2) Meta value=0 → DLV 取不到值；(3) Pixel fire 兩次 → 重複 Tag；(4) CAPI 跟 Pixel <em>dedup 失敗</em> → <code>event_id</code> 必須<em>完全一樣</em>（含空白大小寫）。
+    </div>
+  </div>
+  <footer class="foot">
+    <span>Unit 4-5 · Tools Cheatsheet</span>
+    <span>對 tid · 比 eid · 看 ep</span>
+  </footer>
+</section>
+
+<!-- ============ 20. PRAC4-1 五步驟 check-list (light) · STARRED ============ -->
+<section class="slide light">
+  <header class="chrome">
+    <div>PRAC4-1 · Workflow Checklist</div>
+    <div>20 / 22 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gtm/part4/PRAC4-1.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC4-1</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>演練 1 · 從需求到上線 · 5 步驟</div>
+    <h2 class="h-xl" data-anim>今日情境：<em>預約課程體驗</em>表單追蹤</h2>
+    <p class="lead" style="max-width:46em" data-anim>客戶需求：表單送出後出現「感謝你，我們將盡快與你聯繫。」<em>每週幾人送出</em>？兩兩一組，照清單跑完。</p>
+    <div style="margin-top:1vh">
+      <div class="rowline" data-anim>
+        <div class="k">01 · 定義轉換</div>
+        <div class="v">追<em>感謝字樣出現</em>（元素可見度）還是表單 ID？本情境用<em>元素可見度</em>。</div>
+        <div class="m">Define</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">02 · 開變數</div>
+        <div class="v">變數 → 內建變數，確認 <em>Element Visibility</em> 全部開啟。</div>
+        <div class="m">Variables</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">03 · 建觸發</div>
+        <div class="v">元素可見度，CSS 選擇器指感謝訊息，<em>勾「DOM 變更時觀察」</em>。</div>
+        <div class="m">Trigger</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">04 · 預覽驗</div>
+        <div class="v">Tag Assistant 預覽 → 送表單 → 確認 <code>generate_lead</code> <em>Fire</em>。沒 fire 回頭調 selector。</div>
+        <div class="m">Preview</div>
+      </div>
+      <div class="rowline" data-anim>
+        <div class="k">05 · 寫版本</div>
+        <div class="v">版本名稱：<em>「新增：預約表單轉換追蹤（generate_lead）」</em>，發布後到 PRAC4-2 驗收。</div>
+        <div class="m">Publish</div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>PRAC4-1 · Hands-on</span>
+    <span>Define · Var · Trigger · Preview · Publish</span>
+  </footer>
+</section>
+
+<!-- ============ 21. PRAC4-2 GA4 報表驗收 directional (light) ============ -->
+<section class="slide light" data-animate="directional">
+  <header class="chrome">
+    <div>PRAC4-2 · GA4 Acceptance</div>
+    <div>21 / 22 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gtm/part4/PRAC4-2.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · PRAC4-2</a></div>
+  </header>
+  <div class="frame" style="gap:2.4vh">
+    <div class="kicker" data-anim>演練 2 · GA4 報表驗收 · 兩種時機</div>
+    <h2 class="h-xl" data-anim>即時驗收 vs <em>標準驗收</em></h2>
+    <div class="split" style="margin-top:1.6vh;align-items:stretch">
+      <div data-anim="left" style="display:flex;flex-direction:column;gap:1.4vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">即時 · DebugView</div>
+        <div class="h-md" style="font-size:1.7vw;line-height:1.4">發布後<em>幾秒</em>看到</div>
+        <div class="body-zh" style="opacity:.78">管理 → 資源欄位 → DebugView。Preview 開著就有 debug flag，<em>第一道驗收</em>用這個。</div>
+        <div class="meta-row" style="margin-top:auto"><span>等待</span><span>·</span><span>秒級</span></div>
+      </div>
+      <div data-anim="right" style="display:flex;flex-direction:column;gap:1.4vh;padding:2vh 2vw;border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.7">標準 · 事件報表</div>
+        <div class="h-md" style="font-size:1.7vw;line-height:1.4"><em>24–48 小時</em>後驗</div>
+        <div class="body-zh" style="opacity:.78">報表 → 互動 → 事件。<em>新事件首次延遲 24 小時</em>，之後 4–8 小時。對量、確認觸發合理。</div>
+        <div class="meta-row" style="margin-top:auto"><span>等待</span><span>·</span><span>次日 / 隔日</span></div>
+      </div>
+    </div>
+    <div data-anim="divider" style="border-top:1px dashed rgba(127,127,127,.4);margin-top:1.4vh"></div>
+    <p class="body-zh" data-anim style="text-align:center;opacity:.82">交付給客戶前，<em>兩種都跑一次</em>—— 才算完整收尾。</p>
+  </div>
+  <footer class="foot">
+    <span>PRAC4-2 · Acceptance</span>
+    <span>DebugView · 事件報表</span>
+  </footer>
+</section>
+
+<!-- ============ 22. 結束 hero (hero dark) ============ -->
+<section class="slide hero dark">
+  <header class="chrome">
+    <div>Part 4 · Wrap</div>
+    <div>22 / 22</div>
+  </header>
+  <div class="frame center" style="justify-content:center;text-align:center;gap:3.6vh">
+    <div class="kicker" data-anim>End of Part 4 · Course Complete</div>
+    <h1 class="h-hero" data-anim>把<em>主導權</em>留在你手上</h1>
+    <p class="lead" style="max-width:46em;margin:0 auto" data-anim>你已經走過 LocalWP 沙盒、GTM 容器、<br>事件追蹤、資料層、Lookup、Consent v2、五層 Debug——<br>整段流程<em>都能自己跑</em>。</p>
+    <div class="meta-row" style="justify-content:center;margin-top:2vh" data-anim>
+      <span>Part 4 Done</span><span>·</span><span>4-1 / 4-2 / 4-3 / 4-4 / 4-5</span>
+      <span>·</span><span>PRAC4-1 / PRAC4-2</span>
+    </div>
+    <div class="meta-row" style="justify-content:center;margin-top:1vh;opacity:.74" data-anim>
+      <span>Next Step</span><span>·</span><span>真實專案 · 真實流量 · 真實報表</span>
+    </div>
+  </div>
+  <footer class="foot">
+    <span>弄一下工作室</span>
+    <span class="title">GTM 實務演練 · 全課程完結</span>
+    <span>Thank you</span>
+  </footer>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>

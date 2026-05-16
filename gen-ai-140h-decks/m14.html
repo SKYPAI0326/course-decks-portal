@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D14 · Function + Agents（CH6-3 + CH6-4）｜生成式 AI 職訓 140hr｜弄一下工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#2a1e13;
+    --ink-rgb:42,30,19;
+    --paper:#eedfc7;
+    --paper-rgb:238,223,199;
+    --paper-tint:#e0d0b6;
+    --ink-tint:#3a2a1d;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.14vw);line-height:1.62;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:1.4vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(14px,1.12vw);line-height:1.5;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:1.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:5.2vw;
+    line-height:1.06;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2.3vw;
+    line-height:1.3;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ====================================================================
+     D14 · Function + Agents（CH6-3 + CH6-4）· 30 slides
+     幕結構：開場(1-3) / Act I Function Calling(4-10) / Act II ReAct Loop(11-14)
+            / Act III RAG-as-Tool(15-19) / Act IV 三大陷阱(20-25) / Act V 工具選擇(26-28)
+            / 收束 → D15(29-30)
+     主題色：🍂 牛皮紙
+     ==================================================================== -->
+
+<!-- ============ 1 / 30 · Cover ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>生成式 AI 職訓實務應用班 140hr · 弄一下工作室</div>
+    <div>D14 / 20</div>
+  </div>
+  <div class="frame" style="display:grid; gap:2.4vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Day 14 · Part 6 · CH6-3 + CH6-4</div>
+    <h1 class="h-hero" data-anim>Function <em>+</em> Agents</h1>
+    <h2 class="h-sub" data-anim>讓模型不只「說話」，還能<em>動手</em></h2>
+    <p class="lead" style="max-width:62vw" data-anim>
+      從 Tool Schema 到 ReAct Loop，從把 RAG 包成工具到三大陷阱防禦。今天結束，你能寫出第一個會循環呼叫工具的 Agent，並守得住生產環境。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>Vol.14</span><span>·</span><span>Function Calling · ReAct · Tool-as-RAG · 防禦</span><span>·</span><span>2026</span>
+    </div>
+    <div class="meta-row" style="margin-top:.8vh;opacity:.78" data-anim>
+      <span>Duration · 4-5 小時授課 · D14 / 20</span>
+    </div>
+    <div class="meta-row" style="margin-top:.8vh;opacity:.74" data-anim>
+      <span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>本日為 Part 6 · AI 應用開發進階的核心一日</div>
+    <div>— D14 / 20 —</div>
+  </div>
+</section>
+
+<!-- ============ 2 / 30 · 大引用 ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome">
+    <div>Why Tools · 為什麼要讓模型動手</div>
+    <div>02 / 30</div>
+  </div>
+  <div class="frame" style="display:grid; gap:5vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>The Premise · 本日主張</div>
+    <blockquote style="font-family:var(--serif-zh); font-weight:700; font-size:5.2vw; line-height:1.22; letter-spacing:-.01em; max-width:78vw">
+      <span data-anim="line" style="display:block">不會用工具的 LLM，</span>
+      <span data-anim="line" style="display:block">永遠停在<em>聊天框</em>裡。</span>
+    </blockquote>
+    <p class="lead" style="max-width:60vw; opacity:.72" data-anim>
+      Function Calling 是 LLM 從「文字產生器」變成「行動代理」的開關。<br>
+      但執行權永遠在你手上——這是它能上生產的前提。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>— D14 核心主張</span><span>·</span><span>Tools 的本質是「結構化意圖」</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 02 · The Premise</div>
+    <div>— · —</div>
+  </div>
+</section>
+
+<!-- ============ 3 / 30 · 學習目標 grid-3 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>D14 · Learning Outcomes</div>
+    <div>03 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>OUTCOMES · 今天結束你會做到</div>
+    <h2 class="h-xl" data-anim>四件事</h2>
+    <p class="lead" style="margin-top:3vh; max-width:60vw" data-anim>不是「聽過」，而是「跑得起來」。</p>
+
+    <div class="grid-3" style="margin-top:6vh">
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 01</div>
+        <div class="stat-nb" style="font-size:3vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">寫得出 Tool Schema</div>
+        <div class="stat-note">用 JSON Schema 定義一個工具，description 寫到模型能正確判斷觸發。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 02</div>
+        <div class="stat-nb" style="font-size:3vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">跑得動 ReAct Loop</div>
+        <div class="stat-note">手寫一個會循環的 Agent，至少呼叫兩次工具再收斂出答案。</div>
+      </div>
+      <div class="stat-card" data-anim>
+        <div class="stat-label">Outcome 03</div>
+        <div class="stat-nb" style="font-size:3vw; font-family:var(--serif-zh); line-height:1.2; letter-spacing:0">擋得住三大陷阱</div>
+        <div class="stat-note">無限迴圈、工具幻覺、未處理失敗——三種防禦各自寫在程式哪一段。</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 03 · 學習目標 · 4-5 hours</div>
+    <div>5 Acts · D14</div>
+  </div>
+</section>
+
+<!-- ============ 4 / 30 · Act I 幕封 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>第一幕 · Function Calling 起點</div>
+    <div>Act I · 04 / 30</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act I · CH6-4 §1 · 約 80 分鐘</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>結構化<em>意圖</em></h1>
+    <h2 class="h-sub" data-anim>模型不執行程式，只輸出「我想呼叫什麼」</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      搞清楚這個邊界，你才知道為什麼 Function Calling 是安全的、可控的，<br>
+      而不是「讓 AI 直接動你的資料庫」這種恐怖故事。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act I 開幕</div>
+    <div>— Function Calling 三步驟 —</div>
+  </div>
+</section>
+
+<!-- ============ 5 / 30 · 為何要 Function Calling ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Context · 為什麼純聊天不夠</div>
+    <div>05 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:6vh">
+    <div style="display:flex; flex-direction:column; justify-content:space-between; gap:3vh">
+      <div>
+        <div class="kicker" data-anim>The Limit · 純文字模型的天花板</div>
+        <h2 class="h-xl" style="font-size:6vw" data-anim>
+          模型<em>不知道現在</em>。
+        </h2>
+        <p class="lead" style="margin-top:3vh" data-anim>
+          它不知道現在幾點、不知道你的庫存、<br>
+          不知道訂單狀態、不知道客戶是誰。<br>
+          所有「即時 / 私有 / 動態」資料，它都沒有。
+        </p>
+      </div>
+      <div class="callout" data-anim>
+        Tools 是這片空白的<strong>橋</strong>——<br>
+        讓模型「知道何時去問」，由你決定「答案怎麼回」。
+        <div class="callout-src">— D14 · Function Calling 動機</div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:2.4vh; margin-top:7vh">
+      <div class="kicker" data-anim>Therefore · 所以</div>
+      <p class="body-zh" data-anim>
+        Tools 補三類能力：
+      </p>
+      <ul style="display:flex; flex-direction:column; gap:1.6vh; padding-left:1.2em; font-family:var(--sans-zh); font-size:max(14px,1.15vw); line-height:1.6; opacity:.82" data-anim>
+        <li><strong>即時資訊</strong>：天氣、匯率、新聞</li>
+        <li><strong>私有資料</strong>：訂單、客戶、內部知識</li>
+        <li><strong>副作用操作</strong>：寄信、寫入、付款</li>
+      </ul>
+      <p class="body-zh" data-anim style="margin-top:2vh">
+        模型只負責<strong style="font-family:var(--serif-zh)">判斷該呼叫哪個</strong>。<br>
+        執行、權限、稽核——全在你的程式裡。
+      </p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 05 · The Limit</div>
+    <div>Act I · §1</div>
+  </div>
+</section>
+
+<!-- ============ 6 / 30 · 模型 vs 程式（左右對比） ============ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome">
+    <div>Boundary · 邊界界定</div>
+    <div>06 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Who Does What · 各自負責什麼</div>
+    <h2 class="h-xl" style="margin-bottom:4vh" data-anim>模型輸出意圖，<em>程式才執行</em></h2>
+
+    <div class="grid-2-6-6" style="gap:5vw 4vh">
+      <div data-anim="left" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker" style="opacity:.9">Model · 模型負責</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.4vw">判斷 / 組裝 / 解讀</h3>
+        <ul style="margin-top:3vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.4vh; font-family:var(--sans-zh); font-size:max(14px,1.05vw); line-height:1.55">
+          <li>讀 description 判斷該用哪個工具</li>
+          <li>從對話拆出參數，組成 JSON</li>
+          <li>看 tool_result 決定下一步</li>
+          <li>不能直接呼叫網路、檔案、資料庫</li>
+        </ul>
+      </div>
+      <div data-anim="right" style="padding:3vh 2vw; border-left:3px solid currentColor; opacity:.65">
+        <div class="kicker" style="opacity:.9">Code · 程式負責</div>
+        <h3 class="h-md" style="margin-top:2vh; font-size:2.4vw">驗證 / 執行 / 回傳</h3>
+        <ul style="margin-top:3vh; padding-left:1.2em; display:flex; flex-direction:column; gap:1.4vh; font-family:var(--sans-zh); font-size:max(14px,1.05vw); line-height:1.55">
+          <li>驗證工具名 + 參數合法</li>
+          <li>真正去呼叫 API、查表、寫 DB</li>
+          <li>把結果結構化包回 tool_result</li>
+          <li>所有副作用都要過你這關</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:5vh" data-anim>
+      <strong>這就是 Function Calling 的安全性來源。</strong>模型再怎麼幻想要「rm -rf」，也得通過你程式碼那關。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 06 · Boundary</div>
+    <div>Act I · §1</div>
+  </div>
+</section>
+
+<!-- ============ 7 / 30 · 運作三步驟 pipeline ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>How It Works · 運作三步驟</div>
+    <div>07 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>The Cycle · 一輪 Function Calling</div>
+    <h2 class="h-xl" data-anim>三步走，<em>反覆直到收束</em></h2>
+
+    <div class="pipeline" style="margin-top:6vh; display:grid; grid-template-columns:1fr 1fr 1fr; gap:2vw">
+      <div data-anim="step" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">Step 01</div>
+        <h3 class="h-md" style="margin-top:1.5vh; font-size:2.2vw">你定義工具</h3>
+        <p class="body-zh" style="margin-top:1.5vh; opacity:.78">
+          名稱 + description + JSON Schema 參數定義，<br>
+          一次傳給模型作為「可用工具清單」。
+        </p>
+      </div>
+      <div data-anim="step" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">Step 02</div>
+        <h3 class="h-md" style="margin-top:1.5vh; font-size:2.2vw">模型回 JSON</h3>
+        <p class="body-zh" style="margin-top:1.5vh; opacity:.78">
+          模型決定「呼叫哪個工具、帶什麼參數」，<br>
+          回傳 tool_use 區塊，<em>不執行任何事</em>。
+        </p>
+      </div>
+      <div data-anim="step" style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">Step 03</div>
+        <h3 class="h-md" style="margin-top:1.5vh; font-size:2.2vw">程式接手</h3>
+        <p class="body-zh" style="margin-top:1.5vh; opacity:.78">
+          你的程式真正執行，把結果以 tool_result <br>
+          送回模型繼續對話，必要時再循環。
+        </p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:5vh" data-anim>
+      Step 01 是<strong>一次性設定</strong>，Step 02-03 是<strong>每次對話的循環</strong>。記住這個區分，下一幕的 Loop 就理所當然。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 07 · The Cycle</div>
+    <div>Act I · §1</div>
+  </div>
+</section>
+
+<!-- ============ 8 / 30 · Tool Schema 範本（程式碼）★ ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Tool Schema · Anthropic Claude 範本</div>
+    <div>08 / 30 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Reference Schema · 照抄起手式</div>
+    <h2 class="h-xl" data-anim>get_weather 的<em>標準寫法</em></h2>
+
+    <pre style="margin-top:4vh; padding:3vh 2.5vw; background:rgba(var(--paper-rgb),.06); border:1px solid rgba(var(--paper-rgb),.2); border-radius:4px; font-family:var(--mono); font-size:max(13px,1.05vw); line-height:1.65; overflow-x:auto" data-anim>
+<span style="opacity:.55">// Anthropic Claude · 工具定義範例</span>
+{
+  <span style="opacity:.95">"name"</span>: <span style="opacity:.75">"get_weather"</span>,
+  <span style="opacity:.95">"description"</span>: <span style="opacity:.75">"查詢指定城市的當前天氣"</span>,
+  <span style="opacity:.95">"input_schema"</span>: {
+    <span style="opacity:.95">"type"</span>: <span style="opacity:.75">"object"</span>,
+    <span style="opacity:.95">"properties"</span>: {
+      <span style="opacity:.95">"city"</span>: {
+        <span style="opacity:.95">"type"</span>: <span style="opacity:.75">"string"</span>,
+        <span style="opacity:.95">"description"</span>: <span style="opacity:.75">"城市名稱，例如 台北"</span>
+      },
+      <span style="opacity:.95">"unit"</span>: {
+        <span style="opacity:.95">"type"</span>: <span style="opacity:.75">"string"</span>,
+        <span style="opacity:.95">"enum"</span>: [<span style="opacity:.75">"celsius"</span>, <span style="opacity:.75">"fahrenheit"</span>]
+      }
+    },
+    <span style="opacity:.95">"required"</span>: [<span style="opacity:.75">"city"</span>]
+  }
+}
+</pre>
+
+    <div class="meta-row" style="margin-top:3vh" data-anim>
+      <span>三個必填欄位</span><span>·</span><span>name / description / input_schema</span><span>·</span><span>required 決定強制度</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 08 · Schema Reference</div>
+    <div>Act I · §1</div>
+  </div>
+</section>
+
+<!-- ============ 9 / 30 · description 寫法 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>The Crucial Field · description 是寫給模型看的</div>
+    <div>09 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Description · 觸發精準度的命脈</div>
+    <h2 class="h-xl" data-anim>寫 description = <em>寫給模型的</em>說明文件</h2>
+
+    <div class="rowline" style="margin-top:3.5vh; display:flex; flex-direction:column; gap:1.2vh">
+      <div class="row" data-anim style="display:grid; grid-template-columns:1fr 1.5fr 2fr; gap:3vw; padding:1.4vh 1vw; border-bottom:1px solid rgba(var(--ink-rgb),.18)">
+        <div><strong>級別</strong></div>
+        <div><strong>寫法</strong></div>
+        <div><strong>結果</strong></div>
+      </div>
+      <div class="row" data-anim style="display:grid; grid-template-columns:1fr 1.5fr 2fr; gap:3vw; padding:1.2vh 1vw; border-bottom:1px solid rgba(var(--ink-rgb),.1)">
+        <div style="opacity:.7">爛</div>
+        <div style="font-family:var(--mono); font-size:max(12px,.95vw); opacity:.85">"取得天氣"</div>
+        <div style="opacity:.78">模型常常猜不到要傳什麼參數，或對錯時機呼叫。</div>
+      </div>
+      <div class="row" data-anim style="display:grid; grid-template-columns:1fr 1.5fr 2fr; gap:3vw; padding:1.2vh 1vw; border-bottom:1px solid rgba(var(--ink-rgb),.1)">
+        <div style="opacity:.7">普</div>
+        <div style="font-family:var(--mono); font-size:max(12px,.95vw); opacity:.85">"查詢城市天氣"</div>
+        <div style="opacity:.78">會用，但分不清「現在天氣」vs「未來預報」這種近義場景。</div>
+      </div>
+      <div class="row" data-anim style="display:grid; grid-template-columns:1fr 1.5fr 2fr; gap:3vw; padding:1.2vh 1vw; border-bottom:1px solid rgba(var(--ink-rgb),.1)">
+        <div><strong>好</strong></div>
+        <div style="font-family:var(--mono); font-size:max(12px,.95vw)"><strong>"查詢指定城市的當前天氣，僅限主要城市，不包含未來預報"</strong></div>
+        <div><strong>觸發精準、邊界清楚、模型不會誤用。</strong></div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      把 description 當<strong>給新進工程師看的 docstring</strong>——寫清楚「做什麼 / 不做什麼 / 什麼時候用」。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 09 · Description as Docstring</div>
+    <div>Act I · §1</div>
+  </div>
+</section>
+
+<!-- ============ 10 / 30 · 迷你練習 1 ★ ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Hands-on · 迷你練習 1（CH6-4 mp1）</div>
+    <div>10 / 30 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>MINI PRACTICE 01 · 約 20 分鐘</div>
+    <h2 class="h-xl" data-anim>寫一個會用<em>天氣 + 算術</em>兩個工具的 Agent</h2>
+    <p class="lead" style="margin-top:2vh; max-width:62vw" data-anim>
+      Mock 兩個函式，組一個 while loop，丟一個「台北比東京熱幾度？」<br>
+      看模型是不是真的會依序呼叫 get_weather × 2 → calculator × 1。
+    </p>
+
+    <div class="rowline" style="margin-top:4vh; display:flex; flex-direction:column; gap:1.6vh">
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.7">01</div>
+        <div>定義兩個 schema：<code style="font-family:var(--mono)">get_weather(city)</code>、<code style="font-family:var(--mono)">calculator(expression)</code>，description 寫到能精準觸發。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.7">02</div>
+        <div>寫 while loop：只要 <code style="font-family:var(--mono)">stop_reason === 'tool_use'</code> 就解析、執行 mock、把 tool_result push 回 messages。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.7">03</div>
+        <div>設 <code style="font-family:var(--mono)">max_turns = 5</code> 保護機制，超過就強制跳出。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.7">04</div>
+        <div>丟「台北跟東京現在差幾度？」觀察 console log 的輪次順序與最終文字答案。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:4vh" data-anim>
+      <strong>講義 CH6-4 mp1</strong> 已附完整 schema + mock 行為 + 範例 Prompt + 預期 console 輸出。學員照抄即可跑。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 10 · Mini Practice 01</div>
+    <div>Act I · 收尾</div>
+  </div>
+</section>
+
+<!-- ============ 11 / 30 · Act II 幕封 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>第二幕 · ReAct Agent Loop</div>
+    <div>Act II · 11 / 30</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act II · CH6-4 §2 · 約 60 分鐘</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>觀察 → 思考<br>→ <em>行動</em> → 觀察</h1>
+    <h2 class="h-sub" data-anim>單次工具呼叫解決不了複雜任務，循環才能</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      ReAct 是當代最常見的 Agent 架構。<br>
+      看懂它的本質——「狀態機 + 對話歷史」——你就會自己組任何 Loop。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act II 開幕</div>
+    <div>— Reasoning + Acting —</div>
+  </div>
+</section>
+
+<!-- ============ 12 / 30 · ReAct 四階段 pipeline ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>ReAct Loop · 觀察 → 思考 → 行動 → 觀察</div>
+    <div>12 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Reasoning + Acting</div>
+    <h2 class="h-xl" data-anim>四個階段，<em>循環直到收束</em></h2>
+
+    <div class="pipeline" style="margin-top:6vh; display:grid; grid-template-columns:repeat(4,1fr); gap:1.5vw">
+      <div data-anim="step" style="padding:3vh 1.5vw; border:1px solid rgba(var(--ink-rgb),.25); border-radius:4px">
+        <div class="kicker">01 Observe</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.6vw; margin-top:1.5vh">接收狀態</h3>
+        <p class="body-zh" style="margin-top:1.5vh; font-size:max(13px,1vw); opacity:.78">使用者輸入 + 上輪 tool_result。</p>
+      </div>
+      <div data-anim="step" style="padding:3vh 1.5vw; border:1px solid rgba(var(--ink-rgb),.25); border-radius:4px">
+        <div class="kicker">02 Think</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.6vw; margin-top:1.5vh">推理下一步</h3>
+        <p class="body-zh" style="margin-top:1.5vh; font-size:max(13px,1vw); opacity:.78">模型決定要呼叫哪個工具、帶什麼參數。</p>
+      </div>
+      <div data-anim="step" style="padding:3vh 1.5vw; border:1px solid rgba(var(--ink-rgb),.25); border-radius:4px">
+        <div class="kicker">03 Act</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.6vw; margin-top:1.5vh">輸出 tool_use</h3>
+        <p class="body-zh" style="margin-top:1.5vh; font-size:max(13px,1vw); opacity:.78">程式接手執行，取得結果。</p>
+      </div>
+      <div data-anim="step" style="padding:3vh 1.5vw; border:1px solid rgba(var(--ink-rgb),.25); border-radius:4px; background:rgba(var(--ink-rgb),.05)">
+        <div class="kicker">04 Observe ↻</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.6vw; margin-top:1.5vh">回到第一步</h3>
+        <p class="body-zh" style="margin-top:1.5vh; font-size:max(13px,1vw); opacity:.78">直到 stop_reason = end_turn 才結束。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:5vh" data-anim>
+      <strong>Reasoning 與 Acting 交織</strong>——這就是 ReAct 名稱的來源。模型可以「想一下、做一下、再想一下」，而不是一次想完所有事。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 12 · ReAct Cycle</div>
+    <div>Act II · §2</div>
+  </div>
+</section>
+
+<!-- ============ 13 / 30 · 5 步 Agent Loop 流程 ★ ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Implementation · Agent Loop 程式步驟</div>
+    <div>13 / 30 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>5 Steps · 從零組一個 Loop</div>
+    <h2 class="h-xl" data-anim>實作<em>速查表</em></h2>
+
+    <div class="rowline" style="margin-top:4vh; display:flex; flex-direction:column; gap:1.4vh">
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr 2fr; gap:2.5vw; padding:2.2vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.18); align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">01</div>
+        <div><strong>系統提示 + 工具清單</strong></div>
+        <div style="opacity:.78">告訴模型角色、可用工具、何時該用工具而非直接回答。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr 2fr; gap:2.5vw; padding:2.2vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">02</div>
+        <div><strong>呼叫 API</strong></div>
+        <div style="opacity:.78">模型回 <code style="font-family:var(--mono); opacity:.95">stop_reason: "tool_use"</code>（Claude）/ <code style="font-family:var(--mono); opacity:.95">finish_reason: "tool_calls"</code>（OpenAI）= 想用工具。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr 2fr; gap:2.5vw; padding:2.2vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">03</div>
+        <div><strong>解析 + 執行</strong></div>
+        <div style="opacity:.78">取出 <code style="font-family:var(--mono); opacity:.95">tool_use</code> 區塊，把 <code style="font-family:var(--mono); opacity:.95">input</code> 傳入本地函式取結果。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr 2fr; gap:2.5vw; padding:2.2vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">04</div>
+        <div><strong>tool_result 回送</strong></div>
+        <div style="opacity:.78">以 <code style="font-family:var(--mono); opacity:.95">tool_result</code> 角色把結果送回，讓模型繼續推理。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr 2fr; gap:2.5vw; padding:2.2vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">05</div>
+        <div><strong>循環直到 end_turn</strong></div>
+        <div style="opacity:.78">只要還在要工具就繼續。最終模型輸出文字答案，結束 Loop。</div>
+      </div>
+    </div>
+
+    <div class="meta-row" style="margin-top:4vh" data-anim>
+      <span>關鍵變數</span><span>·</span><span>messages array · stop_reason · max_turns · tool_use_id</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 13 · Loop Reference</div>
+    <div>Act II · §2</div>
+  </div>
+</section>
+
+<!-- ============ 14 / 30 · 狀態機本質 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>The Essence · Agent Loop 的本質</div>
+    <div>14 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Mental Model · 真正的心智模型</div>
+    <h2 class="h-xl" data-anim>Agent Loop 是<em>狀態機</em>，不是 ChatGPT</h2>
+
+    <p class="body-zh" style="margin-top:4vh; max-width:64vw; font-size:max(15px,1.2vw); line-height:1.8" data-anim>
+      你的程式負責維護<strong style="font-family:var(--serif-zh)">對話歷史（messages array）</strong>。<br>
+      模型每次都看到完整歷史，所以它能「記住」前幾輪的工具結果繼續推理。<br><br>
+      模型本身<strong>無記憶</strong>。記憶在你的陣列裡。
+    </p>
+
+    <div class="callout" style="margin-top:5vh" data-anim>
+      <strong>Debug 第一招：把 messages 印出來。</strong>每一輪結束 console.log(JSON.stringify(messages, null, 2))，你就能看到對話的真實樣貌——比 ChatGPT 介面誠實一百倍。
+    </div>
+
+    <div class="meta-row" style="margin-top:4vh" data-anim>
+      <span>三種角色</span><span>·</span><span>user · assistant · user(tool_result)</span><span>·</span><span>都疊在同一個 array</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 14 · State Machine</div>
+    <div>Act II · 收尾</div>
+  </div>
+</section>
+
+<!-- ============ 15 / 30 · Act III 幕封 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>第三幕 · Tools 串知識（RAG-as-Tool）</div>
+    <div>Act III · 15 / 30</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act III · CH6-3 整合 · 約 60 分鐘</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>把 <em>RAG</em><br>包成<em>工具</em></h1>
+    <h2 class="h-sub" data-anim>Agent 需要查資料時，去呼叫一個叫 search_docs 的 function</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      RAG 不一定要寫成獨立 pipeline。<br>
+      包成工具給 Agent 用，模型自己決定何時查、查什麼——更彈性，也更接近真實場景。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act III 開幕</div>
+    <div>— RAG 不是 pipeline，是 tool —</div>
+  </div>
+</section>
+
+<!-- ============ 16 / 30 · 何時 Agent 需要查資料 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Why RAG · Agent 為何需要查資料</div>
+    <div>16 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-3</a></div>
+  </div>
+  <div class="frame grid-2-7-5" style="padding-top:6vh">
+    <div style="display:flex; flex-direction:column; gap:3vh">
+      <div>
+        <div class="kicker" data-anim>The Gap · 模型不知道什麼</div>
+        <h2 class="h-xl" style="font-size:5.6vw" data-anim>
+          訓練資料<em>不會更新</em>，<br>你的文件會。
+        </h2>
+        <p class="lead" style="margin-top:3vh" data-anim>
+          公司 SOP、客戶資料、產品規格、會議紀錄、新政策——<br>
+          這些是模型永遠不知道的「私有現在」。
+        </p>
+      </div>
+      <div class="callout" data-anim>
+        <strong>RAG = Retrieval-Augmented Generation</strong><br>
+        讓 AI「讀你的文件回答問題」，而不是靠訓練資料猜。
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:2.4vh; margin-top:7vh">
+      <div class="kicker" data-anim>So · 因此</div>
+      <p class="body-zh" data-anim>
+        在 D14 的 Agent 架構下：
+      </p>
+      <ul style="display:flex; flex-direction:column; gap:1.6vh; padding-left:1.2em; font-family:var(--sans-zh); font-size:max(14px,1.15vw); line-height:1.6; opacity:.82" data-anim>
+        <li>把「查文件」當成一個 <code style="font-family:var(--mono)">search_docs</code> 工具</li>
+        <li>模型自己判斷何時查、查什麼關鍵字</li>
+        <li>查到的 chunk 變 tool_result 回送</li>
+        <li>模型再決定要不要再查、或開始作答</li>
+      </ul>
+      <p class="body-zh" data-anim style="margin-top:2vh">
+        <strong style="font-family:var(--serif-zh)">RAG 變成 Agent 的一個工具，不是獨立流程。</strong>
+      </p>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 16 · Why RAG</div>
+    <div>Act III · §1</div>
+  </div>
+</section>
+
+<!-- ============ 17 / 30 · RAG 五環節 pipeline ★ ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>RAG Pipeline · 五個必經環節</div>
+    <div>17 / 30 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Indexing（離線） + Querying（線上）</div>
+    <h2 class="h-xl" data-anim>五環節<em>速查表</em></h2>
+
+    <div class="pipeline" style="margin-top:5vh; display:grid; grid-template-columns:repeat(5,1fr); gap:1vw">
+      <div data-anim="step" style="padding:2.5vh 1vw; border:1px solid rgba(var(--paper-rgb),.25); border-radius:4px; text-align:center">
+        <div class="kicker" style="opacity:.7">01</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.2vw; margin-top:1vh">文件讀取</h3>
+        <p style="margin-top:1vh; font-size:max(11px,.85vw); opacity:.7">PDF / Word / 網頁 → 純文字</p>
+      </div>
+      <div data-anim="step" style="padding:2.5vh 1vw; border:1px solid rgba(var(--paper-rgb),.25); border-radius:4px; text-align:center">
+        <div class="kicker" style="opacity:.7">02</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.2vw; margin-top:1vh">切塊</h3>
+        <p style="margin-top:1vh; font-size:max(11px,.85vw); opacity:.7">Chunking（含 overlap）</p>
+      </div>
+      <div data-anim="step" style="padding:2.5vh 1vw; border:1px solid rgba(var(--paper-rgb),.25); border-radius:4px; text-align:center; background:rgba(var(--paper-rgb),.05)">
+        <div class="kicker" style="opacity:.7">03</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.2vw; margin-top:1vh">Embedding</h3>
+        <p style="margin-top:1vh; font-size:max(11px,.85vw); opacity:.7">每塊轉向量入庫</p>
+      </div>
+      <div data-anim="step" style="padding:2.5vh 1vw; border:1px solid rgba(var(--paper-rgb),.25); border-radius:4px; text-align:center; background:rgba(var(--paper-rgb),.05)">
+        <div class="kicker" style="opacity:.7">04</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.2vw; margin-top:1vh">檢索</h3>
+        <p style="margin-top:1vh; font-size:max(11px,.85vw); opacity:.7">問題 → 向量 → top-k</p>
+      </div>
+      <div data-anim="step" style="padding:2.5vh 1vw; border:1px solid rgba(var(--paper-rgb),.25); border-radius:4px; text-align:center">
+        <div class="kicker" style="opacity:.7">05</div>
+        <h3 style="font-family:var(--serif-zh); font-weight:700; font-size:1.2vw; margin-top:1vh">生成</h3>
+        <p style="margin-top:1vh; font-size:max(11px,.85vw); opacity:.7">問題 + chunks → LLM</p>
+      </div>
+    </div>
+
+    <div class="grid-2-6-6" style="margin-top:5vh; gap:3vw">
+      <div data-anim style="padding:2.5vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">01–03 · Indexing</div>
+        <p class="body-zh" style="margin-top:1.5vh; opacity:.8">離線、文件更新才重跑、可預先準備好。</p>
+      </div>
+      <div data-anim style="padding:2.5vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">04–05 · Querying</div>
+        <p class="body-zh" style="margin-top:1.5vh; opacity:.8">線上、每次提問執行、效能瓶頸通常在這。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 17 · RAG Reference</div>
+    <div>Act III · §1</div>
+  </div>
+</section>
+
+<!-- ============ 18 / 30 · 把 RAG 包成工具（左右） ============ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome">
+    <div>Wrap as Tool · 把 RAG 變成 Agent 的工具</div>
+    <div>18 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Two Architectures · 兩種接法</div>
+    <h2 class="h-xl" data-anim>RAG <em>pipeline</em> vs RAG <em>as tool</em></h2>
+
+    <div class="grid-2-6-6" style="margin-top:5vh; gap:4vw 4vh">
+      <div data-anim="left" style="padding:3vh 2vw; border:1px solid rgba(var(--ink-rgb),.25); border-radius:4px">
+        <div class="kicker">Path A · 傳統 RAG Pipeline</div>
+        <h3 class="h-md" style="margin-top:1.5vh; font-size:2vw">每次都查</h3>
+        <p class="body-zh" style="margin-top:2vh; opacity:.78">使用者問 → <strong>強制檢索</strong> → 把 chunks 塞進 prompt → 模型生成。<br><br>簡單、可預期，但「閒聊也檢索」會浪費 token、也沒給模型決定權。</p>
+      </div>
+      <div data-anim="right" style="padding:3vh 2vw; border:2px solid currentColor; border-radius:4px">
+        <div class="kicker">Path B · RAG as Tool（推薦）</div>
+        <h3 class="h-md" style="margin-top:1.5vh; font-size:2vw">模型自己判斷</h3>
+        <p class="body-zh" style="margin-top:2vh"><code style="font-family:var(--mono)">search_docs(query)</code> 變一個 tool。<br><br>模型自己決定：寒暄不查、含糊問題先查、需要交叉比對就<strong>查多次</strong>。和 Agent Loop 天然契合。</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:4vh" data-anim>
+      <strong>實務建議：</strong>從 Path A 起手（簡單可控）；資料越來越多、查詢越來越多元，再升級到 Path B。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 18 · Pipeline vs Tool</div>
+    <div>Act III · §1</div>
+  </div>
+</section>
+
+<!-- ============ 19 / 30 · 迷你練習 2（融合）★ ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Hands-on · 迷你練習 2（融合 CH6-3 + CH6-4）</div>
+    <div>19 / 30 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-3.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-3</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>MINI PRACTICE 02 · 約 25 分鐘</div>
+    <h2 class="h-xl" data-anim>把 <em>請假 SOP</em> 包成 Agent 的 search_docs 工具</h2>
+    <p class="lead" style="margin-top:2vh; max-width:62vw" data-anim>
+      用 CH6-3 的請假 SOP 範本，組一個有兩個工具的 Agent：<br>
+      <code style="font-family:var(--mono)">search_docs(query)</code> + <code style="font-family:var(--mono)">calculator(expr)</code>，問「我年資 2 年 10 個月，特休可以休幾天？」
+    </p>
+
+    <div class="rowline" style="margin-top:4vh; display:flex; flex-direction:column; gap:1.6vh">
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">01</div>
+        <div>把 CH6-3 mp1 的請假 SOP 切成 4 個 chunk（按 ## 標題切），存成 <code style="font-family:var(--mono)">chunks: [{id, section, text}]</code>。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">02</div>
+        <div>定義 <code style="font-family:var(--mono)">search_docs(query) → top-2 chunks</code>，mock 用關鍵字配對也行（不必真跑 embedding）。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">03</div>
+        <div>沿用練習 1 的 Agent Loop，加上 calculator 工具，問「年資 2 年 10 個月，特休幾天？」</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">04</div>
+        <div>觀察：模型是否先 search_docs → 找到「年資每加 1 年再加 1 天」→ 再 calculator 算出 8 天？</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:4vh" data-anim>
+      <strong>關鍵體驗：</strong>學員會看到模型「先查、再算、再答」的真實 ReAct 過程。這是純 RAG pipeline 做不到的。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 19 · Mini Practice 02</div>
+    <div>Act III · 收尾</div>
+  </div>
+</section>
+
+<!-- ============ 20 / 30 · Act IV 幕封 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>第四幕 · 三大陷阱與防禦</div>
+    <div>Act IV · 20 / 30</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act IV · CH6-4 §3 · 約 60 分鐘</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>會跑 ≠ 上線<br><em>三大陷阱</em></h1>
+    <h2 class="h-sub" data-anim>無限迴圈 · 工具幻覺 · 未處理失敗</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      Demo 跑一次就過很容易。生產環境跑一萬次都不爆——<br>
+      你需要把這三個陷阱當成設計需求，而不是 bug 才補。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act IV 開幕</div>
+    <div>— Defensive Agent Design —</div>
+  </div>
+</section>
+
+<!-- ============ 21 / 30 · 陷阱一：無限迴圈 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Trap 01 · Infinite Loop</div>
+    <div>21 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Trap 01 · 最貴的失敗模式</div>
+    <h2 class="h-xl" data-anim><em>無限迴圈</em>：API 帳單的隱形殺手</h2>
+
+    <div class="grid-2-6-6" style="margin-top:5vh; gap:3vw">
+      <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">症狀</div>
+        <p class="body-zh" style="margin-top:1.5vh; opacity:.85">
+          模型反覆呼叫同一工具，或工具回錯讓模型陷入重試循環。<br><br>
+          結果：API 費用暴增，程式卡死，半夜被叫起來看 dashboard。
+        </p>
+      </div>
+      <div data-anim style="padding:3vh 2vw; border:2px solid currentColor; border-radius:4px">
+        <div class="kicker">防禦</div>
+        <p class="body-zh" style="margin-top:1.5vh">
+          <strong>① max_turns 守門</strong>：通常設 5-10。<br>
+          <strong>② 同工具計數</strong>：一輪對話內某工具被呼叫超過 N 次強制中止。<br>
+          <strong>③ 監控 + 告警</strong>：上線後追單一對話的 turn 分佈。
+        </p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:5vh" data-anim>
+      <strong>MAX_TURNS 寫死、不接受使用者輸入。</strong>留個逃生口，永遠比相信模型「自己會收斂」便宜。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 21 · Trap 01</div>
+    <div>Act IV · §3</div>
+  </div>
+</section>
+
+<!-- ============ 22 / 30 · 陷阱二：工具幻覺 ★ ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Trap 02 · Tool Hallucination</div>
+    <div>22 / 30 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Trap 02 · 模型亂發明工具</div>
+    <h2 class="h-xl" data-anim><em>工具幻覺</em>：呼叫一個你根本沒有的東西</h2>
+
+    <div class="grid-2-6-6" style="margin-top:3vh; gap:3vw">
+      <div data-anim style="padding:1.6vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">症狀</div>
+        <p class="body-zh" style="margin-top:1vh; opacity:.85">
+          模型呼叫不存在的工具名（例：<code style="font-family:var(--mono); opacity:.95">send_email</code>），或傳錯型別（字串塞給 integer 欄位）。<br>
+          沒防禦時程式會直接 throw、整個 Agent crash。
+        </p>
+      </div>
+      <div data-anim style="padding:1.6vh 2vw; border:2px solid currentColor; border-radius:4px; background:rgba(var(--paper-rgb),.04)">
+        <div class="kicker">防禦（速查）</div>
+        <pre style="margin-top:1vh; font-family:var(--mono); font-size:max(10px,.86vw); line-height:1.5; opacity:.92">const TOOLS = new Set(['get_weather','calculator']);
+
+if (!TOOLS.has(name)) {
+  return {
+    success: false,
+    error: `tool "${name}" not available.
+Available: ${[...TOOLS].join(', ')}`
+  };
+}</pre>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:3vh" data-anim>
+      <strong>關鍵：把錯誤訊息結構化送回模型，讓它自我修正。</strong>不要 throw 中斷整個流程——模型有能力換一個工具或承認自己不會。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 22 · Trap 02 + Defense</div>
+    <div>Act IV · §3</div>
+  </div>
+</section>
+
+<!-- ============ 23 / 30 · 陷阱三：未處理失敗 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Trap 03 · Unhandled Failure</div>
+    <div>23 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>Trap 03 · 工具自己爆但沒人接</div>
+    <h2 class="h-xl" data-anim><em>未處理失敗</em>：給模型空值，它就會自己編一個</h2>
+
+    <div class="grid-2-6-6" style="margin-top:5vh; gap:3vw">
+      <div data-anim style="padding:3vh 2vw; border-left:3px solid currentColor">
+        <div class="kicker">症狀</div>
+        <p class="body-zh" style="margin-top:1.5vh; opacity:.85">
+          外部 API 503、網路逾時、查無資料——程式沒包 try/catch，<br>
+          或包了但只回空字串給模型。<br><br>
+          結果：模型在不完整資訊下繼續推理，輸出錯誤答案，使用者以為是真的。
+        </p>
+      </div>
+      <div data-anim style="padding:3vh 2vw; border:2px solid currentColor; border-radius:4px">
+        <div class="kicker">防禦</div>
+        <p class="body-zh" style="margin-top:1.5vh">
+          工具函式<strong>永遠回結構化結果</strong>：<br>
+          <code style="font-family:var(--mono)">{ success: false, error: '...' }</code><br><br>
+          模型看到「查詢失敗，原因是 503」會誠實地告訴使用者，<br>
+          看到空字串才會開始捏造。
+        </p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:5vh" data-anim>
+      <strong>規律：失敗訊息越具體，模型越誠實。</strong>「upstream 503」「city not in database」比 null / "" 安全一萬倍。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 23 · Trap 03</div>
+    <div>Act IV · §3</div>
+  </div>
+</section>
+
+<!-- ============ 24 / 30 · 副作用 + idempotency ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Side Effects · 不可逆操作的紅線</div>
+    <div>24 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>The Hard Rule · 上線前必守</div>
+    <h2 class="h-xl" data-anim>有副作用的工具<em>絕不能讓 Agent 自由重試</em></h2>
+
+    <p class="body-zh" style="margin-top:4vh; max-width:64vw; font-size:max(15px,1.2vw); line-height:1.85" data-anim>
+      寄信、寫資料庫、扣款、發出訂單——<strong style="font-family:var(--serif-zh)">所有不可逆的事</strong>。<br><br>
+      max_turns + 結構化錯誤<strong>不夠</strong>，因為 Agent 可能在「成功了但你以為失敗」的情況下重試一次，<br>
+      於是同一封信寄兩次、同一筆款扣兩次。
+    </p>
+
+    <div class="callout" style="margin-top:5vh" data-anim>
+      <strong>解法：在工具實作層加 idempotency key。</strong><br>
+      每次呼叫帶一個唯一 ID（例：<code style="font-family:var(--mono); opacity:.95">order_uuid</code>），同一個 ID 第二次來，工具直接回上次的結果，不重複執行。
+    </div>
+
+    <div class="meta-row" style="margin-top:4vh" data-anim>
+      <span>Read 工具</span><span>·</span><span>可隨意重試</span><span>·</span><span>Write 工具</span><span>·</span><span>必須冪等</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 24 · Idempotency</div>
+    <div>Act IV · §3</div>
+  </div>
+</section>
+
+<!-- ============ 25 / 30 · 迷你練習 3 ★ ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Hands-on · 迷你練習 3（CH6-4 mp2）</div>
+    <div>25 / 30 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>MINI PRACTICE 03 · 約 20 分鐘</div>
+    <h2 class="h-xl" data-anim>刻意觸發三陷阱，<em>驗證防禦真的擋得住</em></h2>
+    <p class="lead" style="margin-top:2vh; max-width:62vw" data-anim>
+      用練習 1 的 Agent 為基底，依講義 mp2 三段壓測腳本各跑一次，<br>
+      驗證 max_turns / 白名單 / try-catch 三層防禦真的有效。
+    </p>
+
+    <div class="rowline" style="margin-top:4vh; display:flex; flex-direction:column; gap:1.6vh">
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">A · 無限迴圈</div>
+        <div>把 calculator 改成永遠回 <code style="font-family:var(--mono)">need_recompute:true</code>，看 max_turns 是否擋住。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">B · 工具幻覺</div>
+        <div>誘導模型呼叫不存在的 send_email，驗證程式回「工具不存在」而非 crash。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">C · 未處理失敗</div>
+        <div>讓 get_weather 故意 throw exception，確保回 <code style="font-family:var(--mono)">{success:false}</code> 而非 500。</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:auto 1fr; gap:2vw; align-items:start">
+        <div style="font-family:var(--serif-en); font-style:italic; opacity:.65">→ 整理</div>
+        <div>「陷阱 → 症狀 → 防禦」三列對照表寫進你的 Agent README 或 docstring。</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:4vh" data-anim>
+      <strong>講義 CH6-4 mp2</strong> 已附三段壓測腳本與對應 5-15 行 JS 修法範例 + 上線前 5 條檢查清單。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 25 · Mini Practice 03</div>
+    <div>Act IV · 收尾</div>
+  </div>
+</section>
+
+<!-- ============ 26 / 30 · Act V 幕封 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>第五幕 · 程式 vs n8n</div>
+    <div>Act V · 26 / 30</div>
+  </div>
+  <div class="frame" style="display:grid; gap:6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>Act V · CH6-4 §4 · 約 30 分鐘</div>
+    <h1 class="h-hero" style="font-size:9vw" data-anim>該<em>寫程式</em>，<br>還是該<em>拖節點</em>？</h1>
+    <h2 class="h-sub" data-anim>Function Calling 兩條實作路線的取捨</h2>
+    <p class="lead" style="max-width:55vw" data-anim>
+      n8n AI Agent 節點 vs 直寫 Anthropic / OpenAI API。<br>
+      不是哪個比較好，是哪個適合你眼前這個任務。
+    </p>
+  </div>
+  <div class="foot">
+    <div>Act V 開幕</div>
+    <div>— Tool of the Tools —</div>
+  </div>
+</section>
+
+<!-- ============ 27 / 30 · 程式 vs n8n 對比表 ★ ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Compare · 程式 API vs n8n AI Agent</div>
+    <div>27 / 30 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:5vh">
+    <div class="kicker" data-anim>Side-by-side · 六個面向對照</div>
+    <h2 class="h-xl" data-anim>選擇<em>速查表</em></h2>
+
+    <div class="rowline" style="margin-top:4vh; display:flex; flex-direction:column; gap:1.4vh">
+      <div data-anim style="display:grid; grid-template-columns:1fr 1.5fr 1.5fr; gap:2vw; padding:2vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.25); align-items:start">
+        <div><strong>面向</strong></div>
+        <div><strong>程式碼（Claude / OpenAI API）</strong></div>
+        <div><strong>n8n AI Agent 節點</strong></div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 1.5fr 1.5fr; gap:2vw; padding:1.8vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="opacity:.78">工具定義</div>
+        <div style="opacity:.85">手寫 JSON Schema，完全自訂</div>
+        <div style="opacity:.85">拖拉節點，平台管理 Schema</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 1.5fr 1.5fr; gap:2vw; padding:1.8vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="opacity:.78">自訂程度</div>
+        <div><strong>最高</strong>，可精控每個參數</div>
+        <div style="opacity:.7">中，受限平台支援的工具</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 1.5fr 1.5fr; gap:2vw; padding:1.8vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="opacity:.78">整合難度</div>
+        <div style="opacity:.7">需自行處理 Loop、狀態、錯誤</div>
+        <div><strong>低</strong>，平台處理迴圈與錯誤</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 1.5fr 1.5fr; gap:2vw; padding:1.8vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="opacity:.78">適用情境</div>
+        <div style="opacity:.85">嵌入既有系統、高度客製工具鏈</div>
+        <div style="opacity:.85">快速自動化、整合 SaaS 服務</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 1.5fr 1.5fr; gap:2vw; padding:1.8vh 0; border-bottom:1px solid rgba(var(--paper-rgb),.12); align-items:start">
+        <div style="opacity:.78">成本控制</div>
+        <div><strong>可自訂</strong> max_turns、token 限制</div>
+        <div style="opacity:.7">依平台設定，彈性較低</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 1.5fr 1.5fr; gap:2vw; padding:1.8vh 0; align-items:start">
+        <div style="opacity:.78">除錯體驗</div>
+        <div style="opacity:.7">查 console log、API 回應</div>
+        <div><strong>視覺化</strong>執行歷史，較直觀</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 27 · Compare Reference</div>
+    <div>Act V · §4</div>
+  </div>
+</section>
+
+<!-- ============ 28 / 30 · 建議路線 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Recommended Path · 不是二選一，是先後</div>
+    <div>28 / 30 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-ai-140h/part6/CH6-4.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · CH6-4</a></div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>The Workflow · 我的建議路線</div>
+    <h2 class="h-xl" data-anim>先 <em>n8n 驗證</em>，<br>再用<em>程式碼重做</em>需要客製的部分</h2>
+
+    <p class="body-zh" style="margin-top:4vh; max-width:64vw; font-size:max(15px,1.2vw); line-height:1.85" data-anim>
+      <strong style="font-family:var(--serif-zh)">第一階段：n8n 把工具鏈邏輯跑通</strong><br>
+      流程對不對、模型有沒有用對工具、token 預算多少——拖一拖就知道。<br>
+      不用花一天寫 Loop、debug schema。<br><br>
+      <strong style="font-family:var(--serif-zh)">第二階段：用程式重寫高頻 / 嵌入既有系統的部分</strong><br>
+      確認流程可行後，把需要嵌入產品、需要更高效能、需要更細控制的工具<br>
+      搬到 Anthropic / OpenAI 直接呼叫。
+    </p>
+
+    <div class="callout" style="margin-top:4vh" data-anim>
+      <strong>節省試錯成本：</strong>用 n8n 把「值不值得做」想清楚，再決定要不要花工程資源寫死。
+    </div>
+
+    <div class="meta-row" style="margin-top:4vh" data-anim>
+      <span>n8n</span><span>·</span><span>探索 / 驗證 / 內部工具</span><span>·</span><span>程式</span><span>·</span><span>產品 / 高頻 / 嵌入</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 28 · Recommendation</div>
+    <div>Act V · 收尾</div>
+  </div>
+</section>
+
+<!-- ============ 29 / 30 · Map → D15 銜接 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Map · D14 → D15 接續</div>
+    <div>29 / 30</div>
+  </div>
+  <div class="frame" style="padding-top:6vh">
+    <div class="kicker" data-anim>What's Next · 明天我們繼續</div>
+    <h2 class="h-xl" data-anim>D15 · <em>Streaming · Evals · 成本控管</em></h2>
+
+    <div class="rowline" style="margin-top:5vh; display:flex; flex-direction:column; gap:1.6vh">
+      <div data-anim style="display:grid; grid-template-columns:1fr 3fr; gap:2vw; padding:2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.15); align-items:start">
+        <div><strong>D14（今天）</strong></div>
+        <div>Function Calling + Agent Loop + 三大陷阱防禦 + RAG-as-Tool</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 3fr; gap:2vw; padding:2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.15); align-items:start">
+        <div><strong>D15 · CH6-5</strong></div>
+        <div>Streaming（即時回應）讓使用者不等到天荒地老 — 給你的 Agent 加上「逐字浮現」</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 3fr; gap:2vw; padding:2vh 0; border-bottom:1px solid rgba(var(--ink-rgb),.15); align-items:start">
+        <div><strong>D15 · PRAC6-1</strong></div>
+        <div>Evals 品質驗收 — 你怎麼知道你的 Agent 真的有變好？建一份可重跑的測試集</div>
+      </div>
+      <div data-anim style="display:grid; grid-template-columns:1fr 3fr; gap:2vw; padding:2vh 0; align-items:start">
+        <div><strong>D15 · Cost</strong></div>
+        <div>成本 Dashboard — 一個 Agent 對話花你多少？怎麼設預算上限不爆？</div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:5vh" data-anim>
+      <strong>銜接重點：</strong>今天的 Agent 跑得起來；明天讓它<strong>跑得快、跑得準、跑得起</strong>。
+    </div>
+  </div>
+  <div class="foot">
+    <div>Page 29 · Map Forward</div>
+    <div>D14 → D15</div>
+  </div>
+</section>
+
+<!-- ============ 30 / 30 · To Be Continued ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>End of D14</div>
+    <div>30 / 30</div>
+  </div>
+  <div class="frame" style="display:grid; gap:2.6vh; align-content:center; min-height:80vh">
+    <div class="kicker" data-anim>D14 / 20 · Function + Agents · Complete</div>
+    <h1 class="h-hero" data-anim>To Be<br><em>Continued</em></h1>
+    <h2 class="h-sub" data-anim>明天 D15 · Streaming · Evals · Cost</h2>
+    <p class="lead" style="max-width:55vw; opacity:.78" data-anim>
+      你今天從「會用 ChatGPT 聊天」升級成「能寫一個會自己決定動手的 Agent」。<br>
+      明天我們把它變成可以上線、可以驗收、可以付得起的東西。
+    </p>
+    <div class="meta-row" data-anim>
+      <span>Vol.14</span><span>·</span><span>Function Calling · ReAct · RAG-as-Tool · Defense</span><span>·</span><span>2026</span>
+    </div>
+    <div class="meta-row" style="margin-top:.8vh; opacity:.74" data-anim>
+      <span>弄一下工作室</span><span>·</span><span>生成式 AI 職訓 140hr</span><span>·</span><span>D14 / 20</span>
+    </div>
+  </div>
+  <div class="foot">
+    <div>感謝今天的投入</div>
+    <div>— 明天見 · D15 —</div>
+  </div>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>
