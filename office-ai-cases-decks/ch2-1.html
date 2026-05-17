@@ -536,7 +536,7 @@
   </header>
 
   <div class="kicker" data-anim>TEACHING HOOKS · 教學埋點預告</div>
-  <div class="h-xl" data-anim style="margin-bottom:3vh">資料裡藏了三個驚喜</div>
+  <div class="h-xl" data-anim style="margin-bottom:3vh">三個資料驚喜＋一個 Prompt 陷阱</div>
 
   <div style="display:flex;flex-direction:column;gap:0;flex:1;justify-content:center">
     <div class="rowline" data-anim>
@@ -554,15 +554,20 @@
       <div class="v">8 個 SKU 整月零銷售（待清倉）。多個 C 類 SKU 只有 1–3 筆。清倉決策分四類，不要只說「清/不清」。</div>
       <div class="m">長尾段落</div>
     </div>
+    <div class="rowline" data-anim>
+      <div class="k" style="font-size:1.5vw;color:var(--accent,#e05a2b)">邊界陷阱</div>
+      <div class="v">ABC 分類的「80%」門檻有兩種算法：包含式（≥80%停）vs 排除式（&lt;80%停）。AI 預設包含式 → A=3；正確答案是排除式 → A=2。<strong>用 P2-1-1b 明確指定，結果就對了。</strong></div>
+      <div class="m">P2-1-1b</div>
+    </div>
   </div>
 
   <div class="callout" data-anim style="margin-top:2vh">
-    這三個發現都是真實電商日常會碰到的。跑完 AI 後，請學員說說：「你的公司資料裡有沒有類似的情況？」
+    前三個是資料設計的埋點，第四個是 Prompt 設計陷阱。跑完 P2-1-1 後，請學員說說 AI 給的 A 類是幾個——答案就出來了。
   </div>
 
   <div class="foot">
-    <span class="title">三個埋點</span>
-    <span>極端集中 · 旺季 · 長尾</span>
+    <span class="title">四個埋點</span>
+    <span>極端集中 · 旺季 · 長尾 · 邊界陷阱</span>
   </div>
 </section>
 
@@ -625,12 +630,12 @@
       </div>
       <div class="info-block">
         <div class="ib-label">Prompt 編號</div>
-        <div class="ib-val">P2-1-1（基礎 ABC）→ P2-1-2（三合一進階版）→ 選做 P2-1-3 / P2-1-4</div>
+        <div class="ib-val">P2-1-1（基礎 ABC）→ <strong>P2-1-1b（修正邊界）</strong> → P2-1-2（三合一進階版）→ 選做 P2-1-3 / P2-1-4</div>
       </div>
       <div class="info-block">
         <div class="ib-label">操作步驟</div>
         <ol>
-          <li>上傳 ecom-orders-500.csv，貼 P2-1-1，確認 A / B / C 數量</li>
+          <li>上傳 ecom-orders-500.csv，貼 P2-1-1，確認 A / B / C 數量——若 AI 輸出 A=3，改跑 P2-1-1b（排除式邊界）</li>
           <li>加入 sku-50.csv，換 P2-1-2，跑三合一進階報告</li>
           <li>跑完後記下 AI 說的「總筆數」和「總銷售額」</li>
           <li>選做：跑 P2-1-4 母親節季節性分析</li>
@@ -906,9 +911,9 @@
     </div>
     <div class="pillar" data-anim>
       <div class="ic"><i data-lucide="layers" class="ico-lg"></i></div>
-      <div class="t">7 套可複用 Prompt</div>
+      <div class="t">7 套＋P2-1-1b 修正版</div>
       <div class="d">
-        P2-1-1 到 P2-1-7，骨架通用。<br>
+        P2-1-1～P2-1-7（＋P2-1-1b 排除式邊界版），骨架通用。<br>
         換「電商訂單」成「門市銷售記錄」或「B2B 採購單」——ABC 分析的五骨架完全不變。
       </div>
     </div>
