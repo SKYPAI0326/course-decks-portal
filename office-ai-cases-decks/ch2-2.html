@@ -207,6 +207,11 @@
     .pipeline{grid-template-columns:repeat(2,1fr)}
     .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
   }
+
+  /* Lecture Switch Cue */
+  .lecture-cue{display:flex;align-items:flex-start;gap:1.2vw;margin-top:2.5vh;padding:1.4vh 1.8vw;border:1px solid rgba(127,127,127,.28);border-left:3px solid rgba(127,127,127,.65);border-radius:3px;background:rgba(127,127,127,.07);max-width:54vw}
+  .lc-label{font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.22em;text-transform:uppercase;font-weight:600;opacity:.9}
+  .lc-url{font-family:var(--mono);font-size:max(10px,.75vw);opacity:.55;margin-top:.3vh}
 </style>
 </head>
 <body>
@@ -409,6 +414,13 @@
     <div>06 / 18</div>
   </div>
   <div class="kicker" data-anim>DEMO · 講師示範</div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH2-2.html</div>
+    </div>
+  </div>
   <div class="frame grid-2-6-6" style="gap:3vw 4vw;align-items:start;flex:1">
     <div style="display:flex;flex-direction:column;gap:2.4vh;justify-content:space-between">
       <div>
@@ -547,6 +559,13 @@
     <div class="kicker" data-anim>ACT II · 上機演練</div>
     <div class="h-hero" data-anim>上機 40 分鐘<br>壓軸演練</div>
     <div class="lead" style="margin-top:3vh;max-width:38vw" data-anim>用你在前三個案例<br>累積的素材組裝成完整內容包</div>
+    <div class="lecture-cue" data-anim>
+      <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+      <div>
+        <div class="lc-label">→ 請切換到講義</div>
+        <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH2-2.html</div>
+      </div>
+    </div>
   </div>
   <div class="foot" data-anim>
     <span class="title">弄一下工作室</span>
@@ -754,6 +773,13 @@
     <div>13 / 18</div>
   </div>
   <div class="kicker" data-anim>VERIFY · 結果驗證卡</div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH2-2.html</div>
+    </div>
+  </div>
   <div class="h-md" style="margin-bottom:3vh" data-anim>離開前 30 秒打勾確認</div>
   <div style="display:flex;flex-direction:column;gap:0;flex:1;justify-content:center">
     <div class="check-row" data-anim>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>案例二 · 業務+財務三刀流｜辦公室 AI 工具案例應用</title>
+<title>案例二 · 業務+財務雙合｜辦公室 AI 工具案例應用</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -188,6 +188,11 @@
   body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
   body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
 
+  /* Lecture Switch Cue */
+  .lecture-cue{display:flex;align-items:flex-start;gap:1.2vw;margin-top:2.5vh;padding:1.4vh 1.8vw;border:1px solid rgba(127,127,127,.28);border-left:3px solid rgba(127,127,127,.65);border-radius:3px;background:rgba(127,127,127,.07);max-width:54vw}
+  .lc-label{font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.22em;text-transform:uppercase;font-weight:600;opacity:.9}
+  .lc-url{font-family:var(--mono);font-size:max(10px,.75vw);opacity:.55;margin-top:.3vh}
+
   @media (max-width:900px){
     .display{font-size:16vw}
     .display-zh{font-size:12vw}
@@ -212,12 +217,12 @@
      ============================================================ -->
 <section class="slide hero dark">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>01 / 24</span>
   </div>
   <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
     <div class="kicker" data-anim>CH 1-2 · Block 2 · 75 min</div>
-    <div class="h-hero" data-anim style="white-space:nowrap">三刀流</div>
+    <div class="h-hero" data-anim>業務+財務<br>雙合</div>
     <div class="h-sub" data-anim style="margin-top:2.4vh">同一招，砍三種數據</div>
     <div class="lead" data-anim style="margin-top:3.2vh;max-width:44vw">行程 + 業績 + 費用——<br>小李一個早上，AI 幫他搞定三件事</div>
     <div class="meta-row" data-anim style="margin-top:4vh">
@@ -241,7 +246,7 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>02 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:3vh">今天 75 分鐘要做什麼</div>
@@ -274,7 +279,7 @@
      ============================================================ -->
 <section class="slide hero light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>03 / 24</span>
   </div>
   <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
@@ -289,6 +294,13 @@
       <span>·</span>
       <span>25 min</span>
     </div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-2.html</div>
+    </div>
+  </div>
   </div>
   <div class="foot" data-anim>
     <span>減少跨區移動 · 優先跟進中客戶</span>
@@ -301,7 +313,7 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>04 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">場景設定 · Visit-30.csv</div>
@@ -338,7 +350,7 @@
      ============================================================ -->
 <section class="slide dark">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>05 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">P1-2A-2 · Prompt 骨架解剖</div>
@@ -387,10 +399,17 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>06 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">HANDS-ON · 換你動手</div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-2.html</div>
+    </div>
+  </div>
   <div class="frame grid-2-6-6" style="margin-top:1.6vh;gap:4vw;flex:1">
     <!-- 左欄：操作資訊 -->
     <div style="display:flex;flex-direction:column;gap:2vh">
@@ -451,7 +470,7 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>07 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">子場景 A · 收束</div>
@@ -489,7 +508,7 @@
      ============================================================ -->
 <section class="slide hero dark">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>08 / 24</span>
   </div>
   <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
@@ -504,6 +523,13 @@
       <span>·</span>
       <span>25 min</span>
     </div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-2.html</div>
+    </div>
+  </div>
   </div>
   <div class="foot" data-anim>
     <span>2-4 月 · 50 筆訂單 · 含 4 月斷崖教學埋點</span>
@@ -516,7 +542,7 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>09 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">場景設定 · Sales-50.csv</div>
@@ -553,7 +579,7 @@
      ============================================================ -->
 <section class="slide light" data-animate="pipeline">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>10 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">P1-2B-2 · Prompt 骨架解剖</div>
@@ -596,7 +622,7 @@
      ============================================================ -->
 <section class="slide dark" data-animate="quote">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>11 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">教學埋點 · 4 月業績斷崖</div>
@@ -623,10 +649,17 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>12 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">HANDS-ON · 換你動手</div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-2.html</div>
+    </div>
+  </div>
   <div class="frame grid-2-6-6" style="margin-top:1.6vh;gap:4vw;flex:1">
     <div style="display:flex;flex-direction:column;gap:2vh">
       <div class="drill-block" data-anim>
@@ -685,7 +718,7 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>13 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">子場景 B · 收束</div>
@@ -723,7 +756,7 @@
      ============================================================ -->
 <section class="slide hero light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>14 / 24</span>
   </div>
   <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
@@ -738,6 +771,13 @@
       <span>·</span>
       <span>25 min</span>
     </div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-2.html</div>
+    </div>
+  </div>
   </div>
   <div class="foot" data-anim>
     <span>小李兼任財務代理 · 200 筆 · 7 個刻意埋入的異常</span>
@@ -750,7 +790,7 @@
      ============================================================ -->
 <section class="slide dark">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>15 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">場景設定 · Expense-200.csv</div>
@@ -788,7 +828,7 @@
      ============================================================ -->
 <section class="slide light" data-animate="pipeline">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>16 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">P1-2C-2 · 兩階段稽核骨架</div>
@@ -830,7 +870,7 @@
      ============================================================ -->
 <section class="slide dark" data-animate="directional">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>17 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">教學埋點 · 7 個異常類型</div>
@@ -881,10 +921,17 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>18 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">HANDS-ON · 換你動手</div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-2.html</div>
+    </div>
+  </div>
   <div class="frame grid-2-6-6" style="margin-top:1.6vh;gap:4vw;flex:1">
     <div style="display:flex;flex-direction:column;gap:2vh">
       <div class="drill-block" data-anim>
@@ -943,7 +990,7 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>19 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">子場景 C · 收束</div>
@@ -981,7 +1028,7 @@
      ============================================================ -->
 <section class="slide dark">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>20 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">總結 · 驗證式分析骨架</div>
@@ -1020,7 +1067,7 @@
      ============================================================ -->
 <section class="slide dark" data-animate="quote">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>21 / 24</span>
   </div>
   <div class="fill" style="display:flex;flex-direction:column;justify-content:center;gap:4vh">
@@ -1051,7 +1098,7 @@
      ============================================================ -->
 <section class="slide light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>22 / 24</span>
   </div>
   <div class="kicker" data-anim style="margin-top:2vh">Take-Away · 帶走清單</div>
@@ -1088,7 +1135,7 @@
      ============================================================ -->
 <section class="slide hero dark">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>23 / 24</span>
   </div>
   <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
@@ -1105,7 +1152,7 @@
     </div>
   </div>
   <div class="foot" data-anim>
-    <span>案例二完成 · 三刀流骨架已掌握</span>
+    <span>案例二完成 · 三子場景骨架已掌握</span>
     <span>23 / 24</span>
   </div>
 </section>
@@ -1115,7 +1162,7 @@
      ============================================================ -->
 <section class="slide hero light">
   <div class="chrome" data-anim>
-    <span>案例二 · 三刀流</span>
+    <span>案例二 · 業務+財務雙合</span>
     <span>24 / 24</span>
   </div>
   <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
@@ -1124,7 +1171,7 @@
     <div class="h-sub" data-anim style="margin-top:2.4vh">10 分鐘後繼續</div>
     <div class="lead" data-anim style="margin-top:3.2vh">趁休息確認一下：<br>三份 CSV 都下載了嗎？<br>21 套 prompts 有沒有想試的？</div>
     <div class="meta-row" data-anim style="margin-top:4vh">
-      <span>CH 1-2 · 案例二 · 三刀流</span>
+      <span>CH 1-2 · 案例二 · 業務+財務雙合</span>
       <span>·</span>
       <span>已完成</span>
     </div>

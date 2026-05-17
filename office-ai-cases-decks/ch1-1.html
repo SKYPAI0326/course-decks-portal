@@ -225,6 +225,11 @@
   body.motion-ready [data-anim="right"]{transform:translateX(24px)}
   body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
   body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* Lecture Switch Cue */
+  .lecture-cue{display:flex;align-items:flex-start;gap:1.2vw;margin-top:2.5vh;padding:1.4vh 1.8vw;border:1px solid rgba(127,127,127,.28);border-left:3px solid rgba(127,127,127,.65);border-radius:3px;background:rgba(127,127,127,.07);max-width:54vw}
+  .lc-label{font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.22em;text-transform:uppercase;font-weight:600;opacity:.9}
+  .lc-url{font-family:var(--mono);font-size:max(10px,.75vw);opacity:.55;margin-top:.3vh}
 </style>
 </head>
 <body>
@@ -368,6 +373,13 @@
     <div class="rule" data-anim style="max-width:42vw;margin-top:4vh"></div>
     <div class="meta-row" data-anim style="margin-top:2vh">
       <span>重點</span><span>·</span><span>P1-1-2 是 5 骨架完整版（主版）</span>
+    </div>
+    <div class="lecture-cue" data-anim>
+      <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+      <div>
+        <div class="lc-label">→ 請切換到講義</div>
+        <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-1.html</div>
+      </div>
     </div>
   </div>
 
@@ -634,6 +646,13 @@
     <div class="lead" data-anim style="margin-top:2.5vh;max-width:42vw">
       打開任一主流 AI 工具<br>（ChatGPT / Gemini / Copilot / Claude.ai，免費版即可）
     </div>
+    <div class="lecture-cue" data-anim>
+      <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+      <div>
+        <div class="lc-label">→ 請切換到講義</div>
+        <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-1.html</div>
+      </div>
+    </div>
   </div>
 
   <div class="meta-row" data-anim>
@@ -651,6 +670,13 @@
   </div>
 
   <div class="kicker" data-anim style="margin-top:1vh">HANDS-ON · 換你動手 · 核心 4 套</div>
+  <div class="lecture-cue" data-anim>
+    <i data-lucide="book-open" style="flex-shrink:0;width:max(14px,1.3vw);height:max(14px,1.3vw);opacity:.65;margin-top:.1em"></i>
+    <div>
+      <div class="lc-label">→ 請切換到講義</div>
+      <div class="lc-url">skypai0326.github.io/courses/courses/office-ai-cases/CH1-1.html</div>
+    </div>
+  </div>
 
   <div class="frame" style="display:grid;grid-template-columns:1fr 1fr;gap:0 5vw;flex:1;align-items:start;margin-top:1vh">
     <!-- 左欄 -->
