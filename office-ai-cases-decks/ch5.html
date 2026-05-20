@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH 5 · Prompt 設計決策樹｜辦公室 AI 工具案例應用</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主題色：墨水經典 ============ */
+    --ink:#0a0a0b;
+    --ink-rgb:10,10,11;
+    --paper:#f1efea;
+    --paper-rgb:241,239,234;
+    --paper-tint:#e8e5de;
+    --ink-tint:#18181a;
+
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 雙背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻頁 ============ */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:max(13px,1vw)}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字體規則 ============ */
+  .kicker{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.18vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.75vw;line-height:1.5;opacity:.86}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  em{font-style:italic;font-family:var(--serif-en);font-synthesis-style:none}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout ============ */
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Rowline ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.1vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons (Lucide via CDN) ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 導航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============ LAYOUTS API ============ */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* 標題層級 */
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:10vw;line-height:.96;letter-spacing:-.02em}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:6.2vw;line-height:1.08;letter-spacing:-.01em}
+  .h-sub{font-family:var(--serif-zh);font-weight:500;font-size:3.1vw;line-height:1.25;letter-spacing:0;opacity:.7}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:2.3vw;line-height:1.3}
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* meta-row */
+  .meta-row{display:flex;gap:1.2em;align-items:baseline;flex-wrap:wrap;font-family:var(--mono);font-size:max(12px,.92vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+
+  /* stat-card */
+  .stat-card{display:flex;flex-direction:column;gap:.8vh;align-items:flex-start;padding-top:1.6vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.3)}
+  .stat-card .stat-label{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .stat-card .stat-nb{font-family:var(--serif-en);font-weight:800;font-size:5.8vw;line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum";margin-top:.4vh}
+  .stat-card .stat-nb .stat-unit{font-family:var(--serif-zh);font-weight:500;font-size:.38em;letter-spacing:0;opacity:.72;margin-left:.14em}
+  .stat-card .stat-note{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.5;opacity:.72;margin-top:.6vh}
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* pipeline */
+  .pipeline-section{margin-top:4.4vh;padding-top:2.8vh;border-top:1px dashed rgba(127,127,127,.32)}
+  .pipeline-section:first-of-type{border-top:0;padding-top:0;margin-top:3vh}
+  .pipeline-label{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.24em;text-transform:uppercase;opacity:.62;margin-bottom:2.2vh}
+  .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw}
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{display:flex;flex-direction:column;gap:.8vh;padding-top:1.4vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .step-nb{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:max(12px,1.15vw);opacity:.45}
+  .step-title{font-family:var(--sans-zh);font-weight:700;font-size:max(14px,1.55vw);letter-spacing:.01em;line-height:1.2}
+  .step-desc{font-family:var(--sans-zh);font-weight:400;font-size:max(12px,.95vw);line-height:1.45;opacity:.72}
+
+  /* grid classes */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(0,1fr);gap:2.4vh 2vw}
+  .callout-src{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+
+  /* 動效系統 */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* 對比卡 */
+  .compare-card{display:flex;flex-direction:column;gap:1.6vh;padding:2.8vh 2.4vw;border-radius:4px}
+  .slide.light .compare-card{background:rgba(var(--ink-rgb),.04);border:1px solid rgba(var(--ink-rgb),.1)}
+  .slide.dark .compare-card{background:rgba(var(--paper-rgb),.05);border:1px solid rgba(var(--paper-rgb),.12)}
+  .compare-card .c-label{font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.26em;text-transform:uppercase;opacity:.55}
+  .compare-card .c-title{font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.5vw);line-height:1.25}
+  .compare-card .c-body{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.65;opacity:.85}
+  .compare-card .c-rule{font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.14em;opacity:.6;margin-top:.8vh}
+
+  /* 決策節點卡 */
+  .q-card{display:flex;flex-direction:column;gap:1.2vh;padding:2vh 1.8vw;border-radius:4px;border-top:2px solid rgba(127,127,127,.35)}
+  .slide.light .q-card{background:rgba(var(--ink-rgb),.04)}
+  .slide.dark .q-card{background:rgba(var(--paper-rgb),.05)}
+  .q-card .q-num{font-family:var(--serif-en);font-weight:800;font-size:2.4vw;line-height:1;letter-spacing:-.025em;opacity:.35}
+  .q-card .q-label{font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.24em;text-transform:uppercase;opacity:.5}
+  .q-card .q-q{font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.35vw);line-height:1.28}
+  .q-card .q-ans{font-family:var(--sans-zh);font-size:max(12px,.98vw);line-height:1.6;opacity:.72}
+  .q-card .q-arrow{font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.18em;opacity:.45;margin-top:.6vh}
+
+  /* 任務區塊 */
+  .task-deck{display:grid;grid-template-columns:1fr 1fr;gap:2vw;flex:1;align-content:start}
+  .task-panel{display:flex;flex-direction:column;gap:.8vh;padding:2vh 1.8vw;border-radius:4px}
+  .slide.dark .task-panel{background:rgba(var(--paper-rgb),.05);border:1px solid rgba(var(--paper-rgb),.1)}
+  .slide.light .task-panel{background:rgba(var(--ink-rgb),.04);border:1px solid rgba(var(--ink-rgb),.08)}
+  .task-panel .tp-tag{font-family:var(--mono);font-size:max(9px,.7vw);letter-spacing:.24em;text-transform:uppercase;opacity:.5}
+  .task-panel .tp-name{font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.3vw);line-height:1.2;margin-bottom:.4vh}
+  .task-panel .tp-row{display:grid;grid-template-columns:5vw 1fr;gap:.6vw;font-size:max(11px,.9vw);line-height:1.55;padding:.3vh 0;border-bottom:1px dashed rgba(127,127,127,.18)}
+  .task-panel .tp-row:last-child{border-bottom:none}
+  .task-panel .tp-lbl{font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.14em;text-transform:uppercase;opacity:.5;padding-top:1px}
+  .task-panel .tp-val{font-family:var(--sans-zh);opacity:.82}
+
+  /* 微調表 */
+  .fix-table{width:100%;border-collapse:separate;border-spacing:0 1.2vh;flex:1}
+  .fix-table .ft-row{display:grid;grid-template-columns:10vw 10vw 1fr;gap:2vw;align-items:start;padding:1.6vh 0;border-top:1px solid rgba(127,127,127,.2)}
+  .fix-table .ft-row:last-child{border-bottom:1px solid rgba(127,127,127,.2)}
+  .ft-sym{font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.3vw);line-height:1.25}
+  .ft-cause{font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.12em;opacity:.6;line-height:1.6}
+  .ft-fix{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.65;opacity:.85}
+
+  /* 帶走清單 */
+  .takeaway-row{display:grid;grid-template-columns:8vw 1fr;gap:2vw;padding:2vh 0;border-top:1px solid rgba(127,127,127,.22);align-items:start}
+  .takeaway-row:last-child{border-bottom:1px solid rgba(127,127,127,.22)}
+  .ta-badge{font-family:var(--mono);font-size:max(9px,.7vw);letter-spacing:.22em;text-transform:uppercase;opacity:.55;padding:4px 0;border-top:2px solid rgba(127,127,127,.45)}
+  .ta-text{font-family:var(--sans-zh);font-size:max(13px,1.08vw);line-height:1.65;opacity:.85}
+
+  /* mobile 竪屏 */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+    .task-deck{grid-template-columns:1fr}
+    .grid-3-3{grid-template-columns:1fr 1fr}
+  }
+  @media (orientation:portrait) and (max-width:1024px){
+    #portrait-overlay{display:flex!important}
+  }
+  #portrait-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(var(--ink-rgb),.97);align-items:center;justify-content:center;flex-direction:column;gap:2.4vh;text-align:center;padding:8vw}
+  #portrait-overlay .po-ico{width:8vw;height:8vw;stroke:var(--paper);fill:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;opacity:.6}
+  #portrait-overlay .po-msg{font-family:var(--sans-zh);font-size:max(14px,3vw);opacity:.8;line-height:1.7}
+  #portrait-overlay .po-hint{font-family:var(--mono);font-size:max(10px,2.2vw);letter-spacing:.18em;text-transform:uppercase;opacity:.45}
+</style>
+</head>
+<body>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻頁 · ESC 索引</div>
+
+<div id="portrait-overlay">
+  <svg class="po-ico" viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><polyline points="4 12 8 8 12 12"/></svg>
+  <div class="po-msg">請橫向觀看此簡報</div>
+  <div class="po-hint">Rotate to Landscape</div>
+</div>
+
+<div id="deck">
+
+<!-- ============================================================
+     頁 01 · 封面 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 01 / 14</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;padding:4vh 0">
+    <div class="kicker" data-anim>辦公室 AI 工具案例應用 · 加深章節</div>
+    <h1 class="h-hero" data-anim style="white-space:nowrap">Prompt<br>設計<br>決策樹</h1>
+    <div style="margin-top:4vh" data-anim>
+      <div class="lead">6 個分支問題答完，prompt 結構就出來了</div>
+    </div>
+    <div class="meta-row" style="margin-top:3.6vh" data-anim>
+      <span>CH 5</span>
+      <span>·</span>
+      <span>40 Min · 純講師主講</span>
+      <span>·</span>
+      <span>2026-05</span>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">辦公室 AI 工具案例應用</span>
+    <span>弄一下工作室</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 02 · 章節 Agenda · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 02 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:3.2vh">本章流程 · Agenda</div>
+  <h2 class="h-xl" data-anim style="margin-bottom:3.6vh">40 分鐘，<br>四個段落</h2>
+
+  <div class="grid-4" style="flex:1;align-content:center">
+    <div class="stat-card" data-anim>
+      <span class="stat-label">§ 01 · 5 Min</span>
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.8vw);line-height:1.25;margin-top:.6vh">5 大骨架回顧</div>
+      <p class="stat-note">角色 / 資料 / 任務 / 輸出 / 驗證 — 依任務選用，不是全寫</p>
+    </div>
+    <div class="stat-card" data-anim>
+      <span class="stat-label">§ 02 · 15 Min</span>
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.8vw);line-height:1.25;margin-top:.6vh">6 題決策樹</div>
+      <p class="stat-note">Q1 給誰 / Q2 資料 / Q3 任務 / Q4 格式 / Q5 風險 / Q6 重複</p>
+    </div>
+    <div class="stat-card" data-anim>
+      <span class="stat-label">§ 03 · 15 Min</span>
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.8vw);line-height:1.25;margin-top:.6vh">5 個任務示範</div>
+      <p class="stat-note">寫信 / 分析 / 摘要 / 翻譯 / 腦力激盪 — 含 6 題答案 + 組裝 prompt</p>
+    </div>
+    <div class="stat-card" data-anim>
+      <span class="stat-label">§ 04 · 5 Min</span>
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.8vw);line-height:1.25;margin-top:.6vh">4 種微調</div>
+      <p class="stat-note">太籠統 / 格式錯 / 幻覺 / 語氣錯 — 對症下藥不重寫</p>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">Prompt 設計決策樹</span>
+    <span>02 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 03 · §01 幕封 · hero light
+     ============================================================ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 03 / 14</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 01 · 5 Min</div>
+    <h2 class="h-hero" data-anim style="white-space:nowrap">5 大骨架<br>回顧</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:40vw" data-anim>骨架不是「都要寫」，是「依任務選用」——決策樹幫你判斷這次該用哪幾個</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">5 大骨架</span>
+    <span>03 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 04 · 5 骨架卡片 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 04 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">5 大骨架 · CH0 學過的基礎</div>
+
+  <div class="pipeline pipeline-section" data-cols="5" style="margin-top:2.4vh;gap:1.6vw;flex:0 0 auto" data-animate="pipeline">
+    <div class="step" data-anim="step">
+      <div class="step-nb">① Role</div>
+      <div class="step-title">角色</div>
+      <div class="step-desc">你希望 AI 扮演什麼身份回答</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">② Data</div>
+      <div class="step-title">資料</div>
+      <div class="step-desc">AI 需要知道哪些既有資訊</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">③ Task</div>
+      <div class="step-title">任務</div>
+      <div class="step-desc">用動詞說清楚你要 AI 做什麼</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">④ Format</div>
+      <div class="step-title">輸出</div>
+      <div class="step-desc">長什麼樣、幾字、什麼結構</div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">⑤ Verify</div>
+      <div class="step-title">驗證</div>
+      <div class="step-desc">要求 AI 自報引用依據、不確定處</div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:3.2vh" data-anim>
+    <div class="q-big">核心心法</div>
+    <p style="margin-top:1.2vh;font-family:var(--sans-zh);font-size:max(14px,1.15vw);line-height:1.7;opacity:.85">你給 AI 越多正確的 context、越明確的任務、越具體的輸出要求，它預測得越準。<br>但「越多」不等於「全寫」——<em>對的東西寫對的量</em>，決策樹幫你判斷「對的量」是多少。</p>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.16em;text-transform:uppercase;opacity:.5;text-decoration:none;color:inherit;border-bottom:1px solid currentColor">講義 · CH5 §01</a>
+    <span>04 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 05 · 5 任務 × 5 骨架矩陣 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 05 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">骨架必要程度 · 5 種任務 × 5 骨架矩陣</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0;margin-top:1.6vh">
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:14vw 8vw 8vw 8vw 8vw 8vw">
+        <div class="m" style="font-size:max(10px,.78vw)">任務類型</div>
+        <div class="m" style="font-size:max(10px,.78vw);text-align:center">角色</div>
+        <div class="m" style="font-size:max(10px,.78vw);text-align:center">資料</div>
+        <div class="m" style="font-size:max(10px,.78vw);text-align:center">任務</div>
+        <div class="m" style="font-size:max(10px,.78vw);text-align:center">輸出</div>
+        <div class="m" style="font-size:max(10px,.78vw);text-align:center">驗證</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:14vw 8vw 8vw 8vw 8vw 8vw;align-items:center">
+        <div class="k" style="font-size:max(13px,1.1vw)">簡單問答</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:14vw 8vw 8vw 8vw 8vw 8vw;align-items:center">
+        <div class="k" style="font-size:max(13px,1.1vw)">輕度寫作</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:14vw 8vw 8vw 8vw 8vw 8vw;align-items:center">
+        <div class="k" style="font-size:max(13px,1.1vw)">分析任務</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:14vw 8vw 8vw 8vw 8vw 8vw;align-items:center">
+        <div class="k" style="font-size:max(13px,1.1vw)">對外發送</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:14vw 8vw 8vw 8vw 8vw 8vw;align-items:center">
+        <div class="k" style="font-size:max(13px,1.1vw)">創意 / 腦力激盪</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;font-family:var(--serif-en);font-weight:700;font-size:1.3vw;color:rgba(var(--paper-rgb),.9)">★</div>
+        <div class="v" style="text-align:center;opacity:.35">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.16em;text-transform:uppercase;opacity:.5;text-decoration:none;color:inherit;border-bottom:1px solid currentColor">講義 · CH5 §01 矩陣</a>
+    <span>05 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 06 · §02 幕封 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 06 / 14</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 02 · 15 Min</div>
+    <h2 class="h-hero" data-anim style="white-space:nowrap">6 題<br>決策樹</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:44vw" data-anim>3 分鐘把 6 題答完，prompt 結構就出來了。題目順序不能亂——前面的答案影響後面的題</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">6 個分支問題</span>
+    <span>06 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 07 · 6 題總覽流程卡 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 07 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2vh">決策樹總覽 · 6 個分支問題</div>
+
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:1vw;flex:1;align-content:center;margin-top:1.6vh">
+    <div class="q-card" data-anim>
+      <div class="q-num">Q1</div>
+      <div class="q-label">對象</div>
+      <div class="q-q">給誰看？</div>
+      <div class="q-ans">自己 / 同事 / 主管·客戶·法務</div>
+      <div class="q-arrow">→ 決定「角色」是否必要</div>
+    </div>
+    <div class="q-card" data-anim>
+      <div class="q-num">Q2</div>
+      <div class="q-label">資料</div>
+      <div class="q-q">需要哪些既有資訊？</div>
+      <div class="q-ans">不需 / 少量 / 大量文件</div>
+      <div class="q-arrow">→ 決定「資料」骨架用量</div>
+    </div>
+    <div class="q-card" data-anim>
+      <div class="q-num">Q3</div>
+      <div class="q-label">任務</div>
+      <div class="q-q">一句話能說清楚嗎？</div>
+      <div class="q-ans">能 / 能但有條件 / 要分步</div>
+      <div class="q-arrow">→ 決定任務句怎麼寫</div>
+    </div>
+    <div class="q-card" data-anim>
+      <div class="q-num">Q4</div>
+      <div class="q-label">格式</div>
+      <div class="q-q">輸出長什麼樣？</div>
+      <div class="q-ans">有範例 / 有結構 / 自由發揮</div>
+      <div class="q-arrow">→ 決定格式骨架策略</div>
+    </div>
+    <div class="q-card" data-anim>
+      <div class="q-num">Q5</div>
+      <div class="q-label">風險</div>
+      <div class="q-q">錯了會出事嗎？</div>
+      <div class="q-ans">不會 / 能 catch / 要負責</div>
+      <div class="q-arrow">→ 決定「驗證」是否必加</div>
+    </div>
+    <div class="q-card" data-anim>
+      <div class="q-num">Q6</div>
+      <div class="q-label">重複</div>
+      <div class="q-q">跑幾次？</div>
+      <div class="q-ans">1 次 / 反覆用 / 批次多筆</div>
+      <div class="q-arrow">→ 決定要不要模板化</div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:2vh;padding:1.8vh 2vw" data-anim>
+    <span style="font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.65;opacity:.88">Q1 + Q2 → prompt 開頭 ·  Q3 → 中段任務句 · Q4 → 格式段 · Q5 → 驗證段 · Q6 → 決定是否做 [佔位符] 模板</span>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.16em;text-transform:uppercase;opacity:.5;text-decoration:none;color:inherit;border-bottom:1px solid currentColor">講義 · CH5 §02 決策樹</a>
+    <span>07 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 08 · Q1 / Q2 / Q3 逐題展開 · dark
+     ============================================================ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 08 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">決策樹 Q1 → Q3 · 誰 / 資料 / 任務</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2vw;flex:1;align-content:start;margin-top:1.6vh">
+    <div class="compare-card" data-anim="left">
+      <div class="c-label">Q1 · 對象</div>
+      <div class="c-title">給誰看？</div>
+      <div class="c-body">
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--paper-rgb),.15)"><strong>給自己</strong> — 不需「角色」，格式可寬鬆</div>
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--paper-rgb),.15)"><strong>給同事</strong> — 不需角色、但明確「對象」（部門 / 職級）讓 AI 抓語氣</div>
+        <div style="padding:.5vh 0"><strong>給主管 / 客戶 / 法務</strong> — 必加「角色」+「對象」，且 Q5 驗證必開</div>
+      </div>
+    </div>
+    <div class="compare-card" data-anim>
+      <div class="c-label">Q2 · 資料</div>
+      <div class="c-title">需要哪些背景資訊？</div>
+      <div class="c-body">
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--paper-rgb),.15)"><strong>不需要</strong>（純創意 / 通用問答）— 跳過「資料」骨架</div>
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--paper-rgb),.15)"><strong>少量</strong>（1-2 條背景）— 開頭寫 1-2 句即可</div>
+        <div style="padding:.5vh 0"><strong>大量</strong>（整份文件 / CSV）— 必用「資料」骨架，用 [資料] 標籤圈出</div>
+      </div>
+    </div>
+    <div class="compare-card" data-anim="right">
+      <div class="c-label">Q3 · 任務</div>
+      <div class="c-title">一句話能說清楚嗎？</div>
+      <div class="c-body">
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--paper-rgb),.15)"><strong>能</strong>（翻譯 / 摘要 / 分類）— 一句話寫任務</div>
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--paper-rgb),.15)"><strong>能但要條件</strong>（保留術語 / 200 字內）— 任務句後加 1-2 條規則</div>
+        <div style="padding:.5vh 0"><strong>不能、要分步</strong>（先 X 再 Y 再 Z）— 拆成 3-4 個編號步驟</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span>08 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 09 · Q4 / Q5 / Q6 逐題展開 · light
+     ============================================================ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 09 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">決策樹 Q4 → Q6 · 格式 / 風險 / 重複</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2vw;flex:1;align-content:start;margin-top:1.6vh">
+    <div class="compare-card" data-anim="left">
+      <div class="c-label">Q4 · 格式</div>
+      <div class="c-title">輸出長什麼樣？</div>
+      <div class="c-body">
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--ink-rgb),.1)"><strong>有範例</strong> — 用範例：「請依以下格式輸出：『例子』」</div>
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--ink-rgb),.1)"><strong>有結構但無範例</strong> — 列規格：行數 / 字數 / 分區 / 必要欄位</div>
+        <div style="padding:.5vh 0"><strong>自由發揮</strong> — 至少寫「請給 3 個方案讓我選」，避免單一輸出</div>
+      </div>
+    </div>
+    <div class="compare-card" data-anim>
+      <div class="c-label">Q5 · 風險</div>
+      <div class="c-title">錯了會出事嗎？</div>
+      <div class="c-body">
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--ink-rgb),.1)"><strong>不會</strong>（草稿 / 內部討論）— 跳過「驗證」骨架</div>
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--ink-rgb),.1)"><strong>會但能 catch</strong>（同事會幫看）— 加「請列你不確定的地方」</div>
+        <div style="padding:.5vh 0"><strong>會且要負責</strong>（對外 / 含數字）— 必加「驗證」骨架 + CH3 驗證卡</div>
+      </div>
+    </div>
+    <div class="compare-card" data-anim="right">
+      <div class="c-label">Q6 · 重複</div>
+      <div class="c-title">這個任務跑幾次？</div>
+      <div class="c-body">
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--ink-rgb),.1)"><strong>1 次性</strong> — 能跑的 prompt 即可，不用美化</div>
+        <div style="padding:.5vh 0;border-bottom:1px dashed rgba(var(--ink-rgb),.1)"><strong>反覆會用</strong>（週報 / 月分析）— 把每次會變的資料用 [佔位符] 框出來，存成模板</div>
+        <div style="padding:.5vh 0"><strong>批次多筆</strong>（一次回 30 封信）— 加「請依序處理每一筆，輸出格式：輸入 → 輸出成對顯示」</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:2vh;padding:1.8vh 2vw" data-anim>
+    <span style="font-family:var(--serif-zh);font-weight:600;font-size:max(14px,1.2vw)">6 題答完 = prompt 結構出爐。</span><span style="font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.82"> 第一次套會慢，跑 3-5 次後 1 分鐘就答完。</span>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.16em;text-transform:uppercase;opacity:.5;text-decoration:none;color:inherit;border-bottom:1px solid currentColor">講義 · CH5 §02 Q4-Q6</a>
+    <span>09 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 10 · §03 幕封 · hero light
+     ============================================================ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 10 / 14</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 03 · 15 Min</div>
+    <h2 class="h-hero" data-anim style="white-space:nowrap">5 個常見<br>任務示範</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:44vw" data-anim>每個任務都展示：6 題答案速覽 → 組出來的 prompt。遇到新任務就照這個流程跑一次</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">5 個常見任務示範</span>
+    <span>10 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 11 · 任務 A 寫信 + B 分析 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 11 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2vh">任務示範 A + B · 寫信 / 數據分析</div>
+
+  <div class="task-deck" style="margin-top:1.6vh">
+    <div class="task-panel" data-anim="left">
+      <div class="tp-tag">任務 A · 寫信</div>
+      <div class="tp-name">延遲交付道歉信（給客戶）</div>
+      <div class="tp-row"><div class="tp-lbl">Q1</div><div class="tp-val"><strong>客戶</strong>（對外）→ 要角色 + 對象</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q2</div><div class="tp-val"><strong>少量</strong>：延遲天數 / 原因 / 補償方案</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q3</div><div class="tp-val"><strong>一句話 + 規則</strong>：道歉 + 解釋 + 補償 + 後續</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q4</div><div class="tp-val"><strong>結構規格</strong>：200 字內 + 4 段</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q5</div><div class="tp-val"><strong>會出事</strong>（對外 + 含承諾）→ 必加驗證</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q6</div><div class="tp-val"><strong>反覆用</strong> → 做成 [佔位符] 模板</div></div>
+      <div style="margin-top:1.2vh;font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.16em;text-transform:uppercase;opacity:.45">→ 角色 + 背景 + 任務 4 步 + 格式 + 驗證 全 5 骨架</div>
+    </div>
+    <div class="task-panel" data-anim="right">
+      <div class="tp-tag">任務 B · 分析數據</div>
+      <div class="tp-name">100 筆退貨清單找退貨主因 Top 3</div>
+      <div class="tp-row"><div class="tp-lbl">Q1</div><div class="tp-val"><strong>主管</strong>（對上）→ 要角色 + 對象</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q2</div><div class="tp-val"><strong>大量</strong>（100 筆 CSV）→ 用 [資料] 標籤</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q3</div><div class="tp-val"><strong>分步</strong>：分類 → 統計 → 排序 → 結論</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q4</div><div class="tp-val"><strong>結構規格</strong>：Top 3 + 佔比 + 1 句結論</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q5</div><div class="tp-val"><strong>會出事</strong>（含數字 + 進報告）→ 必加驗證</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q6</div><div class="tp-val"><strong>每月用</strong> → 模板化</div></div>
+      <div style="margin-top:1.2vh;font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.16em;text-transform:uppercase;opacity:.45">→ 大量資料時請 AI 自報「共處理幾筆、分類規則是什麼」</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.16em;text-transform:uppercase;opacity:.5;text-decoration:none;color:inherit;border-bottom:1px solid currentColor">講義 · CH5 §03 任務 A+B</a>
+    <span>11 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 12 · 任務 C 摘要 + D 翻譯 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 12 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2vh">任務示範 C + D · 摘要 / 翻譯</div>
+
+  <div class="task-deck" style="margin-top:1.6vh">
+    <div class="task-panel" data-anim="left">
+      <div class="tp-tag">任務 C · 寫摘要</div>
+      <div class="tp-name">5 頁會議紀錄 → 100 字摘要</div>
+      <div class="tp-row"><div class="tp-lbl">Q1</div><div class="tp-val"><strong>同事 / 自己</strong>（內部）→ 不需角色，說「對象」</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q2</div><div class="tp-val"><strong>大量</strong>（5 頁紀錄）→ 用 [資料] 標籤</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q3</div><div class="tp-val"><strong>一句話 + 規則</strong>：摘要 + 保留決議與 owner</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q4</div><div class="tp-val"><strong>結構規格</strong>：100 字內 + 1 段</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q5</div><div class="tp-val"><strong>能 catch</strong>（同事會看）→ 加「列你不確定的地方」</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q6</div><div class="tp-val"><strong>每次會議</strong> → 模板化</div></div>
+      <div style="margin-top:1.2vh;font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.16em;text-transform:uppercase;opacity:.45">→ Q1 給自己 / 同事時可省角色骨架，但「對象」仍要說清楚</div>
+    </div>
+    <div class="task-panel" data-anim="right">
+      <div class="tp-tag">任務 D · 翻譯</div>
+      <div class="tp-name">500 字英文產品說明 → 繁體中文（業務用）</div>
+      <div class="tp-row"><div class="tp-lbl">Q1</div><div class="tp-val"><strong>同事</strong>（內部業務）→ 寫對象背景</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q2</div><div class="tp-val"><strong>大量</strong>（500 字原文）→ 用 [資料]</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q3</div><div class="tp-val"><strong>一句話 + 規則</strong>：翻譯 + 保留術語 + 加白話解釋</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q4</div><div class="tp-val"><strong>結構規格</strong>：全譯本 + 術語對照表（英文 / 中譯 / 白話解釋）</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q5</div><div class="tp-val"><strong>能 catch</strong>（業務會用）→ 加「不確定的字句」</div></div>
+      <div class="tp-row"><div class="tp-lbl">Q6</div><div class="tp-val"><strong>反覆</strong> → 模板化</div></div>
+      <div style="margin-top:1.2vh;font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.16em;text-transform:uppercase;opacity:.45">→ 行銷話術（best-in-class）請轉成具體描述，不直譯</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.16em;text-transform:uppercase;opacity:.5;text-decoration:none;color:inherit;border-bottom:1px solid currentColor">講義 · CH5 §03 任務 C+D</a>
+    <span>12 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 13 · 任務 E 腦力激盪 + 組裝心法 · dark
+     ============================================================ -->
+<section class="slide dark" data-animate="quote">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 13 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">任務示範 E + 組裝心法 · 腦力激盪</div>
+
+  <div style="display:grid;grid-template-columns:5fr 7fr;gap:4vw;flex:1;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:1.6vh">
+      <div class="task-panel" style="background:rgba(var(--paper-rgb),.05);border:1px solid rgba(var(--paper-rgb),.1);border-radius:4px" data-anim="left">
+        <div class="tp-tag">任務 E · 腦力激盪</div>
+        <div class="tp-name">5 個提升舊客回購率的活動點子</div>
+        <div class="tp-row"><div class="tp-lbl">Q1</div><div class="tp-val"><strong>自己 / 同事</strong> → 不需角色、說「立場」</div></div>
+        <div class="tp-row"><div class="tp-lbl">Q2</div><div class="tp-val"><strong>少量</strong>：產業 / 客單價 / 預算上限</div></div>
+        <div class="tp-row"><div class="tp-lbl">Q3</div><div class="tp-val"><strong>一句話</strong>：給 5 個差異大的點子</div></div>
+        <div class="tp-row"><div class="tp-lbl">Q4</div><div class="tp-val"><strong>結構規格</strong>：每個點子含成本 / 效果 / 風險</div></div>
+        <div class="tp-row"><div class="tp-lbl">Q5</div><div class="tp-val">內部腦力激盪 → 加「假設透明要求」，讓數字可信</div></div>
+        <div class="tp-row"><div class="tp-lbl">Q6</div><div class="tp-val"><strong>1 次性</strong> → 不用模板化</div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:2.8vh;padding-top:1vh">
+      <div style="border-top:1px solid rgba(var(--paper-rgb),.2);padding-top:3vh">
+        <div class="body-zh" style="opacity:.6;margin-bottom:1.6vh;font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.22em;text-transform:uppercase">6 題答完直接組裝</div>
+        <div data-anim="line" style="display:block;font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.65vw);line-height:1.35">Q1 + Q2 → prompt 開頭</div>
+        <div data-anim="line" style="display:block;font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.65vw);line-height:1.35">Q3 → 中段任務句</div>
+        <div data-anim="line" style="display:block;font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.65vw);line-height:1.35">Q4 → 格式段</div>
+        <div data-anim="line" style="display:block;font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.65vw);line-height:1.35">Q5 → 驗證段</div>
+        <div data-anim="line" style="display:block;font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.65vw);line-height:1.35">Q6 → 決定是否做模板</div>
+        <div style="margin-top:2.4vh;padding:1.8vh 1.8vw;background:rgba(var(--paper-rgb),.07);border-radius:4px" data-anim>
+          <span style="font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.7;opacity:.85">練習 5-10 次後你不用再「想」，看到新任務直接組。<br><em>先慢、後快</em>——這是刻意練習的必經過程。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.16em;text-transform:uppercase;opacity:.5;text-decoration:none;color:inherit;border-bottom:1px solid currentColor">講義 · CH5 §03 任務 E + 組裝</a>
+    <span>13 / 14</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 14 · §04 微調 + 帶走清單 + 收束 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>Prompt 設計 · Decision Tree</div>
+    <div>CH 5 · 14 / 14</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2vh">§ 04 · 5 Min — 輸出不對時的 4 種微調 + 帶走清單</div>
+
+  <div style="display:grid;grid-template-columns:6fr 5fr;gap:5vw;flex:1;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div data-anim>
+        <div class="rowline" style="grid-template-columns:10vw 1fr;align-items:start">
+          <div class="k" style="font-size:max(13px,1.1vw)">太籠統</div>
+          <div class="v">「每條不超過 30 字，不接受『持續推進』這類空話」</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:10vw 1fr;align-items:start">
+          <div class="k" style="font-size:max(13px,1.1vw)">格式不對</div>
+          <div class="v">「請<strong>嚴格</strong>依照以下格式輸出：[範例]，不要增加多餘段落」</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:10vw 1fr;align-items:start">
+          <div class="k" style="font-size:max(13px,1.1vw)">幻覺</div>
+          <div class="v">「每個結論請標明引自我提供的第幾段；沒有對應的請刪掉、不要補」</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:10vw 1fr;align-items:start">
+          <div class="k" style="font-size:max(13px,1.1vw)">語氣不對</div>
+          <div class="v">「對象是 [誰]，語氣應 [專業 / 親切 / 直接]，避免 [客套話 / 縮寫]」</div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:2vh;padding:2vh 1.8vw" data-anim>
+        <span style="font-family:var(--sans-zh);font-size:max(13px,1.1vw);line-height:1.7;opacity:.88">追加微調格式：在原 prompt 後面寫「請特別注意：[微調]」——AI 會以追加指令為最高優先。<strong>連續微調 3 次仍不對就停手</strong>，不是 prompt 問題，是任務本身不適合 AI 做。</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1.2vh;padding-top:.4vh">
+      <div style="font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55;margin-bottom:1vh" data-anim>本章帶走清單</div>
+      <div class="takeaway-row" data-anim>
+        <div class="ta-badge">工具</div>
+        <div class="ta-text"><strong>6 題決策樹</strong> — 新任務 3 分鐘定 prompt 結構</div>
+      </div>
+      <div class="takeaway-row" data-anim>
+        <div class="ta-badge">範本</div>
+        <div class="ta-text"><strong>5 個任務模板</strong> — 含 6 題答案 + 完整 prompt，改 [佔位符] 即用</div>
+      </div>
+      <div class="takeaway-row" data-anim>
+        <div class="ta-badge">速查</div>
+        <div class="ta-text"><strong>5 骨架 × 5 任務矩陣</strong> — 知道哪個任務寫到哪幾個骨架</div>
+      </div>
+      <div class="takeaway-row" data-anim>
+        <div class="ta-badge">招式</div>
+        <div class="ta-text"><strong>4 種微調招</strong> — 太籠統 / 格式錯 / 幻覺 / 語氣錯，對症下藥</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.16em;text-transform:uppercase;opacity:.5;text-decoration:none;color:inherit;border-bottom:1px solid currentColor">講義 · CH5 §04-05 完整版</a>
+    <span>14 / 14</span>
+  </div>
+</section>
+
+</div><!-- #deck -->
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 雙背景 =============== */
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+/* =============== 導航 =============== */
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const el=slides[idx];
+  const th=el.dataset.theme||(el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- Motion One 動效引擎 -->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity='0.15';
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  playSlide(0);
+}
+</script>
+</body>
+</html>

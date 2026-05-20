@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH 4 · AI 工作流拆解與人機分工｜辦公室 AI 工具案例應用</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主題色：墨水經典 ============ */
+    --ink:#0a0a0b;
+    --ink-rgb:10,10,11;
+    --paper:#f1efea;
+    --paper-rgb:241,239,234;
+    --paper-tint:#e8e5de;
+    --ink-tint:#18181a;
+
+    /* ============ 字體（跨主題固定） ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 雙背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻頁 ============ */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 遮罩 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：頂部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:max(13px,1vw)}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字體規則 ============ */
+  .kicker{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.18vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.75vw;line-height:1.5;opacity:.86}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  em{font-style:italic;font-family:var(--serif-en)}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout ============ */
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Rowline ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.1vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons (Lucide via CDN) ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 導航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============ LAYOUTS API ============ */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* 標題層級 */
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:10vw;line-height:.96;letter-spacing:-.02em}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:6.2vw;line-height:1.08;letter-spacing:-.01em}
+  .h-sub{font-family:var(--serif-zh);font-weight:500;font-size:3.1vw;line-height:1.25;letter-spacing:0;opacity:.7}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:2.3vw;line-height:1.3}
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* meta-row */
+  .meta-row{display:flex;gap:1.2em;align-items:baseline;flex-wrap:wrap;font-family:var(--mono);font-size:max(12px,.92vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+
+  /* stat-card */
+  .stat-card{display:flex;flex-direction:column;gap:.8vh;align-items:flex-start;padding-top:1.6vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.3)}
+  .stat-card .stat-label{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .stat-card .stat-nb{font-family:var(--serif-en);font-weight:800;font-size:5.8vw;line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum";margin-top:.4vh}
+  .stat-card .stat-nb .stat-unit{font-family:var(--serif-zh);font-weight:500;font-size:.38em;letter-spacing:0;opacity:.72;margin-left:.14em}
+  .stat-card .stat-note{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.5;opacity:.72;margin-top:.6vh}
+
+  /* pipeline */
+  .pipeline-section{margin-top:4.4vh;padding-top:2.8vh;border-top:1px dashed rgba(127,127,127,.32)}
+  .pipeline-section:first-of-type{border-top:0;padding-top:0;margin-top:3vh}
+  .pipeline-label{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.24em;text-transform:uppercase;opacity:.62;margin-bottom:2.2vh}
+  .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw}
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{display:flex;flex-direction:column;gap:.8vh;padding-top:1.4vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .step-nb{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:max(12px,1.15vw);opacity:.45}
+  .step-title{font-family:var(--sans-zh);font-weight:700;font-size:max(14px,1.55vw);letter-spacing:.01em;line-height:1.2}
+  .step-desc{font-family:var(--sans-zh);font-weight:400;font-size:max(12px,.95vw);line-height:1.45;opacity:.72}
+
+  /* grid classes */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(0,1fr);gap:2.4vh 2vw}
+  .callout-src{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+
+  /* 動效系統 */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* 對比卡 */
+  .compare-card{display:flex;flex-direction:column;gap:1.6vh;padding:2.8vh 2.4vw;border-radius:4px}
+  .slide.light .compare-card{background:rgba(var(--ink-rgb),.04);border:1px solid rgba(var(--ink-rgb),.1)}
+  .slide.dark .compare-card{background:rgba(var(--paper-rgb),.05);border:1px solid rgba(var(--paper-rgb),.12)}
+  .compare-card .c-label{font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.26em;text-transform:uppercase;opacity:.55}
+  .compare-card .c-title{font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.5vw);line-height:1.25}
+  .compare-card .c-bad{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.65;opacity:.85;border-left:2px solid rgba(180,80,60,.6);padding-left:1em}
+  .compare-card .c-good{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.65;opacity:.85;border-left:2px solid rgba(60,130,80,.6);padding-left:1em}
+  .compare-card .c-rule{font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.14em;opacity:.6;margin-top:.8vh}
+
+  /* ============ 工作流時間軸卡片 ============ */
+  .flow-grid{display:grid;gap:1.4vh 1.2vw;flex:1;align-content:center}
+  .flow-grid[data-cols="5"]{grid-template-columns:repeat(5,1fr)}
+  .flow-grid[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .flow-grid[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .fc{display:flex;flex-direction:column;gap:.6vh;padding:1.4vh 1.2vw;border-radius:4px;border-top:3px solid transparent;position:relative}
+  .fc.ai{border-top-color:rgba(180,140,60,.8)}
+  .slide.dark .fc.ai{background:rgba(180,140,60,.1)}
+  .slide.light .fc.ai{background:rgba(180,140,60,.08)}
+  .fc.human{border-top-color:rgba(100,130,170,.8)}
+  .slide.dark .fc.human{background:rgba(100,130,170,.1)}
+  .slide.light .fc.human{background:rgba(100,130,170,.08)}
+  .fc .fc-nb{font-family:var(--serif-en);font-style:italic;font-size:max(10px,.88vw);opacity:.45}
+  .fc .fc-who{font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-bottom:.2vh}
+  .fc.ai .fc-who{color:rgba(200,160,60,1)}
+  .fc.human .fc-who{color:rgba(110,140,180,1)}
+  .fc .fc-title{font-family:var(--serif-zh);font-weight:700;font-size:max(12px,1.05vw);line-height:1.3}
+  .fc .fc-desc{font-family:var(--sans-zh);font-size:max(10px,.82vw);line-height:1.45;opacity:.72}
+
+  /* ============ 人機矩陣 rowline 三欄 ============ */
+  .resp-row{display:grid;grid-template-columns:2.2fr .7fr .7fr 2.4fr;gap:1.8vw;padding:1.8vh 0;border-top:1px solid rgba(127,127,127,.22);align-items:center}
+  .resp-row:last-child{border-bottom:1px solid rgba(127,127,127,.22)}
+  .resp-row .rk{font-family:var(--serif-zh);font-weight:700;font-size:max(13px,1.1vw);line-height:1.3}
+  .resp-row .rv{font-family:var(--mono);font-size:max(11px,.9vw);letter-spacing:.1em;text-align:center;opacity:.85}
+  .resp-row .rv.ai{color:rgba(200,160,60,1)}
+  .resp-row .rv.human{color:rgba(110,140,180,1)}
+  .resp-row .rd{font-family:var(--sans-zh);font-size:max(11px,.88vw);line-height:1.5;opacity:.75}
+  .resp-head{display:grid;grid-template-columns:2.2fr .7fr .7fr 2.4fr;gap:1.8vw;padding-bottom:1.2vh;font-family:var(--mono);font-size:max(9px,.72vw);letter-spacing:.22em;text-transform:uppercase;opacity:.52}
+
+  /* 響應式 */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+    .flow-grid{grid-template-columns:repeat(2,1fr)!important}
+    .resp-row,.resp-head{grid-template-columns:1fr;gap:.8vh}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻頁 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- ============================================================
+     頁 01 · 封面 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 01 / 18</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;padding:4vh 0">
+    <div class="kicker" data-anim>辦公室 AI 工具案例應用</div>
+    <h1 class="h-hero" data-anim style="white-space:nowrap">工作流，<br>不是一個 prompt。</h1>
+    <div style="margin-top:4vh" data-anim>
+      <div class="lead">AI 工作流拆解與人機分工 · 60 分鐘加深章節</div>
+    </div>
+    <div class="meta-row" style="margin-top:3.6vh" data-anim>
+      <span>CH 4</span>
+      <span>·</span>
+      <span>60 Min · 方法論加深</span>
+      <span>·</span>
+      <span>2026-05</span>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">辦公室 AI 工具案例應用</span>
+    <span>弄一下工作室</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 02 · 章節 Agenda · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 02 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:3.2vh">章節架構 · 60 Min</div>
+  <h2 class="h-xl" data-anim style="margin-bottom:3.6vh">這 60 分鐘<br>怎麼走</h2>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center" data-anim>
+    <div class="rowline" style="grid-template-columns:5vw 3fr 1fr">
+      <div class="k" style="font-family:var(--mono);font-size:max(12px,1vw);opacity:.5">01</div>
+      <div class="v"><strong>為什麼「一個 prompt 解一切」不可行</strong> — 3 個問題的成因與後果</div>
+      <div class="m">5 Min</div>
+    </div>
+    <div class="rowline" style="grid-template-columns:5vw 3fr 1fr">
+      <div class="k" style="font-family:var(--mono);font-size:max(12px,1vw);opacity:.5">02</div>
+      <div class="v"><strong>工作流拆解 4 步驟</strong> — 結果倒推 / 任務切片 / 依賴排序 / 交棒點識別</div>
+      <div class="m">15 Min</div>
+    </div>
+    <div class="rowline" style="grid-template-columns:5vw 3fr 1fr">
+      <div class="k" style="font-family:var(--mono);font-size:max(12px,1vw);opacity:.5">03</div>
+      <div class="v"><strong>3 個完整工作流範例</strong> — 季度業務簡報 / 批次客訴回信 / 跨部門資料整合</div>
+      <div class="m">25 Min</div>
+    </div>
+    <div class="rowline" style="grid-template-columns:5vw 3fr 1fr">
+      <div class="k" style="font-family:var(--mono);font-size:max(12px,1vw);opacity:.5">04</div>
+      <div class="v"><strong>人機分工責任表</strong> — 8 類動作的 AI / 人主輔矩陣</div>
+      <div class="m">10 Min</div>
+    </div>
+    <div class="rowline" style="grid-template-columns:5vw 3fr 1fr">
+      <div class="k" style="font-family:var(--mono);font-size:max(12px,1vw);opacity:.5">05</div>
+      <div class="v"><strong>何時該停手</strong> — 3 個停手訊號 + 帶走清單</div>
+      <div class="m">5 Min</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">CH 4 · AI 工作流拆解與人機分工</span>
+    <span>02 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 03 · 幕封 §01 · hero light
+     ============================================================ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 03 / 18</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 01 · 5 Min</div>
+    <h2 class="h-hero" data-anim>為什麼單<br>prompt 不夠</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:42vw" data-anim>CH1 到 CH2 的案例都是「單任務 + 已備好資料 + 1 套 prompt」結構。但真實工作不是這樣。</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">為什麼「一個 prompt 解一切」不可行</span>
+    <span>03 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 04 · §01 三個問題 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 04 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">§ 01 · 單 prompt 跑複雜任務的 3 個問題</div>
+  <h2 class="h-md" data-anim style="margin-bottom:2.8vh">一個 prompt 解一切，會出什麼事</h2>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center" data-anim>
+    <div class="rowline" style="grid-template-columns:2fr 3fr 2fr">
+      <div class="k">問題 1<br>每段做一半</div>
+      <div class="v">AI 一次處理多任務時「平均用力」——分析 70%、結論 70%、排版 70%，每段都不夠用</div>
+      <div class="m" style="color:rgba(200,100,80,.9)">輸出哪段都不能直接用</div>
+    </div>
+    <div class="rowline" style="grid-template-columns:2fr 3fr 2fr">
+      <div class="k">問題 2<br>隱性依賴錯亂</div>
+      <div class="v">後段任務需要的「前段判斷」AI 自己亂下——它先假定業績下滑原因，後面整份簡報都繞著這假定走</div>
+      <div class="m" style="color:rgba(200,100,80,.9)">邏輯漂亮但前提錯誤</div>
+    </div>
+    <div class="rowline" style="grid-template-columns:2fr 3fr 2fr">
+      <div class="k">問題 3<br>人機邊界模糊</div>
+      <div class="v">AI 把「應該人決定的事」也決定了——例如 AI 自己選了 3 個亮點，但你其實有 5 個亮點要呈現</div>
+      <div class="m" style="color:rgba(200,100,80,.9)">輸出有 AI 的判斷、不是你的</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">為什麼「一個 prompt 解一切」不可行</span>
+    <span>04 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 05 · §01 核心原則 · light · quote recipe
+     ============================================================ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 05 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">§ 01 · 核心原則</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:74vw;gap:4vh">
+    <div class="callout" data-anim style="border-left-width:3px">
+      <div class="q-big">
+        <span data-anim="line" style="display:block">把複雜工作拆成「多個小任務 + 明確交棒點」，</span>
+        <span data-anim="line" style="display:block">每段 AI 只做一件事、每段人都檢核一次。</span>
+        <span data-anim="line" style="display:block;margin-top:2.4vh;opacity:.7">這比追求「一個超強 prompt 跑全部」可靠 10 倍。</span>
+      </div>
+    </div>
+    <div data-anim style="font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.2em;text-transform:uppercase;opacity:.5">
+      下面 4 步驟教你拆 — 任何複雜工作都適用
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH4.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.55;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px">對應講義 CH4 §01</a>
+    <span>05 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 06 · 幕封 §02 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 06 / 18</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 02 · 15 Min</div>
+    <h2 class="h-hero" data-anim>拆解 4 步驟</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:44vw" data-anim>結果倒推 / 任務切片 / 依賴排序 / 交棒點識別 — 4 步驟順序不可打亂，跑一次省你後面 1-2 小時</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">工作流拆解 4 步驟</span>
+    <span>06 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 07 · §02 4 步驟全景 pipeline · light
+     ============================================================ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 07 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">§ 02 · 4 步驟總覽（每步按鍵逐一點亮）</div>
+
+  <div class="pipeline-section" style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div class="pipeline" data-cols="4" style="gap:2vw;flex:1;align-content:center">
+      <div class="step" data-anim="step">
+        <div class="step-nb">Step 01</div>
+        <div class="step-title">結果倒推</div>
+        <div class="step-desc">從「最終要交的東西長什麼樣」開始想。把成品的 5 個關鍵特徵寫下來——<strong>沒寫之前不要碰 AI</strong></div>
+      </div>
+      <div class="step" data-anim="step">
+        <div class="step-nb">Step 02</div>
+        <div class="step-title">任務切片</div>
+        <div class="step-desc">從成品倒推需要哪些原料，每個原料對應一個小任務。<strong>每片 ≤ 1 個 prompt 能跑完</strong>，約 5-10 分鐘</div>
+      </div>
+      <div class="step" data-anim="step">
+        <div class="step-nb">Step 03</div>
+        <div class="step-title">依賴排序</div>
+        <div class="step-desc">標明哪些片要先做才能做下一片。排錯依賴的後果：AI 拿不到前段結果，就<strong>自己編一個</strong></div>
+      </div>
+      <div class="step" data-anim="step">
+        <div class="step-nb">Step 04</div>
+        <div class="step-title">交棒點識別</div>
+        <div class="step-desc">每片之間明確標「誰來檢核」。不標交棒點就是「AI 接力」——<strong>容易把人的判斷悄悄推給 AI</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH4.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.55;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px">對應講義 CH4 §02</a>
+    <span>07 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 08 · §02 步驟 01-02 展開 · dark · directional
+     ============================================================ -->
+<section class="slide dark" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 08 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">§ 02 · Step 01 + 02 展開</div>
+
+  <div class="frame grid-2-6-6" style="flex:1;gap:4vw;align-items:start;margin-top:1.6vh">
+    <div class="compare-card" data-anim="left">
+      <span class="c-label">Step 01 · 結果倒推</span>
+      <div class="c-title">從成品長相開始想</div>
+      <div class="c-good" style="border-left-color:rgba(var(--paper-rgb),.4)">問自己：<strong>最終要交的東西有哪 5 個特徵？</strong><br>例：8 頁、給 CEO 看、含 3 張圖表、有預測數字、結論有行動建議</div>
+      <div class="c-bad" style="border-left-color:rgba(180,80,60,.5);margin-top:1.2vh">沒寫下成品長相就開始 prompt——80% 的「不知道怎麼問 AI」都是因為「不知道想要什麼」</div>
+      <div class="c-rule">寫下來才碰 AI，不是碰了 AI 才知道要什麼</div>
+    </div>
+    <div class="compare-card" data-anim="right">
+      <span class="c-label">Step 02 · 任務切片</span>
+      <div class="c-title">每片 ≤ 1 個 prompt 跑完</div>
+      <div class="c-good" style="border-left-color:rgba(var(--paper-rgb),.4)">「8 頁簡報」→ 背景 1 頁 / 數據 3 頁 / 分析 2 頁 / 結論 1 頁 / Q&amp;A 預備 1 頁<br><strong>每片 5-10 分鐘能完成</strong></div>
+      <div class="c-bad" style="border-left-color:rgba(180,80,60,.5);margin-top:1.2vh">切太細效率差 / 切太粗 AI 做不好。兩個極端都是坑</div>
+      <div class="c-rule">每片一個問題，每片人都能驗收</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">工作流拆解 4 步驟</span>
+    <span>08 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 09 · §02 步驟 03-04 展開 · light · directional
+     ============================================================ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 09 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">§ 02 · Step 03 + 04 展開</div>
+
+  <div class="frame grid-2-6-6" style="flex:1;gap:4vw;align-items:start;margin-top:1.6vh">
+    <div class="compare-card" data-anim="left">
+      <span class="c-label">Step 03 · 依賴排序</span>
+      <div class="c-title">哪些片要先做才能做下一片</div>
+      <div class="c-good" style="border-left-color:rgba(10,10,11,.3)">「數據頁」→「分析頁」→「結論頁」<br>同層級可並行：背景頁 ≠ 依賴 Q&amp;A 預備頁</div>
+      <div class="c-bad" style="border-left-color:rgba(180,80,60,.6);margin-top:1.2vh">排錯依賴的後果：AI 拿不到前段結果就「自己編一個」——<strong>幻覺從這裡生出來</strong></div>
+      <div class="c-rule">依賴圖畫出來，比腦袋記著更可靠</div>
+    </div>
+    <div class="compare-card" data-anim="right">
+      <span class="c-label">Step 04 · 交棒點識別（最關鍵）</span>
+      <div class="c-title">三種交棒模式</div>
+      <div class="c-good" style="border-left-color:rgba(10,10,11,.3);line-height:1.9"><strong>AI → 人 → AI</strong>：AI 做 A 片，人檢核 + 補判斷，再交 AI 做 B 片<br><strong>人 → AI</strong>：人決策完才開始用 AI（最安全）<br><span style="opacity:.6"><strong>AI → AI</strong>：少見、風險高——幾乎不建議</span></div>
+      <div class="c-rule">不標交棒點 = AI 接力 = 人的判斷被悄悄交出去</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH4.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.55;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px">對應講義 CH4 §02</a>
+    <span>09 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 10 · 幕封 §03 · hero light
+     ============================================================ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 10 / 18</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 03 · 25 Min</div>
+    <h2 class="h-hero" data-anim>3 個<br>完整工作流</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:44vw" data-anim>每個工作流展示完整的人機交替節奏。<span style="font-family:var(--mono);font-size:.7em;letter-spacing:.15em;text-transform:uppercase;opacity:.65">金色 = AI 做 · 藍色 = 人做</span></div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">3 個完整工作流範例</span>
+    <span>10 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 11 · 工作流 A 時間軸 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 11 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:1.8vh">工作流 A · 季度業務簡報</div>
+  <h2 class="h-md" data-anim style="margin-bottom:1.6vh">從零做一份 8 頁季度業務簡報給 CEO — 2-3 小時（vs 純 AI 單 prompt 0.5h 但不能用）</h2>
+
+  <div class="flow-grid" data-cols="5" data-anim style="flex:1;align-content:center">
+    <div class="fc human">
+      <div class="fc-nb">01</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">定成品規格</div>
+      <div class="fc-desc">8 頁、給 CEO、Q2 成長 + Q3 預測、3 個圖表、有行動建議</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">02</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">蒐集原始資料</div>
+      <div class="fc-desc">從 CRM / 財務 / 客服系統拉 CSV——AI 進不去後台</div>
+    </div>
+    <div class="fc ai">
+      <div class="fc-nb">03</div>
+      <div class="fc-who">AI</div>
+      <div class="fc-title">業績分析</div>
+      <div class="fc-desc">月份分組 + QoQ 成長率 + 前 3 大客戶 + 前 3 大商品</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">04</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">檢核 + 補判斷</div>
+      <div class="fc-desc">用驗證卡 v2 核數字 + 補業務脈絡——AI 不知道公司內部</div>
+    </div>
+    <div class="fc ai">
+      <div class="fc-nb">05</div>
+      <div class="fc-who">AI</div>
+      <div class="fc-title">圖表建議</div>
+      <div class="fc-desc">建議 3 個圖表類型、X/Y 軸、數據來源欄位、標題</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">06</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">實際做圖表</div>
+      <div class="fc-desc">Excel / Canva 做圖。AI 給規格，人來實做</div>
+    </div>
+    <div class="fc ai">
+      <div class="fc-nb">07</div>
+      <div class="fc-who">AI</div>
+      <div class="fc-title">分析 + 結論文字</div>
+      <div class="fc-desc">依整理後的數據寫 2 頁分析 + 1 頁結論，每頁 80 字內</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">08</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">內化重寫</div>
+      <div class="fc-desc">用自己語氣改一遍——你要在會議上回答這份簡報的內容</div>
+    </div>
+    <div class="fc ai">
+      <div class="fc-nb">09</div>
+      <div class="fc-who">AI</div>
+      <div class="fc-title">Q&amp;A 預備</div>
+      <div class="fc-desc">假設你是 CEO，列 5 個問題 + 建議回答方向</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">10</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">驗證卡 v2 全跑</div>
+      <div class="fc-desc">8 欄全打勾才寄出。引用核實 / 空話檢核 / 機密漂白</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH4.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.55;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px">對應講義 CH4 §03</a>
+    <span>11 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 12 · 工作流 A 人機分工重點 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 12 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">工作流 A · 人機交替心法</div>
+  <h2 class="h-md" data-anim style="margin-bottom:2.8vh">為什麼要「人 → AI → 人 → AI → 人」交替？</h2>
+
+  <div class="frame grid-2-6-6" style="flex:1;gap:5vw;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:2.4vh">
+      <div class="callout" data-anim>
+        <div class="q-big">工作流 A 的 3 個關鍵交棒點</div>
+        <ul style="margin-top:1.4vh;font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:2.1;opacity:.85;padding-left:1.2em">
+          <li>步驟 03→04：AI 分析完，<strong>人補業務脈絡</strong>（AI 不知道你公司的內部故事）</li>
+          <li>步驟 07→08：AI 寫完文字，<strong>人內化重寫</strong>（你要在會議上回答）</li>
+          <li>步驟 09→10：AI Q&amp;A 完，<strong>人最終驗證</strong>（8 欄全打勾才出門）</li>
+        </ul>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2vh" data-anim>
+      <div style="font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:.4vh">時間對比</div>
+      <div class="rowline" style="grid-template-columns:7fr 5fr">
+        <div class="k">純人工</div>
+        <div class="v">6-8 小時</div>
+      </div>
+      <div class="rowline" style="grid-template-columns:7fr 5fr">
+        <div class="k">人機工作流</div>
+        <div class="v" style="font-family:var(--serif-en);font-weight:700;font-size:2.2vw;letter-spacing:-.02em">2-3 h</div>
+      </div>
+      <div class="rowline" style="grid-template-columns:7fr 5fr">
+        <div class="k">單 prompt</div>
+        <div class="v" style="opacity:.5">0.5 h 但不能用</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">工作流 A · 季度業務簡報</span>
+    <span>12 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 13 · 工作流 B 時間軸 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 13 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:1.8vh">工作流 B · 批次客訴回信</div>
+  <h2 class="h-md" data-anim style="margin-bottom:1.6vh">處理一週累積的 30 封客訴回信 — 1-1.5 小時（vs 純人工 4-5 小時）</h2>
+
+  <div class="flow-grid" data-cols="4" data-anim style="flex:1;align-content:center;gap:1.8vh 2vw">
+    <div class="fc human">
+      <div class="fc-nb">01</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">定回信原則</div>
+      <div class="fc-desc">滿意為首要 / 不承諾無法兌現 / 賠款要請示 / 專業但溫暖</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">02</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">客訴分 3 類（5 min）</div>
+      <div class="fc-desc">A：標準問題（出貨延遲 / 瑕疵）· B：需查資料 · C：必須主管處理</div>
+    </div>
+    <div class="fc ai">
+      <div class="fc-nb">03</div>
+      <div class="fc-who">AI</div>
+      <div class="fc-title">A 類：批次草稿</div>
+      <div class="fc-desc">15 封同時送：同理 1 句 + 解釋 1 句 + 補償 1 句 + 後續 1 句，每封 80 字內</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">04</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">A 類審稿 + 寄出</div>
+      <div class="fc-desc">15 封各看 1 分鐘 = 15 min 審完。確認補償沒超權限</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">05</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">B 類：先查資料</div>
+      <div class="fc-desc">10 封 B 類先查訂單 / 物流系統，整理「客訴 + 事實」清單</div>
+    </div>
+    <div class="fc ai">
+      <div class="fc-nb">06</div>
+      <div class="fc-who">AI</div>
+      <div class="fc-title">B 類：客製草稿</div>
+      <div class="fc-desc">必須引用你給的事實、不加沒給的承諾、金額處寫「待主管核可」</div>
+    </div>
+    <div class="fc human">
+      <div class="fc-nb">07</div>
+      <div class="fc-who">人</div>
+      <div class="fc-title">C 類：自己寫</div>
+      <div class="fc-desc" style="color:rgba(200,100,80,.9);opacity:1">投訴客服態度 / 媒體威脅——這 5 封不交 AI，當事人寫</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH4.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.55;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px">對應講義 CH4 §03</a>
+    <span>13 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 14 · 工作流 C + 3 工作流共通結構 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 14 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">工作流 C · 跨部門資料整合 + 3 個工作流的共通結構</div>
+
+  <div class="frame grid-2-6-6" style="flex:1;gap:5vw;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:2vh">
+      <h3 class="h3-zh" data-anim>工作流 C：月度經營儀表板</h3>
+      <div data-anim>
+        <div class="rowline" style="grid-template-columns:4vw 3fr">
+          <div class="k" style="font-family:var(--mono);font-size:max(11px,.9vw);opacity:.5">01</div>
+          <div class="v"><span style="color:rgba(100,130,170,.9);font-weight:700">人</span> 定指標 + 確認 3 份報表的欄位對應</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:4vw 3fr">
+          <div class="k" style="font-family:var(--mono);font-size:max(11px,.9vw);opacity:.5">02</div>
+          <div class="v"><span style="color:rgba(100,130,170,.9);font-weight:700">人</span> 去識別化 + 格式統一（避免 AI 對錯欄位）</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:4vw 3fr">
+          <div class="k" style="font-family:var(--mono);font-size:max(11px,.9vw);opacity:.5">03</div>
+          <div class="v"><span style="color:rgba(180,140,60,.9);font-weight:700">AI</span> 單表分析 × 3 次（分開跑，結果分開存）</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:4vw 3fr">
+          <div class="k" style="font-family:var(--mono);font-size:max(11px,.9vw);opacity:.5">04</div>
+          <div class="v"><span style="color:rgba(100,130,170,.9);font-weight:700">人</span> 3 份結果交叉檢核（AI 分開跑時看不到跨表訊號）</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:4vw 3fr">
+          <div class="k" style="font-family:var(--mono);font-size:max(11px,.9vw);opacity:.5">05</div>
+          <div class="v"><span style="color:rgba(180,140,60,.9);font-weight:700">AI</span> 儀表板組裝（依 3 份分析 + 人標的交叉訊號）</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:4vw 3fr">
+          <div class="k" style="font-family:var(--mono);font-size:max(11px,.9vw);opacity:.5">06</div>
+          <div class="v"><span style="color:rgba(100,130,170,.9);font-weight:700">人</span> 驗證卡 v2 全跑（後續會被用來下決策，錯一個代價很高）</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2.4vh">
+      <h3 class="h3-zh" data-anim>3 個工作流的共通結構</h3>
+      <div class="callout" data-anim>
+        <div class="q-big" style="font-size:max(15px,1.35vw)">開頭</div>
+        <p style="margin-top:.8vh;font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.85">人定規格 + 人準備資料 — <strong>第 1 步永遠是人</strong></p>
+      </div>
+      <div class="callout" data-anim>
+        <div class="q-big" style="font-size:max(15px,1.35vw)">中間</div>
+        <p style="margin-top:.8vh;font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.85">AI 分階段做 + 人逐段檢核，交替推進</p>
+      </div>
+      <div class="callout" data-anim>
+        <div class="q-big" style="font-size:max(15px,1.35vw)">結尾</div>
+        <p style="margin-top:.8vh;font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.85">人最終驗證 + 人對外負責 — <strong>最後 1 步永遠是人</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH4.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.55;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px">對應講義 CH4 §03</a>
+    <span>14 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 15 · 幕封 §04 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 15 / 18</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 04 · 10 Min</div>
+    <h2 class="h-hero" data-anim>人機分工<br>責任表</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:44vw" data-anim>8 類動作的 AI / 人主輔矩陣 — 回公司遇到新任務先查這張表，判斷誰做什麼</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">人機分工責任表</span>
+    <span>15 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 16 · §04 8 類動作矩陣 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 16 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">§ 04 · 8 類動作 × AI / 人主輔矩陣</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center" data-anim>
+    <div class="resp-head">
+      <div>動作類型</div>
+      <div style="text-align:center">AI</div>
+      <div style="text-align:center">人</div>
+      <div>理由</div>
+    </div>
+    <div class="resp-row">
+      <div class="rk">蒐集原始資料</div>
+      <div class="rv human">輔</div>
+      <div class="rv ai" style="color:rgba(100,130,170,.9)">主</div>
+      <div class="rd">後台 / 系統 / 郵件必須人做，AI 進不去</div>
+    </div>
+    <div class="resp-row">
+      <div class="rk">格式轉換 / 整理</div>
+      <div class="rv ai">主</div>
+      <div class="rv human" style="color:rgba(100,130,170,.9)">輔</div>
+      <div class="rd">CSV → 表格、亂排序 → 分類好的清單，AI 強項</div>
+    </div>
+    <div class="resp-row">
+      <div class="rk">數字計算</div>
+      <div class="rv human" style="color:rgba(100,130,170,.9)">輔</div>
+      <div class="rv ai" style="color:rgba(100,130,170,.9)">主</div>
+      <div class="rd">AI 算「估計」可以，進報告的關鍵數字一律 Excel 重算</div>
+    </div>
+    <div class="resp-row">
+      <div class="rk">文字草稿</div>
+      <div class="rv ai">主</div>
+      <div class="rv human" style="color:rgba(100,130,170,.9)">輔</div>
+      <div class="rd">週報 / 客訴回信 / 簡報文案，AI 強項。草稿 ≠ 最終版</div>
+    </div>
+    <div class="resp-row">
+      <div class="rk">內化重寫 / 對外發送版</div>
+      <div class="rv human" style="color:rgba(100,130,170,.9)">輔</div>
+      <div class="rv ai" style="color:rgba(100,130,170,.9)">主</div>
+      <div class="rd">對外文字必須是你寫的、你能在會議上回答的</div>
+    </div>
+    <div class="resp-row">
+      <div class="rk">判斷 / 決策</div>
+      <div class="rv" style="opacity:.3">—</div>
+      <div class="rv ai" style="color:rgba(100,130,170,.9)">主</div>
+      <div class="rd">「該強調哪個亮點」「該採哪個方案」，人才能做、人要負責</div>
+    </div>
+    <div class="resp-row">
+      <div class="rk">引用法規 / 報告 / 數據</div>
+      <div class="rv" style="opacity:.3">—</div>
+      <div class="rv ai" style="color:rgba(100,130,170,.9)">主</div>
+      <div class="rd">AI 最容易在這幻覺。「依 X 法第 Y 條」一律自己 Google</div>
+    </div>
+    <div class="resp-row">
+      <div class="rk">跨部門協調 / 涉人事</div>
+      <div class="rv" style="opacity:.3">—</div>
+      <div class="rv ai" style="color:rgba(100,130,170,.9)">主</div>
+      <div class="rd">跟同事 / 主管溝通、人事評估，AI 完全不該介入</div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH4.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.55;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px">對應講義 CH4 §04</a>
+    <span>16 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 17 · §04 心法金句 + §05 停手訊號 · dark · quote recipe
+     ============================================================ -->
+<section class="slide dark" data-animate="quote">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 17 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">§ 04 心法 + § 05 停手訊號</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:5vh;max-width:76vw">
+    <div class="callout" data-anim style="border-left-width:3px">
+      <div class="q-big">
+        <span data-anim="line" style="display:block">AI 處理「整理 / 草稿 / 估計」，</span>
+        <span data-anim="line" style="display:block">人處理「蒐集 / 判斷 / 對外」。</span>
+        <span data-anim="line" style="display:block;margin-top:1.6vh;opacity:.65;font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.18em;text-transform:uppercase">這條原則拿來判斷新任務 80% 不會錯</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1.8vh" data-anim>
+      <div style="font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55">§ 05 · 3 個停手訊號</div>
+      <div style="display:flex;gap:3vw">
+        <div style="flex:1;padding:2vh 1.8vw;border-top:2px solid rgba(200,100,80,.5);background:rgba(200,100,80,.06)">
+          <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.2vw);line-height:1.3;margin-bottom:.8vh">工作流超過 10 個階段</div>
+          <div style="font-family:var(--sans-zh);font-size:max(12px,.95vw);opacity:.75;line-height:1.55">停下檢視：哪些段其實是「人定義 + 人判斷」？抽掉後剩下的才交給 AI</div>
+        </div>
+        <div style="flex:1;padding:2vh 1.8vw;border-top:2px solid rgba(200,100,80,.5);background:rgba(200,100,80,.06)">
+          <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.2vw);line-height:1.3;margin-bottom:.8vh">同段重跑 3 次還不對</div>
+          <div style="font-family:var(--sans-zh);font-size:max(12px,.95vw);opacity:.75;line-height:1.55">不是 prompt 寫不好——是這任務不適合 AI。把這段抽掉自己做</div>
+        </div>
+        <div style="flex:1;padding:2vh 1.8vw;border-top:2px solid rgba(200,100,80,.5);background:rgba(200,100,80,.06)">
+          <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(14px,1.2vw);line-height:1.3;margin-bottom:.8vh">教 AI 比自己做還久</div>
+          <div style="font-family:var(--sans-zh);font-size:max(12px,.95vw);opacity:.75;line-height:1.55">AI 工作流的 ROI 反轉了。這個任務不適合 AI 化，回去自己手做</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH4.html#main" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.55;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px">對應講義 CH4 §04–05</a>
+    <span>17 / 18</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 18 · 帶走清單 + 銜接 CH5 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>工作流拆解 · Workflow</div>
+    <div>CH 4 · 18 / 18</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">§ 06 · 帶走清單 + 銜接 CH 5</div>
+  <h2 class="h-md" data-anim style="margin-bottom:2.8vh">確認這些都在你手上</h2>
+
+  <div class="frame grid-2-7-5" style="flex:1;gap:5vw;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:2vh" data-anim>
+      <div class="rowline" style="grid-template-columns:5vw 1fr">
+        <div class="k" style="font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.14em;opacity:.55">方法論</div>
+        <div class="v"><strong>工作流拆解 4 步驟</strong>（結果倒推 / 任務切片 / 依賴排序 / 交棒點識別）— 適用任何複雜任務</div>
+      </div>
+      <div class="rowline" style="grid-template-columns:5vw 1fr">
+        <div class="k" style="font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.14em;opacity:.55">範本</div>
+        <div class="v"><strong>3 個工作流範本</strong>（季度簡報 10 階段 / 批次客訴 7 階段 / 跨部門整合 6 階段）— 回去可直接套</div>
+      </div>
+      <div class="rowline" style="grid-template-columns:5vw 1fr">
+        <div class="k" style="font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.14em;opacity:.55">工具</div>
+        <div class="v"><strong>人機分工責任表</strong>（8 類動作 × AI / 人主輔）— 判斷新任務 80% 不會錯</div>
+      </div>
+      <div class="rowline" style="grid-template-columns:5vw 1fr">
+        <div class="k" style="font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.14em;opacity:.55">原則</div>
+        <div class="v"><strong>3 個停手訊號</strong>（超 10 階段 / 重跑 3 次失敗 / 教 AI 比做還久）— 知道什麼時候不要 AI 化</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:2.4vh;padding-top:.8vh">
+      <div style="font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:.4vh">接下來</div>
+      <div class="callout" data-anim>
+        <div class="q-big" style="font-size:max(16px,1.45vw)">CH 5 · Prompt 決策樹</div>
+        <p style="margin-top:1.2vh;font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.75;opacity:.85">有了工作流，下一步是「怎麼讓每一個 prompt 的品質更穩」。CH5 用決策樹形式，幫你在 30 秒內判斷任何情況下該怎麼寫 prompt。</p>
+        <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH5.html" target="_blank" rel="noopener" style="display:inline-block;margin-top:1.4vh;font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.18em;text-transform:uppercase;color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px;opacity:.7">開啟 CH5 講義 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">AI 工作流拆解與人機分工 · 完結</span>
+    <span>18 / 18</span>
+  </div>
+</section>
+
+</div><!-- #deck -->
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 雙背景 =============== */
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+/* =============== 導航 =============== */
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const el=slides[idx];
+  const th=el.dataset.theme||(el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- Motion One 動效引擎 -->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity='0.15';
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  playSlide(0);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CH 3 · AI 結果驗證與抓幻覺方法論｜辦公室 AI 工具案例應用</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主題色：墨水經典 ============ */
+    --ink:#0a0a0b;
+    --ink-rgb:10,10,11;
+    --paper:#f1efea;
+    --paper-rgb:241,239,234;
+    --paper-tint:#e8e5de;
+    --ink-tint:#18181a;
+
+    /* ============ 字體（跨主題固定） ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 雙背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻頁 ============ */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 遮罩 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:max(13px,1vw)}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字體規則 ============ */
+  .kicker{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.18vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.75vw;line-height:1.5;opacity:.86}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  em{font-style:italic;font-family:var(--serif-en);font-synthesis-style:none}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 螢光筆 em 強調 ============ */
+  .slide.dark em::after,.slide.hero.dark em::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.22);z-index:-1}
+  .slide.light em::after,.slide.hero.light em::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout ============ */
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Rowline ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.1vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons (Lucide via CDN) ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 導航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============ LAYOUTS API ============ */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+
+  /* 標題層級 */
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:10vw;line-height:.96;letter-spacing:-.02em}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:6.2vw;line-height:1.08;letter-spacing:-.01em}
+  .h-sub{font-family:var(--serif-zh);font-weight:500;font-size:3.1vw;line-height:1.25;letter-spacing:0;opacity:.7}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:2.3vw;line-height:1.3}
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* meta-row */
+  .meta-row{display:flex;gap:1.2em;align-items:baseline;flex-wrap:wrap;font-family:var(--mono);font-size:max(12px,.92vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+
+  /* stat-card */
+  .stat-card{display:flex;flex-direction:column;gap:.8vh;align-items:flex-start;padding-top:1.6vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.3)}
+  .stat-card .stat-label{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .stat-card .stat-nb{font-family:var(--serif-en);font-weight:800;font-size:5.8vw;line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum";margin-top:.4vh}
+  .stat-card .stat-nb .stat-unit{font-family:var(--serif-zh);font-weight:500;font-size:.38em;letter-spacing:0;opacity:.72;margin-left:.14em}
+  .stat-card .stat-note{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.5;opacity:.72;margin-top:.6vh}
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* pipeline */
+  .pipeline-section{margin-top:4.4vh;padding-top:2.8vh;border-top:1px dashed rgba(127,127,127,.32)}
+  .pipeline-section:first-of-type{border-top:0;padding-top:0;margin-top:3vh}
+  .pipeline-label{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.24em;text-transform:uppercase;opacity:.62;margin-bottom:2.2vh}
+  .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw}
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{display:flex;flex-direction:column;gap:.8vh;padding-top:1.4vh;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .step-nb{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:max(12px,1.15vw);opacity:.45}
+  .step-title{font-family:var(--sans-zh);font-weight:700;font-size:max(14px,1.55vw);letter-spacing:.01em;line-height:1.2}
+  .step-desc{font-family:var(--sans-zh);font-weight:400;font-size:max(12px,.95vw);line-height:1.45;opacity:.72}
+
+  /* grid classes */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(0,1fr);gap:2.4vh 2vw}
+  .callout-src{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+
+  /* 對比卡 */
+  .compare-card{display:flex;flex-direction:column;gap:1.6vh;padding:2.8vh 2.4vw;border-radius:4px}
+  .slide.light .compare-card{background:rgba(var(--ink-rgb),.04);border:1px solid rgba(var(--ink-rgb),.1)}
+  .slide.dark .compare-card{background:rgba(var(--paper-rgb),.05);border:1px solid rgba(var(--paper-rgb),.12)}
+  .compare-card .c-label{font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.26em;text-transform:uppercase;opacity:.55}
+  .compare-card .c-title{font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.5vw);line-height:1.25}
+  .compare-card .c-bad{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.65;opacity:.85;border-left:2px solid rgba(180,80,60,.6);padding-left:1em}
+  .compare-card .c-good{font-family:var(--sans-zh);font-size:max(13px,1.05vw);line-height:1.65;opacity:.85;border-left:2px solid rgba(60,130,80,.6);padding-left:1em}
+  .compare-card .c-rule{font-family:var(--mono);font-size:max(10px,.82vw);letter-spacing:.14em;opacity:.6;margin-top:.8vh}
+
+  /* 動效系統 */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* 響應式 */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile 豎屏提示 ============ */
+  @media (max-width:600px) and (orientation:portrait){
+    #portrait-overlay{display:flex}
+  }
+  #portrait-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(var(--ink-rgb),.96);align-items:center;justify-content:center;flex-direction:column;gap:2vh;font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.9;color:var(--paper);text-align:center;padding:4vw}
+</style>
+</head>
+<body>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻頁 · ESC 索引</div>
+<div id="portrait-overlay">
+  <i data-lucide="rotate-cw" style="width:3vh;height:3vh;stroke:currentColor;fill:none;stroke-width:1.4"></i>
+  <span>請橫向觀看</span>
+</div>
+
+<div id="deck">
+
+<!-- ============================================================
+     頁 01 · 封面 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 01 / 19</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;padding:4vh 0">
+    <div class="kicker" data-anim>辦公室 AI 工具案例應用 · 加深章節</div>
+    <h1 class="h-hero" data-anim style="white-space:nowrap">AI 結果驗證<br>與抓幻覺。</h1>
+    <div style="margin-top:4vh" data-anim>
+      <div class="lead">4 招方法論 + 驗證卡 v2 + 4 真實翻車案例</div>
+    </div>
+    <div class="meta-row" style="margin-top:3.6vh" data-anim>
+      <span>CH 3</span>
+      <span>·</span>
+      <span>60 Min · 方法論段</span>
+      <span>·</span>
+      <span>2026-05</span>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">辦公室 AI 工具案例應用</span>
+    <span>弄一下工作室</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 02 · 章節 Agenda · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 02 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:3.2vh">本章流程 · 60 Min Agenda</div>
+  <h2 class="h-xl" data-anim style="margin-bottom:3.2vh">這 60 分鐘<br>的結構</h2>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0">
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:6vw 6vw 1fr">
+        <div class="k" style="font-size:max(14px,1.3vw)">§ 01</div>
+        <div class="m">5 Min</div>
+        <div class="v">為什麼「快檢驗證卡」不夠 — 5 種幻覺型態導覽</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:6vw 6vw 1fr">
+        <div class="k" style="font-size:max(14px,1.3vw)">§ 02</div>
+        <div class="m">20 Min</div>
+        <div class="v">抓幻覺 4 招方法論：引用追蹤 / 反向追問 / 數字三角 / 結構分區</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:6vw 6vw 1fr">
+        <div class="k" style="font-size:max(14px,1.3vw)">§ 03</div>
+        <div class="m">10 Min</div>
+        <div class="v">結果驗證卡 v2（8 欄升級版）+ v1 vs v2 使用時機</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:6vw 6vw 1fr">
+        <div class="k" style="font-size:max(14px,1.3vw)">§ 04</div>
+        <div class="m">15 Min</div>
+        <div class="v">4 案例真實幻覺：週報補充型 / 業績推斷型 / 電商計算型 / 簡報補充型</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:6vw 6vw 1fr">
+        <div class="k" style="font-size:max(14px,1.3vw)">§ 05</div>
+        <div class="m">10 Min</div>
+        <div class="v">何時該停下 — 5 個情境 + 帶走清單</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">AI 結果驗證與抓幻覺方法論</span>
+    <span>02 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 03 · §01 幕封 · hero light
+     ============================================================ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 03 / 19</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 01 · 5 Min</div>
+    <h2 class="h-hero" data-anim>為什麼<br>快檢不夠</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:44vw" data-anim>前 4 個案例的驗證卡，只能擋住一半的幻覺。另一半「看起來對」的幻覺，要靠這 60 分鐘的方法論才能抓到。</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">為什麼快檢不夠</span>
+    <span>03 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 04 · 5 種幻覺型態 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 04 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">幻覺型態 · 5 種分類</div>
+  <h2 class="h-md" data-anim style="margin-bottom:2vh">快檢驗證卡擋得住前兩種，<br>後三種需要系統方法</h2>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0">
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:8vw 1fr 1fr">
+        <div class="m" style="font-size:max(9px,.72vw)">型態</div>
+        <div class="m" style="font-size:max(9px,.72vw)">AI 的行為</div>
+        <div class="m" style="font-size:max(9px,.72vw)">典型場景</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:8vw 1fr 1fr;align-items:start">
+        <div class="k" style="font-size:max(13px,1.1vw)">補充型</div>
+        <div class="v">資料不夠完整，自己「補一點」讓答案合理</div>
+        <div class="v" style="opacity:.65">週報多了一句「完成 Q2 預算初稿」—— 日誌根本沒有</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:8vw 1fr 1fr;align-items:start">
+        <div class="k" style="font-size:max(13px,1.1vw)">推斷型</div>
+        <div class="v">從有限資訊推斷出「聽起來對」的結論</div>
+        <div class="v" style="opacity:.65">AI 說「Q2 成長 12%」—— 其實它沒真的算過</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:8vw 1fr 1fr;align-items:start">
+        <div class="k" style="font-size:max(13px,1.1vw)">計算型</div>
+        <div class="v">加總 / 平均 / 占比計算錯誤</div>
+        <div class="v" style="opacity:.65">200 筆費用加總差 4%；ABC 比例用估的不是算的</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:8vw 1fr 1fr;align-items:start">
+        <div class="k" style="font-size:max(13px,1.1vw)">引用型</div>
+        <div class="v">編造不存在的法規、人名、報告、網址</div>
+        <div class="v" style="opacity:.65">「依據勞基法第 X 條」—— 根本沒這條</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:8vw 1fr 1fr;align-items:start">
+        <div class="k" style="font-size:max(13px,1.1vw)">遺漏型</div>
+        <div class="v">沒有補造，但漏掉了重要的項目（最難被發現）</div>
+        <div class="v" style="opacity:.65">50 條日誌中 3 條主管交辦的高優先項沒進週報</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">為什麼快檢不夠</span>
+    <span>04 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 05 · 幻覺的本質 + 心法 · light
+     ============================================================ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 05 / 19</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;max-width:68vw">
+    <div class="kicker" data-anim>核心心法 · §01 收束</div>
+    <div style="font-family:var(--serif-zh);font-weight:700;font-size:3.4vw;line-height:1.3;margin-bottom:4vh">
+      <span data-anim="line">AI 幻覺不是「AI 笨」，</span><br>
+      <span data-anim="line">是 AI 的本質。</span>
+    </div>
+    <div class="body-zh" style="max-width:52vw;line-height:2" data-anim>
+      它預測「下一個最像的字」。當沒看過正確答案時，它補一個「聽起來合理的字」。<br>
+      這是設計上的特性、不是 bug。<br>
+      所以驗證不是「萬一」要做，是<strong>「每次」都要做</strong>。
+    </div>
+    <div class="callout" style="margin-top:4vh;max-width:52vw" data-anim>
+      快檢驗證卡（v1）擋住「明顯對不上」的錯。今天學的 4 招，專門抓「看起來對」的隱形幻覺。
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">為什麼快檢不夠</span>
+    <span>05 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 06 · §02 幕封 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 06 / 19</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 02 · 20 Min</div>
+    <h2 class="h-hero" data-anim>抓幻覺<br>4 招</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:48vw" data-anim>引用追蹤 / 反向追問 / 數字三角 / 結構分區 — 每招對應 1-2 種幻覺型態。不需要每次全用，看任務性質選 1-2 招。</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">抓幻覺 4 招方法論</span>
+    <span>06 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 07 · 招① 引用追蹤法 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 07 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">招 ① · 引用追蹤法</div>
+
+  <div class="frame grid-2-7-5" style="flex:1;gap:4vw;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:2.8vh">
+      <h2 class="h-md" data-anim>要求 AI 在每個結論後面<br>標出「引自哪一條」</h2>
+      <div class="body-zh" data-anim>
+        Prompt 加一句：「請在每條主要成果後面，附上『引自日誌第 X 條』。」<br>
+        AI 標不出來的結論 = 它自己補的 = 補充型幻覺。
+      </div>
+      <div class="compare-card" data-anim>
+        <div class="c-label">範例：週報幻覺</div>
+        <div class="c-bad">AI 輸出：「本週完成 Q2 預算初稿」（日誌其實寫「預計下週前完成」）</div>
+        <div class="c-good">追問後：引用追蹤發現日誌第 23 條是「預計」，不是「完成」→ 刪掉</div>
+        <div class="c-rule">修正 prompt：「狀態判定：原文寫『完成』才列成果；寫『預計』請列為下週計畫」</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2.4vh;padding-top:.8vh">
+      <div class="body-zh" data-anim><strong>招 ① 快查</strong></div>
+      <div data-anim>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">抓哪種</div>
+          <div class="v">補充型、推斷型</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">何時用</div>
+          <div class="v">文字類：週報 / 摘要 / 簡報文案</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">限制</div>
+          <div class="v" style="color:rgba(180,80,60,.85)">AI 自標的引用也可能編的，要抽查 2-3 條核對原文</div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:1vh" data-anim>
+        <i data-lucide="link" class="ico-md"></i> 對應講義：<a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH3.html#s02" target="_blank" rel="noopener" style="color:inherit;border-bottom:1px solid currentColor;padding-bottom:1px;font-family:var(--mono);font-size:.9em;letter-spacing:.1em">CH3.html § 02 引用追蹤法</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">抓幻覺 4 招方法論</span>
+    <span>07 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 08 · 招② 反向追問法 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 08 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">招 ② · 反向追問法</div>
+
+  <div class="frame grid-2-7-5" style="flex:1;gap:4vw;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:2.8vh">
+      <h2 class="h-md" data-anim>對可疑結論追問<br>「逐步說明你的推理」</h2>
+      <div class="body-zh" data-anim>
+        Prompt：「這個結論是從哪推出來的？逐步說明你的推理。」<br>
+        AI 解釋不出來、或前後矛盾 = 幻覺。
+      </div>
+      <div class="compare-card" data-anim>
+        <div class="c-label">範例：業績成長率幻覺</div>
+        <div class="c-bad">AI 說「本月較上月成長 12%」—— 沒說分子是哪幾筆、退單怎麼處理</div>
+        <div class="c-good">追問後發現：AI 用「整月 SUM 比較」、退單直接扣到當月、4 月只有 18 筆但 5 月 50 筆 → 比較基準根本不對</div>
+        <div class="c-rule">修正 prompt：「請明確定義分子分母範圍 + 退單處理規則；資料不足請說『資料不足』」</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2.4vh;padding-top:.8vh">
+      <div class="body-zh" data-anim><strong>招 ② 快查</strong></div>
+      <div data-anim>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">抓哪種</div>
+          <div class="v">推斷型、引用型</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">何時用</div>
+          <div class="v">AI 給了「結論性數字」或「引用法規」</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">限制</div>
+          <div class="v" style="color:rgba(255,180,100,.85)">AI 有時會「補一個合理推理」自圓其說，數字類建議搭配招 ③</div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:1vh" data-anim>
+        <i data-lucide="message-square" class="ico-md"></i> 對應講義：<a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH3.html#s02" target="_blank" rel="noopener" style="color:inherit;border-bottom:1px solid currentColor;padding-bottom:1px;font-family:var(--mono);font-size:.9em;letter-spacing:.1em">CH3.html § 02 反向追問法</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">抓幻覺 4 招方法論</span>
+    <span>08 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 09 · 招③ 數字三角驗證法 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 09 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">招 ③ · 數字三角驗證法</div>
+
+  <div class="frame grid-2-7-5" style="flex:1;gap:4vw;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:2.8vh">
+      <h2 class="h-md" data-anim>用至少 2 種算法<br>讓 AI 重新算一次</h2>
+      <div class="body-zh" data-anim>
+        Prompt：「請用 SUM 加總；再用 AVG × COUNT 反推一次；兩個結果應該一致。」<br>
+        兩次結果差很多 = AI 原本是用「估」的。
+      </div>
+      <div class="compare-card" data-anim>
+        <div class="c-label">範例：電商費用幻覺</div>
+        <div class="c-bad">AI：「200 筆費用總額 1,234,567 元，異常 7 筆共 89,432 元」</div>
+        <div class="c-good">追問後：兩種算法結果差很多 → AI 原本是估的。再用 Excel 對：差 55K（4% 誤差），原因是退款筆數的認定不同</div>
+        <div class="c-rule">重要金額最終一定要用 Excel 自己算一次，不能只靠 AI 的兩次自驗</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2.4vh;padding-top:.8vh">
+      <div class="body-zh" data-anim><strong>招 ③ 快查</strong></div>
+      <div data-anim>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">抓哪種</div>
+          <div class="v">計算型</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">何時用</div>
+          <div class="v">費用 / 業績 / 訂單等數字類輸出</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">限制</div>
+          <div class="v" style="color:rgba(180,80,60,.85)">AI 不一定真的會算，要求「列出每一步」才更可靠</div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:1vh" data-anim>
+        <i data-lucide="calculator" class="ico-md"></i> 對應講義：<a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH3.html#s02" target="_blank" rel="noopener" style="color:inherit;border-bottom:1px solid currentColor;padding-bottom:1px;font-family:var(--mono);font-size:.9em;letter-spacing:.1em">CH3.html § 02 數字三角驗證法</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">抓幻覺 4 招方法論</span>
+    <span>09 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 10 · 招④ 結構分區 + 覆蓋率 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 10 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">招 ④ · 結構分區檢核法 + 覆蓋率檢核</div>
+
+  <div class="frame grid-2-6-6" style="flex:1;gap:5vw;align-items:start;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:2.4vh">
+      <h2 class="h-md" data-anim>拆區逐段確認 +<br>反推有沒有漏掉的</h2>
+      <div class="body-zh" data-anim>
+        (a) <strong>分區</strong>：把 AI 輸出按段落 / 欄位 / 條目拆開，逐區判斷「這區資料夠不夠支撐這結論」<br><br>
+        (b) <strong>覆蓋率</strong>：Prompt 加：「請列出你在輸出中未提及的日誌條號，並說明為什麼不提」
+      </div>
+      <div class="callout" data-anim>
+        覆蓋率反推是<strong>唯一能抓遺漏型幻覺的方法</strong>。遺漏型最危險：AI 沒有補造任何東西、但就是少了那條最重要的。
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2.4vh">
+      <div class="body-zh" data-anim><strong>招 ④ 快查</strong></div>
+      <div data-anim>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">抓哪種</div>
+          <div class="v">補充型、推斷型、遺漏型（覆蓋率）</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">何時用</div>
+          <div class="v">最終要交差的重要輸出</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr 1fr">
+          <div class="k" style="font-size:max(12px,1vw)">限制</div>
+          <div class="v" style="color:rgba(255,180,100,.85)">耗時，不適合每個 prompt 都做</div>
+        </div>
+      </div>
+      <div class="compare-card" data-anim>
+        <div class="c-label">範例：簡報組裝幻覺（招 ④）</div>
+        <div class="c-bad">AI 在第 6 頁加了「客戶滿意度 92%」—— 原始素材根本沒這數字</div>
+        <div class="c-good">分區拆解：每頁每個數字找原始素材，找不到的標紅</div>
+        <div class="c-rule">修正 prompt：「所有數字必須來自我提供的素材；缺數字請寫『（無數據）』」</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">抓幻覺 4 招方法論</span>
+    <span>10 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 11 · 選招原則 · light (directional)
+     ============================================================ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 11 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">選招原則 · 哪種任務用哪招</div>
+
+  <div class="frame" style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:4vw;align-items:center;margin-top:1.6vh">
+    <div style="display:flex;flex-direction:column;gap:2.8vh" data-anim="left">
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.8vw);line-height:1.3;padding-bottom:2vh;border-bottom:1px solid rgba(127,127,127,.2)">文字類輸出</div>
+      <div class="body-zh">週報 / 摘要 / 簡報文案</div>
+      <div style="display:flex;flex-direction:column;gap:1.2vh">
+        <div style="font-family:var(--sans-zh);font-size:max(14px,1.2vw);font-weight:500">優先：招① + 招④</div>
+        <div class="body-zh" style="opacity:.7">引用追蹤確認每條有來源 + 覆蓋率確認有沒有漏掉</div>
+      </div>
+      <div class="callout">
+        特殊情況：有引用法規 / 報告 / 人名 → <strong>必用招②</strong>，且最後自己 Google 核實
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2.8vh" data-anim="right">
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(17px,1.8vw);line-height:1.3;padding-bottom:2vh;border-bottom:1px solid rgba(127,127,127,.2)">數字類輸出</div>
+      <div class="body-zh">費用 / 業績 / 訂單分析</div>
+      <div style="display:flex;flex-direction:column;gap:1.2vh">
+        <div style="font-family:var(--sans-zh);font-size:max(14px,1.2vw);font-weight:500">優先：招② + 招③</div>
+        <div class="body-zh" style="opacity:.7">反向追問確認計算邏輯 + 數字三角用兩種算法交叉驗</div>
+      </div>
+      <div class="callout">
+        重要金額 → 最後還是要用 <strong>Excel 自己算一次</strong>，不只是 AI 自驗
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">抓幻覺 4 招方法論</span>
+    <span>11 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 12 · §03 幕封 · hero light
+     ============================================================ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 12 / 19</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 03 · 10 Min</div>
+    <h2 class="h-hero" data-anim>驗證卡<br>v2</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:44vw" data-anim>v1 是 4 欄 10 秒快檢（前 4 案例用過的）。v2 是 8 欄 3 分鐘細檢 — 適合要交出去的最終輸出。</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">結果驗證卡 v2</span>
+    <span>12 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 13 · 驗證卡 v2 8 欄 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 13 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">驗證卡 v2 · 交差前 3 分鐘細檢</div>
+  <h2 class="h-md" data-anim style="margin-bottom:2vh">8 欄依序打勾，缺一不可</h2>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0">
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr">
+        <div class="m">欄</div><div class="m">檢核點</div><div class="m">具體做什麼</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr;align-items:start">
+        <div style="font-family:var(--serif-en);font-weight:700;font-size:1.3vw">1</div>
+        <div class="k" style="font-size:max(12px,1vw)">引用對應</div>
+        <div class="v">每個結論能對應到原始資料哪一段 / 第幾筆？無法對應的刪掉或追問來源</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr;align-items:start">
+        <div style="font-family:var(--serif-en);font-weight:700;font-size:1.3vw">2</div>
+        <div class="k" style="font-size:max(12px,1vw)">數字一致</div>
+        <div class="v">關鍵數字（金額 / 筆數 / 比例）至少 1 次反向驗算或對照原始檔</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr;align-items:start">
+        <div style="font-family:var(--serif-en);font-weight:700;font-size:1.3vw">3</div>
+        <div class="k" style="font-size:max(12px,1vw)">邊界完整</div>
+        <div class="v">AI 涵蓋的日期 / 範圍 / 對象與原始資料一致？有沒有少算半天、漏一個部門？</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr;align-items:start">
+        <div style="font-family:var(--serif-en);font-weight:700;font-size:1.3vw">4</div>
+        <div class="k" style="font-size:max(12px,1vw)">推理可解</div>
+        <div class="v">對 AI 推論出的結論追問「為什麼這樣判斷」，看回答有沒有邏輯。沒邏輯 = 幻覺</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr;align-items:start">
+        <div style="font-family:var(--serif-en);font-weight:700;font-size:1.3vw">5</div>
+        <div class="k" style="font-size:max(12px,1vw)">引用核實</div>
+        <div class="v">AI 引用的法規 / 報告 / 人名 / 網址，最少抽查 1 筆 Google 確認。沒查過絕不照貼</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr;align-items:start">
+        <div style="font-family:var(--serif-en);font-weight:700;font-size:1.3vw">6</div>
+        <div class="k" style="font-size:max(12px,1vw)">空話檢核</div>
+        <div class="v">「持續推進」「積極處理」等無資訊量字眼？有就追問「具體是什麼」</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr;align-items:start">
+        <div style="font-family:var(--serif-en);font-weight:700;font-size:1.3vw">7</div>
+        <div class="k" style="font-size:max(12px,1vw)">機密漂白</div>
+        <div class="v">對外版本：AI 有沒有意外把內部代號 / 客戶全名 / 員工本名寫進去？</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:3.5vw 10vw 1fr;align-items:start">
+        <div style="font-family:var(--serif-en);font-weight:700;font-size:1.3vw">8</div>
+        <div class="k" style="font-size:max(12px,1vw)">立場核對</div>
+        <div class="v">語氣 / 結論 / 建議是你自己同意的嗎？AI 幫你寫的不等於你會講的</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">結果驗證卡 v2</span>
+    <span>13 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 14 · v1 vs v2 使用時機 · light
+     ============================================================ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 14 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">版本選擇 · v1 vs v2 使用時機</div>
+  <h2 class="h-md" data-anim style="margin-bottom:2.4vh">v2 不是取代 v1，是「加交差版」</h2>
+
+  <div class="frame" style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:4vw;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:2.4vh" data-anim="left">
+      <div style="font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:.4vh">v1 · 4 欄快檢 · 10 秒</div>
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.6vw);line-height:1.3">前 4 個案例結尾<br>你用過的那份</div>
+      <div class="body-zh">適合：自己看的 / 給同事討論的 / 給主管口頭報告的 / 不需要白紙黑字的場景</div>
+      <div style="display:flex;flex-direction:column;gap:.8vh">
+        <div class="rowline" style="grid-template-columns:1fr">
+          <div class="v">總筆數對</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr">
+          <div class="v">加總 / 小計對</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr">
+          <div class="v">前三大有列出</div>
+        </div>
+        <div class="rowline" style="grid-template-columns:1fr;border-bottom:1px solid rgba(127,127,127,.25)">
+          <div class="v">異常規則有套用</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2.4vh" data-anim="right">
+      <div style="font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.55;margin-bottom:.4vh">v2 · 8 欄細檢 · 3 分鐘</div>
+      <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.6vw);line-height:1.3">今天剛看完的那份<br>交差前必做</div>
+      <div class="body-zh">適合：要寄出的信 / 要交的報告 / 要簡報的內容 / 對外發布 / 有客戶 / 法規 / 數字責任的場景</div>
+      <div class="callout" style="margin-top:auto">
+        <strong>不要 v2 化每個輸出</strong>——3 分鐘的成本對快檢場景太貴；但對交差場景不做就是賭運氣
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">結果驗證卡 v2</span>
+    <span>14 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 15 · §04 幕封 · hero dark
+     ============================================================ -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 15 / 19</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 04 · 15 Min</div>
+    <h2 class="h-hero" data-anim>4 個<br>真實翻車</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:52vw" data-anim>這 4 個案例對應 CH1-1 到 CH2-2。不是假設情境，是 2025-2026 真實測試中抓到的。它們有一個共同點：<strong>看起來都對</strong>。</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">4 個案例真實幻覺實例</span>
+    <span>15 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 16 · 4 案例幻覺實例 · light (pipeline)
+     ============================================================ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 16 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2vh">4 案例 · 幻覺型態 / 用哪招 / 修正方向</div>
+
+  <div class="pipeline" data-cols="4" style="flex:1;align-content:center;margin-top:1.6vh">
+    <div class="step" data-anim="step">
+      <div class="step-nb">案例 ①</div>
+      <div class="step-title">週報補充型</div>
+      <div class="step-desc">
+        <strong>幻覺：</strong>「預計下週完成」被寫成「完成」<br>
+        <strong>招：</strong>招① 引用追蹤<br>
+        <strong>修正：</strong>加狀態判定規則，「預計」→ 下週計畫
+      </div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">案例 ②</div>
+      <div class="step-title">業績推斷型</div>
+      <div class="step-desc">
+        <strong>幻覺：</strong>「成長 12%」但分母基準根本錯誤<br>
+        <strong>招：</strong>招② 反向追問<br>
+        <strong>修正：</strong>明確定義分子分母範圍 + 退單規則
+      </div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">案例 ③</div>
+      <div class="step-title">電商計算型</div>
+      <div class="step-desc">
+        <strong>幻覺：</strong>ABC 占比 70/20/10 是套 80/20 法則「估」的，實際 62%<br>
+        <strong>招：</strong>招③ 數字三角<br>
+        <strong>修正：</strong>「請先列每 SKU 金額排序再分 ABC，占比用加總後相除」
+      </div>
+    </div>
+    <div class="step" data-anim="step">
+      <div class="step-nb">案例 ④</div>
+      <div class="step-title">簡報補充型</div>
+      <div class="step-desc">
+        <strong>幻覺：</strong>第 6 頁出現「客戶滿意度 92%」—— 素材裡根本沒有<br>
+        <strong>招：</strong>招④ 結構分區<br>
+        <strong>修正：</strong>「所有數字必須來自素材；缺數字請寫（無數據）」
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:2.4vh" data-anim>
+    這 4 個都是正常用 AI 的常見場景會踩到的。隱形幻覺最危險的是<strong>看起來對</strong>——沒走過驗證流程，你根本不會發現。對應講義 <a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH3.html#s04" target="_blank" rel="noopener" style="color:inherit;border-bottom:1px solid currentColor;padding-bottom:1px;font-family:var(--mono);font-size:.85em;letter-spacing:.08em">CH3.html § 04</a> 有完整原始輸出與修正 prompt。
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">4 個案例真實幻覺實例</span>
+    <span>16 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 17 · §05 幕封 · hero light
+     ============================================================ -->
+<section class="slide hero light">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 17 / 19</div>
+  </div>
+
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <div class="kicker" data-anim>§ 05 · 10 Min</div>
+    <h2 class="h-hero" data-anim>何時該<br>停下來</h2>
+    <div class="lead" style="margin-top:3.6vh;max-width:44vw" data-anim>驗證方法再強也有上限。這 5 個情境下多花 30 分鐘人工處理，比之後被追問 3 小時划算。</div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">何時該停下、把事情交回給人</span>
+    <span>17 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 18 · 5 個情境 · dark
+     ============================================================ -->
+<section class="slide dark">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 18 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">停下的 5 個情境 · 每個都是真正的停損點</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0">
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:18vw 1fr 18vw">
+        <div class="m">情境</div><div class="m">為什麼該停</div><div class="m">改怎麼做</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:18vw 1fr 18vw;align-items:start">
+        <div class="k" style="font-size:max(12px,1vw)">涉及法規條文引用</div>
+        <div class="v">引用型幻覺最致命 — 編造的法條看起來像真的，出事是你的責任</div>
+        <div class="v" style="opacity:.7">AI 只用來「找方向」，具體條文去政府官網 / 法務查</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:18vw 1fr 18vw;align-items:start">
+        <div class="k" style="font-size:max(12px,1vw)">數字進財報或對外簡報</div>
+        <div class="v">計算型幻覺即使誤差 1% 都可能是大問題（千萬營收 1% = 10 萬）</div>
+        <div class="v" style="opacity:.7">AI 算的數字最後用 Excel 全算，不是「抽查」是「全算」</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:18vw 1fr 18vw;align-items:start">
+        <div class="k" style="font-size:max(12px,1vw)">涉及人事決策</div>
+        <div class="v">AI 帶有訓練資料的偏見（性別 / 年齡 / 學校），且決策責任無法推給 AI</div>
+        <div class="v" style="opacity:.7">AI 只整理資料、不做判斷。判斷由人做，且必須有書面理由</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:18vw 1fr 18vw;align-items:start">
+        <div class="k" style="font-size:max(12px,1vw)">主管客戶當面追問細節</div>
+        <div class="v">你答不出「這數字怎麼來」就是輸了 — AI 給你的不是你的</div>
+        <div class="v" style="opacity:.7">對外版本你必須能逐句說明來源。AI 寫初稿、你重寫一次內化</div>
+      </div>
+    </div>
+    <div data-anim>
+      <div class="rowline" style="grid-template-columns:18vw 1fr 18vw;align-items:start;border-bottom:1px solid rgba(127,127,127,.25)">
+        <div class="k" style="font-size:max(12px,1vw)">跑 3 次以上仍不對</div>
+        <div class="v">不是 AI 不會做 — 是這任務不適合 AI 做（資料太雜 / 規則太多 / 需要實際業務判斷）</div>
+        <div class="v" style="opacity:.7">停下來自己手做。「以為 AI 能做但做不到」本身就是學習</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">何時該停下、把事情交回給人</span>
+    <span>18 / 19</span>
+  </div>
+</section>
+
+<!-- ============================================================
+     頁 19 · 帶走清單 + 銜接 CH4 · light
+     ============================================================ -->
+<section class="slide light">
+  <div class="chrome" data-anim>
+    <div>AI 結果驗證 · Validation</div>
+    <div>CH 3 · 19 / 19</div>
+  </div>
+
+  <div class="kicker" data-anim style="margin-top:2.4vh">帶走清單 + 銜接 CH 4</div>
+  <h2 class="h-md" data-anim style="margin-bottom:3vh">確認這些都在你手上</h2>
+
+  <div class="frame grid-2-6-6" style="flex:1;gap:5vw;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:2.4vh">
+      <div class="stat-card" data-anim>
+        <span class="stat-label">方法論</span>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.5vw);line-height:1.3;margin-top:.4vh">抓幻覺 4 招</div>
+        <p class="stat-note">引用追蹤 / 反向追問 / 數字三角 / 結構分區 — 對應 4 種幻覺型態的選招表</p>
+      </div>
+      <div class="stat-card" data-anim>
+        <span class="stat-label">工具</span>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.5vw);line-height:1.3;margin-top:.4vh">驗證卡 v2</div>
+        <p class="stat-note">8 欄細檢 3 分鐘版本 — 用於最終交差前；v1 用於草稿自看</p>
+      </div>
+      <div class="stat-card" data-anim>
+        <span class="stat-label">案例</span>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.5vw);line-height:1.3;margin-top:.4vh">4 個真實幻覺 + 修正 Prompt</div>
+        <p class="stat-note">週報補充型 / 業績推斷型 / 電商計算型 / 簡報補充型 — 回去當警示樣本</p>
+      </div>
+      <div class="stat-card" data-anim>
+        <span class="stat-label">原則</span>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.5vw);line-height:1.3;margin-top:.4vh">5 個停下情境</div>
+        <p class="stat-note">法規 / 對外財務 / 人事 / 當面追問 / 連跑 3 次失敗 — 知道什麼時候不該繼續壓</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3vh;padding-top:1.6vh">
+      <div class="callout" data-anim>
+        <strong>AI 是助手，不是負責人。</strong><br>
+        你才是那個要在會議上回答「這數字怎麼算的」的人。驗證方法論不是讓你「更信任 AI」，是讓你<strong>更知道什麼時候不該信 AI</strong>。
+        <span class="callout-src">對應講義：<a href="https://skypai0326.github.io/courses/courses/office-ai-cases/CH3.html" target="_blank" rel="noopener" style="color:inherit;border-bottom:1px solid currentColor;padding-bottom:1px;font-family:var(--mono);font-size:.85em;letter-spacing:.08em">CH3.html 全章</a></span>
+      </div>
+      <div style="padding-top:2vh;border-top:1px solid rgba(127,127,127,.2)" data-anim>
+        <div class="body-zh" style="margin-bottom:1.6vh;opacity:.65;font-family:var(--mono);letter-spacing:.12em;font-size:max(10px,.82vw);text-transform:uppercase">接下來 CH 4</div>
+        <div style="font-family:var(--serif-zh);font-weight:700;font-size:max(16px,1.6vw);line-height:1.3;margin-bottom:1.2vh">AI 工作流拆解</div>
+        <div class="body-zh">把今天學的單一任務 Prompt，串成可重複使用的<br>多步工作流 — 真正的自動化起點。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" data-anim>
+    <span class="title">辦公室 AI 工具案例應用</span>
+    <span>19 / 19</span>
+  </div>
+</section>
+
+</div><!-- #deck -->
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 雙背景 =============== */
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+/* =============== 導航 =============== */
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const el=slides[idx];
+  const th=el.dataset.theme||(el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- Motion One 動效引擎 -->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity='0.15';
+        el.style.transform='none';
+      });
+      // show chrome and kicker immediately
+      slide.querySelectorAll('[data-anim]:not([data-anim="step"])').forEach(el=>{
+        el.style.opacity='1';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  playSlide(0);
+}
+</script>
+</body>
+</html>
