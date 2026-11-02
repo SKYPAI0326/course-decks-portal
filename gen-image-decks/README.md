@@ -7,6 +7,11 @@
 
 > https://skypai0326.github.io/gen-image-decks/
 
+## 2h 工作坊簡報
+
+- 檔案：`workshop-2h.html`（51 頁，對應講義 `courses/gen-image/workshop-2h-poster-social.html`）
+- 圖片：`assets/workshop2h/`（講義範例圖壓縮版）
+
 ## 課程資訊
 
 - **時數**：8 hr · 5 Modules · 13 單元 · 32 頁

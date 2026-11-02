@@ -23,7 +23,7 @@ course-decks-portal/
 
 ---
 
-## 課程清單（17 課程 · 97 deck · 2544 頁 · 440.5 hr）
+## 課程清單（17 課程 · 98 deck · 2595 頁 · 440.5 hr）
 
 | 課程資料夾 | 課程 | 時數 | Deck | 頁數 | 主題色 |
 |---|---|---:|---:|---:|---|
@@ -38,7 +38,7 @@ course-decks-portal/
 | [gemini-ai-decks](gemini-ai-decks/) | Gemini 零代碼 AI 實戰 | 15hr | 5 | 112 | 靛藍瓷 |
 | [line-stickers-decks](line-stickers-decks/) | AI 自製 LINE 貼圖 | 12hr | 2 | 66 | 牛皮紙 |
 | [n8n-decks](n8n-decks/) | n8n 自動化實戰 | 9.5hr | 1 | 36 | 森林墨 |
-| [gen-image-decks](gen-image-decks/) | 商業用圖片生成 | 8hr | 1 | 32 | 牛皮紙 |
+| [gen-image-decks](gen-image-decks/) | 商業用圖片生成（含 2h 工作坊 `workshop-2h.html`） | 8hr | 2 | 83 | 牛皮紙 |
 | [office-ai-decks](office-ai-decks/) | 辦公室 AI 工具實務 | 6hr | 1 | 28 | 牛皮紙 |
 | [office-ai-cases-decks](office-ai-cases-decks/) | 辦公室 AI 工具案例應用 | 6hr | 9 | 155 | 墨水經典 |
 | [prompt-basic-decks](prompt-basic-decks/) | 從「問 AI」到「交辦 AI」 | 6hr | 1 | 32 | 靛藍瓷 |
@@ -60,7 +60,7 @@ course-decks-portal/
 
 ## 排版檢查機制（兩段式）
 
-跨 97 deck × 2,544 頁規模下，靠人眼很難抓出「內容被切」「callout 太擠」這類問題。
+跨 98 deck × 2,595 頁規模下，靠人眼很難抓出「內容被切」「callout 太擠」這類問題。
 檢查工具會自動掃描本 repo 內所有 `*-decks/` 子資料夾。
 
 ### Stage A · 靜態啟發式 lint（秒級）

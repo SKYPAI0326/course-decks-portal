@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>從 AI 生圖到設計完稿｜兩小時工作坊講師簡報｜弄一下工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ============ 主题色(默认:🖋 墨水经典) ============
+       切换主题:从 references/themes.md 复制对应的 :root 块
+       整体替换这几行(--ink / --ink-rgb / --paper / --paper-rgb)
+       其他地方散落的 rgba() 都走 var(--ink-rgb) / var(--paper-rgb),无需逐处改 */
+    /* === MAIN THEME COLORS === 5 套預設（從本檔頂部 Comment 區塊任選一套替換）
+       Default: 🖋 墨水經典（任何場景都安全）
+       靛藍瓷 / 森林墨 / 牛皮紙 / 沙丘 見 references/themes.md */
+    --ink:#2a1e13;
+    --ink-rgb:42,30,19;
+    --paper:#eedfc7;
+    --paper-rgb:238,223,199;
+    --paper-tint:#e0d0b6;
+    --ink-tint:#3a2a1d;
+
+    /* ============ 字体(跨主题固定) ============ */
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-body-en:"Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ============ WebGL 双背景 ============ */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* ============ Deck 容器 + 翻页 ============ */
+  /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+
+  /* 默认页：遮罩较厚，保证文字可读 */
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  /* Hero 页：遮罩大幅降低，让 WebGL 背景明显透出 */
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  /* Hero 页顶底微弱渐隐，保证 chrome/foot 区域可读 */
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  /* ============ Magazine chrome：顶部 meta + 底部 foot ============ */
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .chrome .left,.chrome .right{display:flex;gap:2.4em;align-items:center}
+  .chrome .sep{width:40px;height:1px;background:currentColor;opacity:.4}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:6px 14px;border:1px solid currentColor;opacity:.85}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .rule.v{width:1px;height:100%;margin:0}
+
+  /* ============ 字体规则 ============
+     · 衬线（Noto Serif SC / Playfair）：大标题、重点金句、数字
+     · 非衬线（Noto Sans SC）：正文描述、body、补充说明
+     · 等宽（IBM Plex Mono）：kicker、meta 小标签、foot 右侧
+  */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .display{font-family:var(--serif-en);font-weight:700;font-size:11vw;line-height:.92;letter-spacing:-.025em}
+  .display-zh{font-family:var(--serif-zh);font-weight:700;font-size:7.8vw;line-height:1.04;letter-spacing:-.005em}
+  .h1-zh{font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.12;letter-spacing:-.005em}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2;letter-spacing:0}
+  .h3-zh{font-family:var(--serif-zh);font-weight:500;font-size:1.9vw;line-height:1.35}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(15px,1.22vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.9vw;line-height:1.4;opacity:.85}
+  .meta{font-family:var(--mono);font-size:max(11px,.88vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  /* em 中文友善：英文 Playfair italic 保留，中文 fallback 到 Noto Serif SC 不被強制歪斜；
+     中文無 italic 視覺差，靠下方色塊（螢光筆感）+ 微字距製造強調效果 */
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;letter-spacing:.03em;font-synthesis-style:none;-webkit-font-synthesis:weight;position:relative;z-index:1}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.24em;z-index:-1;pointer-events:none;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.13)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.18);height:.26em}
+  .slide.hero.light em::after{opacity:.7}
+  .slide.hero.dark em::after{opacity:.85;background:rgba(var(--paper-rgb),.22);height:.28em}
+  /* chrome 內講義連結：右上角小 link，靜默不搶眼 */
+  .chrome-link{
+    display:inline-flex;align-items:center;gap:.4em;
+    color:inherit;text-decoration:none;
+    border:1px solid currentColor;border-color:rgba(127,127,127,.45);
+    padding:3px 10px;border-radius:99px;
+    font-family:var(--mono);font-size:max(10px,.74vw);
+    letter-spacing:.18em;text-transform:uppercase;
+    opacity:.7;transition:opacity .2s,border-color .2s;
+    margin-left:1.2em;white-space:nowrap;
+  }
+  .chrome-link:hover{opacity:1;border-color:currentColor}
+  .chrome-link::after{content:"↗";opacity:.7;font-size:.9em}
+  /* starred：本頁適合摘要、講義有更完整細節時，提示講師「值得開講義輔助」 */
+  .chrome-link.starred::before{content:"★";opacity:.85;margin-right:.3em;font-size:.95em}
+  .chrome-link.starred{border-color:currentColor;opacity:.85}
+  .en{font-family:var(--serif-en);font-style:italic;font-weight:500}
+
+  /* ============ 布局工具 ============ */
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .grid-6{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4vw 6vw;flex:1;align-content:center;padding:2vh 0}
+  .grid-9{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3vh 4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .bottom-left{position:absolute;left:6vw;bottom:9vh;max-width:50vw}
+  .bottom-right{position:absolute;right:6vw;bottom:9vh;max-width:50vw;text-align:right}
+  .top-right{position:absolute;right:6vw;top:6vh;text-align:right}
+
+  /* ============ Stat（数字矩阵） ============ */
+  .stat{display:flex;flex-direction:column;gap:1vh;align-items:flex-start}
+  .stat .n{font-family:var(--serif-en);font-weight:800;font-size:8vw;line-height:.88;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .stat .l{font-family:var(--sans-zh);font-size:max(13px,1.05vw);opacity:.7;margin-top:1vh;font-weight:400;line-height:1.5}
+  .stat .m{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:.2vh}
+
+  /* ============ Callout（引用框） ============ */
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;position:relative;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout .cite{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .callout .q-big{font-family:var(--serif-zh);font-weight:600;font-size:max(17px,1.6vw);line-height:1.42}
+
+  /* ============ Platform（平台卡） ============ */
+  .plat{display:flex;flex-direction:column;justify-content:flex-end;padding:2vh 0;border-top:1px solid currentColor;border-color:rgba(127,127,127,.35)}
+  .plat .name{font-family:var(--serif-zh);font-weight:700;font-size:1.8vw;margin-bottom:.6vh}
+  .plat .nb{font-family:var(--serif-en);font-weight:700;font-size:3.2vw;letter-spacing:-.02em;line-height:1;font-feature-settings:"tnum"}
+  .plat .sub{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.55;margin-top:.6vh}
+  .plat .fill{font-family:var(--sans-zh);font-weight:300;font-size:2.4vw;opacity:.28;letter-spacing:-.01em;line-height:1}
+
+  /* ============ Rowline（表格行） ============ */
+  .rowline{display:grid;grid-template-columns:1fr 2fr 1fr;gap:2vw;padding:2.2vh 0;border-top:1px solid currentColor;align-items:center;border-color:rgba(127,127,127,.25)}
+  .rowline:last-child{border-bottom:1px solid currentColor;border-color:rgba(127,127,127,.25)}
+  .rowline .k{font-family:var(--serif-zh);font-weight:700;font-size:1.7vw}
+  .rowline .v{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.2vw);opacity:.85;line-height:1.55}
+  .rowline .m{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;justify-self:end}
+
+  /* ============ Pillar（支柱卡片） ============ */
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic{font-family:var(--serif-en);font-style:italic;font-size:2.6vw;opacity:.45;font-weight:400}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+
+  /* ============ Signature / Highlight ============ */
+  .sign{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:2vw;opacity:.7}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  /* ============ Icons（Lucide via CDN） ============ */
+  .ico{width:1em;height:1em;display:inline-block;vertical-align:-.12em;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-lg,.ico-md,.ico-sm{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:2.6vw;height:2.6vw;stroke-width:1.2;display:inline-block}
+  .ico-md{width:1.8vw;height:1.8vw;stroke-width:1.3;display:inline-block;vertical-align:-.4em}
+  .ico-sm{width:1.1vw;height:1.1vw;stroke-width:1.4;display:inline-block;vertical-align:-.15em;opacity:.7}
+
+  /* ============ 图片占位（虚线框，提示设计师位置） ============ */
+  .img-slot{border:1.5px dashed rgba(127,127,127,.4);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;padding:2vh 2vw;font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.55;position:relative;aspect-ratio:16/9;width:100%;max-height:56vh;margin-inline:auto;box-sizing:border-box}
+  .img-slot::before{content:"";position:absolute;inset:8px;border:1px solid currentColor;opacity:.2}
+  .img-slot .plus{font-size:2vw;font-weight:300;opacity:.5;letter-spacing:0}
+  .img-slot .label{position:relative;z-index:2;text-align:center}
+  .img-slot.r-4x3{aspect-ratio:4/3}
+  .img-slot.r-3x2{aspect-ratio:3/2}
+  .img-slot.r-1x1{aspect-ratio:1/1}
+
+  /* ============ 图片实填框（关键：固定高度 + 只裁底部） ============
+     重要约束：高度用内联 height:Nvh 精确控制，不要用 aspect-ratio（会撑破布局）
+     object-position:top center 保证严禁裁剪顶部和左右，只裁剪底部
+  */
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  .frame-img > img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain > img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-16x10{aspect-ratio:16/10;max-height:56vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-img.r-1x1{aspect-ratio:1/1;max-height:50vh}
+  .frame-img.h-16{height:16vh}
+  .frame-img.h-18{height:18vh}
+  .frame-img.h-22{height:22vh}
+  .frame-img.h-26{height:26vh}
+  .frame-img.h-28{height:28vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  .frame-cap .nb{font-family:var(--serif-en);font-style:italic;font-size:max(15px,1.2vw);letter-spacing:.02em;text-transform:none;opacity:.88}
+  .frame-cap .idx{font-family:var(--mono);opacity:.5}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile > .frame-img{flex:0 0 auto}
+
+  /* ============ 导航 ============ */
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+
+  /* ============================================================
+     ============ LAYOUTS API · 面向 agent 的类（v2）============
+     所有 layouts.md 中的骨架都基于下面这套命名。
+     如果你在 layouts.md 里看到某个类，它必须在下面有定义。
+     ============================================================ */
+
+  /* ---------- .frame：每页主内容容器 ---------- */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  /* 当 .frame 同时加了 grid 类时，grid 的 display:grid 覆盖 flex */
+  .frame.grid-2-7-5,
+  .frame.grid-2-6-6,
+  .frame.grid-2-8-4,
+  .frame.grid-3-3,
+  .frame.grid-6{display:grid}
+
+  /* ---------- 标题层级（API 名称，衬线为主） ---------- */
+  /* 主標題下方呼吸 — 補 skill 結構缺口
+     精準化：只在「標題後緊接文字」加 margin，標題後接 callout/grid/pipeline 不加（避免 push overflow） */
+  :where(.h-hero, .h-xl, .display, .display-zh, .h1-zh, .h2-zh) + :where(.lead, .meta-row, .body-zh, .body-serif, p) { margin-top: 1.6vh }
+  .h-hero{
+    font-family:var(--serif-zh);
+    font-weight:900;
+    font-size:10vw;
+    line-height:.96;
+    letter-spacing:-.02em;
+  }
+  .h-xl{
+    font-family:var(--serif-zh);
+    font-weight:700;
+    font-size:6.2vw;
+    line-height:1.08;
+    letter-spacing:-.01em;
+  }
+  .h-sub{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:3.1vw;
+    line-height:1.25;
+    letter-spacing:0;
+    opacity:.7;
+  }
+  .h-md{
+    font-family:var(--serif-zh);
+    font-weight:600;
+    font-size:2.3vw;
+    line-height:1.3;
+  }
+  /* 英文标题专用（Playfair 衬线） */
+  .h-hero-en,.h-xl-en{font-family:var(--serif-en);letter-spacing:-.025em}
+
+  /* ---------- lead 引语 ---------- */
+  .lead{
+    font-family:var(--serif-zh);
+    font-weight:400;
+    font-size:1.75vw;
+    line-height:1.5;
+    opacity:.86;
+  }
+
+  /* ---------- meta-row 底部元数据 ---------- */
+  .meta-row{
+    display:flex;
+    gap:1.2em;
+    align-items:baseline;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:max(12px,.92vw);
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- stat-card（数据大字报用） ---------- */
+  .stat-card{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    align-items:flex-start;
+    padding-top:1.6vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.3);
+  }
+  .stat-card .stat-label{
+    font-family:var(--mono);
+    font-size:max(10px,.78vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.55;
+  }
+  .stat-card .stat-nb{
+    font-family:var(--serif-en);
+    font-weight:800;
+    font-size:5.8vw;
+    line-height:.9;
+    letter-spacing:-.03em;
+    font-feature-settings:"tnum";
+    margin-top:.4vh;
+  }
+  .stat-card .stat-nb .stat-unit{
+    font-family:var(--serif-zh);
+    font-weight:500;
+    font-size:.38em;
+    letter-spacing:0;
+    opacity:.72;
+    margin-left:.14em;
+  }
+  .stat-card .stat-note{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(13px,1.05vw);
+    line-height:1.5;
+    opacity:.72;
+    margin-top:.6vh;
+  }
+  /* 当 stat-card 用于 grid-4（2x2），数字适度放大；若页面有标题+引文在上方，可内联 style 覆盖为更小值 */
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  /* 当只有 3 个，字也可以稍大 */
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+
+  /* ---------- pipeline（流水线） ---------- */
+  .pipeline-section{
+    margin-top:4.4vh;
+    padding-top:2.8vh;
+    border-top:1px dashed rgba(127,127,127,.32);
+  }
+  .pipeline-section:first-of-type{
+    border-top:0;
+    padding-top:0;
+    margin-top:3vh;
+  }
+  .pipeline-label{
+    font-family:var(--mono);
+    font-size:max(11px,.85vw);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    opacity:.62;
+    margin-bottom:2.2vh;
+  }
+  .pipeline{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:1.2vw;
+  }
+  .pipeline[data-cols="3"]{grid-template-columns:repeat(3,1fr)}
+  .pipeline[data-cols="4"]{grid-template-columns:repeat(4,1fr)}
+  .pipeline[data-cols="6"]{grid-template-columns:repeat(6,1fr)}
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap:.8vh;
+    padding-top:1.4vh;
+    border-top:1px solid currentColor;
+    border-color:rgba(127,127,127,.35);
+  }
+  .step-nb{
+    font-family:var(--serif-en);
+    font-style:italic;
+    font-weight:500;
+    font-size:1.15vw;
+    opacity:.45;
+  }
+  .step-title{
+    font-family:var(--sans-zh);
+    font-weight:700;
+    font-size:1.55vw;
+    letter-spacing:.01em;
+    line-height:1.2;
+  }
+  .step-desc{
+    font-family:var(--sans-zh);
+    font-weight:400;
+    font-size:max(12px,.95vw);
+    line-height:1.45;
+    opacity:.72;
+  }
+
+  /* ---------- 网格（layouts.md 所用） ---------- */
+  /* 这些类独立挂到任何容器上都能生效，不依赖 .frame 复合选择器 */
+  .grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:3vw 4vh;align-items:start}
+  .grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw 4vh;align-items:start}
+  .grid-2-8-4{display:grid;grid-template-columns:8fr 4fr;gap:3vw 4vh;align-items:start}
+  .grid-3-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    grid-auto-rows:minmax(0,1fr);
+    gap:2.4vh 2vw;
+  }
+  /* grid-6 已在旧样式里定义为 3x2，这里仅补 align */
+
+  /* ---------- 图片 frame-img（layouts.md 主命名） ---------- */
+  /* 在旧样式里已定义，这里补 img-cap 命名别名与增强 */
+  figure.frame-img{margin:0;display:flex;flex-direction:column;min-width:0}
+  .img-cap{
+    display:block;
+    margin-top:.8vh;
+    font-family:var(--mono);
+    font-size:max(10px,.8vw);
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+  /* callout src 命名别名 */
+  .callout-src{
+    display:block;
+    margin-top:1.6vh;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    opacity:.6;
+  }
+
+  /* ---------- chrome & foot 补位（layouts.md 简单写法） ---------- */
+  .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+
+  /* ============ 动效系统(Motion One 驱动) ============
+     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
+     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
+     - hero(hero 页自动):慢一点的 stagger 180ms
+     - quote(含 [data-anim="line"]):逐行 600ms 淡入
+     - directional(含 [data-anim="left|right"]):左→分隔线→右
+     - pipeline(data-animate="pipeline"):Space/→ 手动推进
+     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  */
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.motion-ready [data-animate="pipeline"] [data-anim]{opacity:.15}
+
+  /* ---------- 响应式降级 ---------- */
+  @media (max-width:900px){
+    .display{font-size:16vw}
+    .display-zh{font-size:12vw}
+    .h1-zh{font-size:7vw}
+    .h-hero{font-size:14vw}
+    .h-xl{font-size:9vw}
+    .pipeline{grid-template-columns:repeat(2,1fr)}
+    .grid-2-7-5,.grid-2-6-6,.grid-2-8-4{grid-template-columns:1fr}
+  }
+
+  /* ============ Mobile Responsive (B + C) · 2026-05 ============
+     B. 豎屏提示 overlay：≤768px + portrait 顯示「請橫屏」
+     C. 全面響應式：補強字型/grid 在 ≤900px 的手機體驗
+     原 template 的 @media (max-width:900px) 在這之後（仍生效），
+     此區段僅補強原本沒處理的 class
+  ============================================================ */
+  @media (max-width:900px) {
+    .h-sub { font-size: 5.5vw; line-height: 1.3 }
+    .h-md { font-size: 4vw; line-height: 1.3 }
+    .lead { font-size: 3.4vw; line-height: 1.6 }
+    .h2-zh { font-size: 5vw }
+    .h3-zh { font-size: 4.4vw }
+    .body-zh, .body-serif { font-size: max(13px, 2.6vw); line-height: 1.7 }
+    .step-title { font-size: 3.6vw; line-height: 1.25 }
+    .step-desc { font-size: max(13px, 2.4vw); line-height: 1.55 }
+    .step-nb { font-size: 2.6vw }
+    .rowline .k { font-size: 4vw }
+    .rowline .v { font-size: max(13px, 2.6vw) }
+    .rowline .m { font-size: max(11px, 2vw) }
+    .stat-card .stat-nb { font-size: 14vw }
+    .stat-card .stat-label { font-size: max(10px, 2vw) }
+    .stat-card .stat-note { font-size: max(13px, 2.4vw) }
+    .stat .n { font-size: 12vw }
+    .stat .l { font-size: max(12px, 2.4vw) }
+    .pillar .t { font-size: 5vw }
+    .pillar .d { font-size: max(13px, 2.4vw) }
+    .plat .name { font-size: 4vw }
+    .plat .nb { font-size: 7vw }
+    .plat .sub { font-size: max(10px, 2vw) }
+    .callout { font-size: max(14px, 2.8vw); line-height: 1.65; padding: 2.4vh 5vw }
+    .callout .q-big { font-size: max(16px, 3.4vw) }
+    .callout .cite, .callout-src { font-size: max(10px, 2vw) }
+    .big-num { font-size: 14vw }
+    .mid-num { font-size: 10vw }
+    .display { font-size: 14vw }
+    .display-zh { font-size: 11vw }
+    .meta-row { font-size: max(11px, 2.4vw); gap: .8em; row-gap: .5em; flex-wrap: wrap }
+    .meta { font-size: max(11px, 2.2vw) }
+    .kicker { font-size: max(11px, 2.4vw); margin-bottom: 1.6vh }
+    .chrome { font-size: max(10px, 2.2vw) }
+    .foot { font-size: max(10px, 2.2vw) }
+    .frame-cap { font-size: max(10px, 2vw) }
+    .img-cap { font-size: max(10px, 2vw) }
+    .tag { font-size: max(10px, 2vw); padding: 4px 10px }
+    .pipeline { grid-template-columns: 1fr; gap: 1.5vh }
+    .pipeline-section { margin-top: 3vh; padding-top: 2vh }
+    .pipeline-label { font-size: max(11px, 2.2vw); margin-bottom: 1.4vh }
+    .grid-3, .grid-3-3, .grid-4, .grid-6, .grid-9 { grid-template-columns: 1fr; gap: 2vh }
+    .split, .split-55 { grid-template-columns: 1fr; gap: 2vh }
+    .slide { padding: 4vh 5vw 8vh 5vw }
+    .frame { gap: 1.6vh }
+    .frame.center, .frame[style*="align-content:center"] { gap: 2vh }
+    /* 內頁標題長字串斷字 */
+    .h-hero, .h-xl, .h-sub, .h-md, .display-zh { word-break: break-word; overflow-wrap: anywhere }
+  }
+  @media (max-width:480px) {
+    .h-hero { font-size: 16vw; line-height: 1.05 }
+    .h-xl { font-size: 11vw; line-height: 1.1 }
+    .h-sub { font-size: 6.5vw }
+    .lead { font-size: 4vw }
+    .stat-card .stat-nb { font-size: 16vw }
+    .big-num { font-size: 18vw }
+  }
+  /* ============ B. 豎屏提示 overlay ============ */
+  #portrait-hint { display: none }
+  @media (max-width:768px) and (orientation:portrait) {
+    body { overflow: hidden }
+    #portrait-hint {
+      display: flex !important;
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--paper); color: var(--ink);
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 10vh 8vw; text-align: center;
+      animation: phFadeIn .4s ease;
+    }
+    #portrait-hint .icon {
+      width: 64px; height: 64px;
+      border: 1.5px solid currentColor; border-radius: 8px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; opacity: .82;
+      animation: phRotate 2.4s ease-in-out infinite;
+    }
+    #portrait-hint h3 {
+      font-family: var(--serif-zh); font-weight: 700;
+      font-size: 28px; line-height: 1.25;
+      margin-bottom: 14px; letter-spacing: -.005em;
+    }
+    #portrait-hint p {
+      font-family: var(--serif-zh); font-weight: 400;
+      font-size: 15px; line-height: 1.7; opacity: .76;
+      max-width: 280px; margin-bottom: 28px;
+    }
+    #portrait-hint .meta-line {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .22em; text-transform: uppercase;
+      opacity: .5;
+    }
+  }
+  @keyframes phFadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes phRotate {
+    0%, 40%, 100% { transform: rotate(0deg) }
+    50%, 80% { transform: rotate(-90deg) }
+  }
+
+
+
+/* mobile-reader-mode v7.1 — Codex consult 0e6bc391+d4a34d90 採納（v6.5/v6.6/v6.7+v7 收口）*/
+html.mobile-reader, html.mobile-reader body { overflow: auto !important; height: auto !important }
+html.mobile-reader #deck { width: 100% !important; transform: none !important; display: block !important; height: auto !important; flex-direction: column !important; position: static !important; inset: auto !important }
+html.mobile-reader .slide { width: 100% !important; height: auto !important; min-height: auto !important; flex: 0 0 auto !important; padding: 6vw 6vw 8vw 6vw !important; overflow: visible !important; margin-bottom: 4vw; position: relative }
+html.mobile-reader .slide::after { content: ""; display: block; position: absolute; bottom: -2vw; left: 0; right: 0; height: 4vw; background: linear-gradient(180deg, transparent 0%, rgba(127,127,127,.08) 50%, transparent 100%); pointer-events: none }
+html.mobile-reader .slide.dark + .slide.light, html.mobile-reader .slide.light + .slide.dark { margin-top: 0 !important }
+html.mobile-reader .slide.dark + .slide.dark, html.mobile-reader .slide.light + .slide.light { border-top: 3px solid rgba(127,127,127,.32); padding-top: 8vw !important }
+html.mobile-reader .slide::before, html.mobile-reader .slide::after { display: none !important }
+html.mobile-reader .frame { display: flex !important; flex-direction: column !important; gap: 1.6vh !important; align-content: flex-start !important; align-items: flex-start !important; justify-content: flex-start !important; min-height: auto !important; padding-top: 0 !important; overflow: visible !important }
+html.mobile-reader .frame > * { align-self: stretch !important; justify-self: flex-start !important }
+html.mobile-reader .chrome { font-size: 11px !important; letter-spacing: .14em !important; opacity: .55; margin-bottom: 2vw }
+html.mobile-reader .foot { font-size: 11px !important; letter-spacing: .14em !important; opacity: .45; margin-top: 3vw }
+html.mobile-reader .kicker { font-size: 11px !important; letter-spacing: .22em !important; margin-bottom: 1vh !important }
+html.mobile-reader .h-hero, html.mobile-reader .h1-zh, html.mobile-reader .display-zh, html.mobile-reader .display { font-size: clamp(34px, 11vw, 64px) !important; line-height: 1.08 !important; margin-bottom: .4vh }
+html.mobile-reader .h-xl { font-size: clamp(24px, 7.5vw, 44px) !important; line-height: 1.12 !important }
+html.mobile-reader .h-sub, html.mobile-reader .h2-zh { font-size: clamp(18px, 5.2vw, 30px) !important; line-height: 1.25 !important }
+html.mobile-reader .h-md, html.mobile-reader .h3-zh { font-size: clamp(15px, 4vw, 22px) !important; line-height: 1.3 !important }
+html.mobile-reader .h-lg { font-size: clamp(20px, 6vw, 32px) !important; line-height: 1.18 !important }
+html.mobile-reader .lead { font-size: clamp(15px, 4.2vw, 22px) !important; line-height: 1.55 !important }
+html.mobile-reader .body-zh, html.mobile-reader .body-serif, html.mobile-reader p, html.mobile-reader li { font-size: clamp(14px, 3.8vw, 18px) !important; line-height: 1.7 !important }
+html.mobile-reader .meta-row { font-size: 11px !important; gap: .4em 1em !important; flex-wrap: wrap !important; margin-top: .8vh !important }
+html.mobile-reader .callout { padding: 3vw 4vw !important; font-size: clamp(13px, 3.6vw, 17px) !important; line-height: 1.55 !important }
+html.mobile-reader .callout .body-zh, html.mobile-reader .callout .body-serif { font-size: clamp(14px, 3.8vw, 18px) !important }
+html.mobile-reader .grid-2, html.mobile-reader .grid-3, html.mobile-reader .grid-4, html.mobile-reader .grid-6, html.mobile-reader .grid-2-7-5, html.mobile-reader .grid-2-6-6, html.mobile-reader .grid-2-8-4, html.mobile-reader .grid-3-3 { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .pipeline { grid-template-columns: 1fr !important; gap: 2vh 0 !important }
+html.mobile-reader .rowline { grid-template-columns: 1fr !important; padding: 1.4vh 0 !important; gap: .4vh !important }
+html.mobile-reader .rowline .k, html.mobile-reader .rowline .v, html.mobile-reader .rowline .m { font-size: clamp(13px, 3.6vw, 16px) !important }
+html.mobile-reader .stat-card { padding: 2vw 0 !important }
+html.mobile-reader .stat-nb, html.mobile-reader .stat-n { font-size: clamp(20px, 6.5vw, 32px); line-height: 1.1 }
+html.mobile-reader .big-num { font-size: clamp(36px, 14vw, 56px) !important; line-height: 1 !important }
+html.mobile-reader .mid-num { font-size: clamp(28px, 9vw, 44px) !important; line-height: 1.05 !important }
+html.mobile-reader .stat-label, html.mobile-reader .stat-l { font-size: 11px !important }
+html.mobile-reader .stat-note { font-size: clamp(13px, 3.4vw, 16px) !important; line-height: 1.5 !important }
+html.mobile-reader q, html.mobile-reader blockquote, html.mobile-reader .q-big, html.mobile-reader .quote { font-size: clamp(20px, 5.4vw, 28px) !important; line-height: 1.35 !important }
+html.mobile-reader canvas.bg { display: none !important }
+html.mobile-reader #portrait-hint { display: none !important }
+html.mobile-reader #nav, html.mobile-reader #hint, html.mobile-reader .dots, html.mobile-reader #dots, html.mobile-reader .index-toggle { display: none !important }
+html.mobile-reader::before { content: "✱ 手機閱讀模式 · 向下捲動瀏覽全部頁面"; display: block; position: sticky; top: 0; z-index: 100; padding: 8px 4vw; background: rgba(0,0,0,.85); color: #fff; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-align: center; opacity: .92 }
+html.mobile-reader [style*="grid-template-columns:repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns: repeat(2,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(3,1fr)"], html.mobile-reader [style*="grid-template-columns:repeat(4,1fr)"] { grid-template-columns: 1fr !important }
+html.mobile-reader .frame[style*="padding-top"] { padding-top: 0 !important }
+html.mobile-reader .frame[style*="min-height"] { min-height: 0 !important }
+html.mobile-reader { padding-bottom: 12vh }
+html.mobile-reader [data-anim], html.mobile-reader [data-animate], html.mobile-reader [data-anim] *, html.mobile-reader [data-animate] *, html.mobile-reader .slide [data-anim], html.mobile-reader .slide [data-animate] { opacity: 1 !important; transform: none !important; visibility: visible !important; filter: none !important; clip-path: none !important }
+html.mobile-reader [data-anim="line"], html.mobile-reader [data-anim="left"], html.mobile-reader [data-anim="right"], html.mobile-reader [data-anim="up"], html.mobile-reader [data-anim="down"] { opacity: 1 !important; transform: none !important }
+html.mobile-reader .reader-toggle { position: fixed; bottom: 1vh; right: 2vw; z-index: 1000; font-family: var(--mono); font-size: 11px; padding: 6px 12px; background: rgba(127,127,127,.15); border: 1px solid currentColor; border-radius: 99px; opacity: .65; cursor: pointer; letter-spacing: .14em; text-transform: uppercase; color: inherit; text-decoration: none }
+html.mobile-reader .reader-toggle:hover { opacity: 1 }
+.reader-toggle { display: none }
+
+
+/* mobile-overlay v1 — Codex consult 5ac1020f 採納 D1 */
+html.mobile-reader.overlay-shown { overflow: hidden !important; height: 100% !important }
+.deck-mobile-overlay { position: fixed; inset: 0; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 8vw 6vw; gap: 4vh; background: rgba(0,0,0,.92); backdrop-filter: blur(20px); color: #f1efea; font-family: var(--sans-zh, "Noto Sans SC", sans-serif); text-align: center; -webkit-font-smoothing: antialiased }
+html.mobile-reader.overlay-shown .deck-mobile-overlay { display: flex }
+.deck-mobile-overlay .o-kicker { font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; opacity: .55 }
+.deck-mobile-overlay h2 { font-family: var(--serif-zh, "Noto Serif SC", serif); font-weight: 700; font-size: clamp(22px, 7vw, 32px); line-height: 1.4; max-width: 22ch; margin: 0 }
+.deck-mobile-overlay h2 em { font-style: italic; opacity: 1; color: #ffd07a }
+.deck-mobile-overlay .o-sub { font-family: var(--serif-zh, "Noto Serif SC", serif); font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; opacity: .82; max-width: 28ch }
+.deck-mobile-overlay .o-cta { display: flex; flex-direction: column; gap: 1.4vh; width: min(360px, 86vw); margin-top: 2vh }
+.deck-mobile-overlay .o-btn { display: block; padding: 16px 24px; border-radius: 12px; font-family: var(--mono, monospace); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; transition: all .2s; cursor: pointer; border: none; -webkit-tap-highlight-color: transparent }
+.deck-mobile-overlay .o-btn-primary { background: #f1efea; color: #1a1a1a; font-weight: 700 }
+.deck-mobile-overlay .o-btn-primary:active { transform: scale(.98); background: #fff }
+.deck-mobile-overlay .o-btn-primary[disabled] { opacity: .35; cursor: not-allowed }
+.deck-mobile-overlay .o-btn-secondary { background: transparent; color: rgba(241,239,234,.75); border: 1px solid rgba(241,239,234,.32) }
+.deck-mobile-overlay .o-btn-secondary:active { background: rgba(255,255,255,.08) }
+.deck-mobile-overlay .o-foot { font-family: var(--mono, monospace); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; opacity: .35; margin-top: auto; padding-top: 4vh }
+
+/* chrome-link mobile 位置統一 — 永遠新行對齊右、不隨 page-number 長度漂移 */
+html.mobile-reader .chrome { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 4px !important }
+html.mobile-reader .chrome > div { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important }
+html.mobile-reader .chrome-link { margin-left: 0 !important; align-self: flex-start; flex-shrink: 0 }
+</style>
+</head>
+<body>
+<div id="portrait-hint" aria-hidden="true">
+  <div class="icon">▭</div>
+  <h3>請橫向觀看</h3>
+  <p>本簡報以 16:9 橫向為主<br>請旋轉手機<br>或改用平板 / 桌機觀看</p>
+  <div class="meta-line">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · ESC 索引</div>
+
+<div id="deck">
+
+<!-- gen-image · 從 AI 生圖到設計完稿 2H · 51 slides -->
+
+<!-- ============ 1 / 51 · 從 AI 生圖到設計完稿 · 2H Workshop · 弄一下工作室 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>從 AI 生圖到設計完稿 · 2H Workshop · 弄一下工作室</div>
+    <div>01 / 51 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 2H</a></div>
+  </div>
+
+<div class="frame" style="display:grid;gap:4vh;align-content:center;min-height:80vh">
+  <div class="kicker" data-anim>Two-Hour Workshop · 海報與社群視覺製作</div>
+  <h1 class="h-hero" style="font-size:7.6vw" data-anim>從 AI 生圖到設計完稿</h1>
+  <h2 class="h-sub" data-anim>先定版型，再讓 AI 執行</h2>
+  <p class="lead" style="max-width:62vw" data-anim>兩小時，把一個社群主題做成<em>可生成、可修改、可發布</em>的兩張圖。</p>
+  <div class="meta-row" data-anim><span>任務句</span><span>·</span><span>版型與線稿</span><span>·</span><span>六種結構</span><span>·</span><span>施工單提示詞</span><span>·</span><span>Canva 完稿</span></div>
+  <div class="meta-row" style="margin-top:1.6vh;opacity:.78" data-anim><span>Duration · 120 分鐘 · ChatGPT 或 Gemini ＋ Canva</span></div>
+  <div class="meta-row" style="margin-top:1.6vh;opacity:.74" data-anim><span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span></div>
+</div>
+  <div class="foot">
+    <div>受眾 · 要自己做社群圖的行銷、行政與小品牌經營者</div>
+    <div>— gen-image / 2H —</div>
+  </div>
+</section>
+
+<!-- ============ 2 / 51 · The Situation · 今天的工作情境 ============ -->
+<section class="slide light" data-animate="quote">
+  <div class="chrome">
+    <div>The Situation · 今天的工作情境</div>
+    <div>02 / 51</div>
+  </div>
+
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh">
+  <div class="kicker" data-anim>Opening · 先想像這個場景</div>
+  <blockquote style="font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.25;max-width:82vw">
+    <span data-anim="line" style="display:block">老闆丟來一個芒果乾品牌，</span>
+    <span data-anim="line" style="display:block">要你<em>明天</em>在 IG 發一張圖。</span>
+  </blockquote>
+  <p class="lead" style="max-width:62vw;opacity:.8" data-anim>你打開生圖工具，輸入「幫我做一張好看的芒果乾貼文」。<br>出來的圖可能很漂亮，但它是你要的那一張嗎？</p>
+</div>
+  <div class="foot">
+    <div>Page · 開場情境</div>
+    <div>講師提問：你會先做什麼？</div>
+  </div>
+</section>
+
+<!-- ============ 3 / 51 · Deliverables · 今天要交出什麼 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Deliverables · 今天要交出什麼</div>
+    <div>03 / 51 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 學習成果</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Outcome · 同一主題、兩張 PNG</div>
+<h2 class="h-xl" data-anim>兩張圖，<em>一套方法</em></h2>
+<p class="lead" style="margin-top:2vh;max-width:64vw" data-anim>最後交出 1080×1350（4:5）主視覺與 1080×1080（1:1）延展圖，並且說得出每個決定的理由。</p><div class="grid-3" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">能力 01 · 選結構</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">依溝通目的選型</div><div class="stat-note">選定合適的社群視覺結構，並說明為什麼選它。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">能力 02 · 寫施工單</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">完整生成指令</div><div class="stat-note">寫出含任務、內容、結構、品牌視覺與限制的提示詞。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">能力 03 · 完稿驗收</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">4:5 ＋ 1:1</div><div class="stat-note">完成兩個尺寸，交給 AI 依檢核表找出最需要修的地方。</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 學習成果</div>
+    <div>對應講義「學習成果」</div>
+  </div>
+</section>
+
+<!-- ============ 4 / 51 · Route Map · 120 分鐘路線圖 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Route Map · 120 分鐘路線圖</div>
+    <div>04 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Timeline · 每一段都留下一個成果</div>
+<h2 class="h-xl" data-anim>120 分鐘，<em>六段</em></h2><div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">0–20 分</div><div class="v">填任務句、判讀版型與線稿 → 寫出第一眼、第二眼、第三眼看到的內容</div><div class="m">任務句</div></div>
+      <div class="rowline" data-anim><div class="k">20–40 分</div><div class="v">比較六種結構並選型 → 完成兩題判斷，替自己的任務選型</div><div class="m">選型</div></div>
+      <div class="rowline" data-anim><div class="k">40–60 分</div><div class="v">改寫所選結構的完整提示詞 → 留下文字線稿與可直接生圖的提示詞</div><div class="m">施工單</div></div>
+      <div class="rowline" data-anim><div class="k">60–70 分</div><div class="v">休息與生成準備 → 備妥素材、正式文字與第一版生成條件</div><div class="m">工作紙</div></div>
+      <div class="rowline" data-anim><div class="k">70–95 分</div><div class="v">AI 社群視覺實作 → 初稿、一次只改一個地方的修正、前後比較</div><div class="m">生成</div></div>
+      <div class="rowline" data-anim><div class="k">95–120 分</div><div class="v">Canva 完稿與尺寸延展 → 4:5 與 1:1 兩張 PNG，交給 AI 檢核</div><div class="m">完稿</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 路線圖</div>
+    <div>講師可依現場進度調整休息點</div>
+  </div>
+</section>
+
+<!-- ============ 5 / 51 · Pass Criteria · 過關標準 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Pass Criteria · 過關標準</div>
+    <div>05 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 過關標準</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Pass · 先看終點再出發</div>
+<h2 class="h-xl" data-anim>怎樣算<em>做完</em></h2>
+<p class="lead" style="margin-top:2vh;max-width:64vw" data-anim>這五條是最後驗收的標準。開課先講，學員做每一步時都知道自己在往哪裡走。</p><div class="grid-6" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">01 · 版型</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">對得上目的</div><div class="stat-note">所選版型和溝通目的相符。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">02 · 第一眼</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">知道先看哪</div><div class="stat-note">讀者第一眼就知道先看哪裡。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">03 · 文字</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">逐字正確</div><div class="stat-note">繁體中文沒有錯字；錯字已局部修正或在 Canva 重建。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">04 · 色與字</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">≤ 3 色 · 2 字體</div><div class="stat-note">全圖最多三個主色、兩種字體。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">05 · 裁切</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">兩尺寸都完整</div><div class="stat-note">標題、主體、行動句都沒被裁掉。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">+ 行動句</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">告訴讀者下一步</div><div class="stat-note">例如「立即預購」。後面都這樣稱呼，取代英文縮寫。</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 過關標準</div>
+    <div>收尾檢核表會再回到這五條</div>
+  </div>
+</section>
+
+<!-- ============ 6 / 51 · Act I · 任務句 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Act I · 任務句</div>
+    <div>06 / 51</div>
+  </div>
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>0–20 MIN · 第一個動作</div><h1 class="h-hero" style="font-size:8.4vw" data-anim>先別開生圖工具</h1><h2 class="h-sub" data-anim>用一句話說清楚這張圖要做什麼</h2><p class="lead" style="max-width:58vw" data-anim>後面的版型、提示詞與檢核，都會回頭對照這一句。<br>這一句寫不出來，AI 也只能猜。</p></div>
+  <div class="foot">
+    <div>Act I 開幕</div>
+    <div>— 任務句 · 版型 · 線稿 —</div>
+  </div>
+</section>
+
+<!-- ============ 7 / 51 · Task Sentence · 任務句四格 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Task Sentence · 任務句四格</div>
+    <div>07 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 任務句</a></div>
+  </div>
+<div class="frame grid-2-7-5" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Fill In · 先填四格，再收成一句</div>
+  <h2 class="h-xl" style="font-size:5vw;line-height:1.15" data-anim>四格填完，<br><em>收成一句</em></h2>
+  <div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">目的</div><div class="v">這張圖要替品牌完成什麼事</div><div class="m">Why</div></div>
+      <div class="rowline" data-anim><div class="k">讀者</div><div class="v">誰會滑到這張圖</div><div class="m">Who</div></div>
+      <div class="rowline" data-anim><div class="k">唯一重點</div><div class="v">看完只記得一件事，是哪件</div><div class="m">One</div></div>
+      <div class="rowline" data-anim><div class="k">發布尺寸</div><div class="v">在哪個平台、什麼比例</div><div class="m">Size</div></div></div>
+</div>
+<div style="margin-top:5vh">
+  <div class="kicker" data-anim>Formula · 任務句</div>
+  <p class="h-md" style="font-family:var(--serif-zh);font-size:2.4vw;line-height:1.5;margin-top:2vh" data-anim>我要讓＿＿在＿＿平台<br>看懂＿＿。</p>
+  <div class="callout" style="margin-top:3vh" data-anim><strong>講師示範：</strong>我要讓想找健康零食的上班族在 IG 看懂：SUN DRIED 是自然日曬的南投芒果乾。<div class="callout-src">示範用寫法，讀者設定為講師舉例</div></div>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 任務句</div>
+    <div>現場：學員寫下自己的任務句</div>
+  </div>
+</section>
+
+<!-- ============ 8 / 51 · Materials · 今天的工具與素材 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Materials · 今天的工具與素材</div>
+    <div>08 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Prepare · 開工前確認</div>
+<h2 class="h-xl" data-anim>工具兩樣，<em>素材一份</em></h2><div class="grid-3" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">生圖</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">ChatGPT 或 Gemini</div><div class="stat-note">擇一即可。當天先確認帳號能產出圖片。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">完稿</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">Canva</div><div class="stat-note">排正式文字、做 4:5 與 1:1 兩個尺寸。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">示範品牌</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">SUN DRIED</div><div class="stat-note">芒果乾品牌，六種形式各有一段完整提示詞。也可用自己有權使用的素材。</div></div></div><div class="callout" style="margin-top:4vh" data-anim><strong>先講清楚：</strong>範例圖裡的成分、產地、製程與優惠都只用來練習版面，正式發布前要先查證。</div>
+</div>
+  <div class="foot">
+    <div>Page · 工具與素材</div>
+    <div>範例只練版面，不當商品事實</div>
+  </div>
+</section>
+
+<!-- ============ 9 / 51 · Layout by Purpose · 版型先回答溝通目的 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Layout by Purpose · 版型先回答溝通目的</div>
+    <div>09 / 51 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 溝通目的表</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>02 · 10 MIN · 同一個商品換版型，重點就變了</div>
+<h2 class="h-xl" data-anim>版型先回答<em>溝通目的</em></h2><div class="grid-9" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">A · 主視覺版</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">廣告首圖</div><div class="stat-note">商品或主題占畫面 80% 左右。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">B · 橫幅版</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">網站 banner</div><div class="stat-note">商品與短標並列，橫向快速讀完。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">C · 社群版</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">IG 日常貼文</div><div class="stat-note">主體清楚、文字少、留白多。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">D · 系列版</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">多款比較</div><div class="stat-note">多個品項仍像同一品牌。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">E · 禮盒版</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">節慶送禮</div><div class="stat-note">包裝與整組價值感。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">F · 特寫版</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">材質細節</div><div class="stat-note">質地、流動、表面細節。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">G · 促銷版</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">立即轉換</div><div class="stat-note">優惠與期限比裝飾更醒目。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">H · 生活版</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">品牌故事</div><div class="stat-note">人在什麼時刻使用商品。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">+ 順序</div><div class="stat-nb" style="font-size:2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">先目的、後風格</div><div class="stat-note">風格形容詞留到結構確定之後再挑。</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 八種版型</div>
+    <div>講師提問：芒果乾 IG 貼文該用哪一種？</div>
+  </div>
+</section>
+
+<!-- ============ 10 / 51 · Act I · 線稿 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>Act I · 線稿</div>
+    <div>10 / 51</div>
+  </div>
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>03 · 10 MIN</div><h1 class="h-hero" style="font-size:8.4vw" data-anim>把顏色拿掉</h1><h2 class="h-sub" data-anim>線稿讓你看見版面骨架</h2><p class="lead" style="max-width:58vw" data-anim>上一步選好了版型，現在把顏色與照片拿開。<br>骨架看得懂，才知道這個版面能不能換主題繼續用。</p></div>
+  <div class="foot">
+    <div>線稿段開幕</div>
+    <div>— 完成圖 · 線稿 · 換題材 —</div>
+  </div>
+</section>
+
+<!-- ============ 11 / 51 · Finished vs Wireframe · 完成圖與線稿 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Finished vs Wireframe · 完成圖與線稿</div>
+    <div>11 / 51 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 線稿</a></div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Compare · 同一張圖的兩種樣子</div>
+  <h2 class="h-xl" style="font-size:4.6vw;line-height:1.15" data-anim>完成圖看表面，<br><em>線稿看關係</em></h2>
+  <div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">完成圖</div><div class="v">顏色、照片、材質、正式文字</div><div class="m">Surface</div></div>
+      <div class="rowline" data-anim><div class="k">線稿</div><div class="v">物件輪廓、文字區、大小比例、對齊關係</div><div class="m">Structure</div></div></div>
+  <p class="body-zh" style="margin-top:3vh" data-anim>線稿保留版面關係、移除表象。它可以用來檢查結構，也可以換商品、主題與風格再做一次。</p>
+</div>
+<div class="grid-2-6-6" style="gap:1.6vw"><figure class="frame-img" style="height:58vh;background:transparent" data-anim><img src="assets/workshop2h/bento.jpg" alt="完成圖 · SUN DRIED 便當格" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">完成圖 · SUN DRIED 便當格</figcaption></figure><figure class="frame-img" style="height:58vh;background:transparent" data-anim><img src="assets/workshop2h/bento-wireframe.jpg" alt="線稿 · 同一張圖的骨架" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">線稿 · 同一張圖的骨架</figcaption></figure></div>
+</div>
+  <div class="foot">
+    <div>Page · 完成圖 vs 線稿</div>
+    <div>請學員比對兩張圖的格子位置</div>
+  </div>
+</section>
+
+<!-- ============ 12 / 51 · Reuse · 同一張線稿換題材 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Reuse · 同一張線稿換題材</div>
+    <div>12 / 51</div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div class="grid-2-6-6" style="gap:1.6vw"><figure class="frame-img" style="height:58vh;background:transparent" data-anim><img src="assets/workshop2h/bento-wireframe.jpg" alt="線稿 · 五格骨架" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">線稿 · 五格骨架</figcaption></figure><figure class="frame-img" style="height:58vh;background:transparent" data-anim><img src="assets/workshop2h/bento-soap.jpg" alt="成圖 · 植物手工皂" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">成圖 · 植物手工皂</figcaption></figure></div>
+<div>
+  <div class="kicker" data-anim>Reuse · 骨架不動，內容全換</div>
+  <h2 class="h-xl" style="font-size:4.6vw;line-height:1.15" data-anim>格局沒動，<br><em>只換家具</em></h2>
+  <div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">保留</div><div class="v">左側主視覺、右側三格、底部行動入口的位置與閱讀順序</div><div class="m">Keep</div></div>
+      <div class="rowline" data-anim><div class="k">換掉</div><div class="v">商品、道具、文案與色彩</div><div class="m">Swap</div></div></div>
+  <div class="callout" style="margin-top:3vh" data-anim>記住這句「<strong>格局沒動，只換家具</strong>」，等一下寫提示詞時會再用到。</div>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 換題材</div>
+    <div>伏筆：施工單的結構欄與內容欄</div>
+  </div>
+</section>
+
+<!-- ============ 13 / 51 · Reading Steps · 判讀三步 ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>Reading Steps · 判讀三步</div>
+    <div>13 / 51 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 判讀步驟</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Read · 三步看懂一張圖</div>
+<h2 class="h-xl" data-anim>判讀線稿的<em>三個步驟</em></h2><div class="pipeline-section"><div class="pipeline-label">講師按 → 鍵逐步點亮</div><div class="pipeline" data-cols="3"><div class="step" data-anim="step"><div class="step-nb">01 · 第一視覺</div><div class="step-title">找出眼睛第一個停下來的地方</div><div class="step-desc">讀者眼睛第一個停下來的地方，叫「第一視覺」。主體、標題、價格只能有一個第一名，看是誰靠尺寸、位置或對比勝出。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">02 · 視線順序</div><div class="step-title">寫下第一眼、第二眼、第三眼</div><div class="step-desc">依視線順序寫出前三個停點。寫不出順序，代表版面主次還沒排好。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">03 · 留白</div><div class="step-title">檢查留白與安全區</div><div class="step-desc">重要元素旁要留辨識空間；四周保留安全區，也就是圖片邊緣容易被平台裁掉的範圍。</div></div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 判讀步驟</div>
+    <div>三步驟 · 講師逐步點亮</div>
+  </div>
+</section>
+
+<!-- ============ 14 / 51 · Answer · 對答案 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Answer · 對答案</div>
+    <div>14 / 51</div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div><figure class="frame-img" style="height:62vh;background:transparent" data-anim><img src="assets/workshop2h/bento.jpg" alt="SUN DRIED 便當格 · 對照判讀" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">SUN DRIED 便當格 · 對照判讀</figcaption></figure></div>
+<div>
+  <div class="kicker" data-anim>Answer · 便當格的閱讀順序</div>
+  <h2 class="h-xl" style="font-size:4.4vw;line-height:1.15" data-anim>第一眼、第二眼、<br><em>第三眼</em></h2>
+  <div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">第一眼</div><div class="v">左側芒果乾大格</div><div class="m">第一視覺</div></div>
+      <div class="rowline" data-anim><div class="k">第二眼</div><div class="v">右側三個資訊格</div><div class="m">補充</div></div>
+      <div class="rowline" data-anim><div class="k">第三眼</div><div class="v">底部行動入口</div><div class="m">行動句</div></div></div>
+  <p class="body-zh" style="margin-top:3vh" data-anim>學員答案不同時，請他指出是哪個尺寸、對比或位置讓視線改道。這比對錯更重要。</p>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 參考答案</div>
+    <div>先讓學員寫，再翻這頁</div>
+  </div>
+</section>
+
+<!-- ============ 15 / 51 · Practice · 讓 AI 當第一次看到的讀者 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Practice · 讓 AI 當第一次看到的讀者</div>
+    <div>15 / 51</div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Practice · 用自己的任務句重看線稿</div>
+  <h2 class="h-xl" style="font-size:4.4vw;line-height:1.15" data-anim>自己畫完，<br><em>請 AI 驗證</em></h2>
+  <div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">1 · 畫</div><div class="v">在筆記畫出主要區域</div><div class="m">Draw</div></div>
+      <div class="rowline" data-anim><div class="k">2 · 圈</div><div class="v">圈出要保留的第一視覺與標題留白</div><div class="m">Keep</div></div>
+      <div class="rowline" data-anim><div class="k">3 · 劃</div><div class="v">劃掉一個與任務無關的次要資訊</div><div class="m">Cut</div></div>
+      <div class="rowline" data-anim><div class="k">4 · 問</div><div class="v">開新對話，上傳線稿與筆記，貼上任務句</div><div class="m">Ask</div></div></div>
+</div>
+<div style="margin-top:4vh"><div class="callout" style="font-family:var(--sans-zh);white-space:pre-line;font-size:max(14px,1.15vw);line-height:1.7" data-anim><div class="kicker" style="margin-bottom:1.2vh;opacity:.7">可複製提示詞 · 貼進 ChatGPT 或 Gemini</div>扮演第一次看到這張圖的讀者。
+依序說出你第一眼、第二眼、第三眼看到什麼，各用一句話。
+最後說出你覺得這張圖想讓你做什麼。</div>
+  <p class="body-zh" style="margin-top:2.4vh" data-anim>AI 說的第一眼和你預期不同，就先調整主次，再進入選型。</p>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 線稿練習</div>
+    <div>單人完成：AI 扮演讀者</div>
+  </div>
+</section>
+
+<!-- ============ 16 / 51 · Act II · 六種結構 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Act II · 六種結構</div>
+    <div>16 / 51</div>
+  </div>
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>04 · 20 MIN</div><h1 class="h-hero" style="font-size:8.4vw" data-anim>六種社群視覺結構</h1><h2 class="h-sub" data-anim>內容關係決定結構</h2><p class="lead" style="max-width:58vw" data-anim>上一段找到了第一視覺與閱讀順序。<br>現在決定內容怎麼組織：並列、比較、順序、人物、角色，還是系列。</p></div>
+  <div class="foot">
+    <div>Act II 開幕</div>
+    <div>— 六種結構 · 參考圖 · 選型 —</div>
+  </div>
+</section>
+
+<!-- ============ 17 / 51 · Six Structures · 六種結構總覽 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Six Structures · 六種結構總覽</div>
+    <div>17 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 六種結構</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Overview · 每一種處理一種內容關係</div>
+<h2 class="h-xl" data-anim>六種結構，<em>六種關係</em></h2><div class="grid-6" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">Bento Grid · 便當格</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">並列</div><div class="stat-note">一張圖並列產品、原料、包裝與使用情境。左側大格、右側三小格、底部橫格。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">Comparison · 對比</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">比較</div><div class="stat-note">讓讀者逐項比較兩種方案。兩欄五列對照。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">Step by Step · 步驟</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">順序</div><div class="stat-note">用製程、使用方式或服務流程建立信任。3–7 步，最後回到商品。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">Founder Portrait · 肖像</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">人物</div><div class="stat-note">用人物、商品與工作場域建立品牌信任。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">Sticker Set · 貼圖組</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">角色</div><div class="stat-note">品牌角色延伸到客服、限動與社群互動。角色固定，多格換情境。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">Lookbook Grid · 系列</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">系列</div><div class="stat-note">展示服飾系列或多款商品。每格獨立、整組調性一致。</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 六種結構</div>
+    <div>講師：先講關係，再講名字</div>
+  </div>
+</section>
+
+<!-- ============ 18 / 51 · Gallery · 六種形式的參考圖 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Gallery · 六種形式的參考圖</div>
+    <div>18 / 51 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 參考圖</a></div>
+  </div>
+
+<div class="frame" style="padding-top:4vh">
+  <div class="kicker" data-anim>Gallery · 先看畫面，再對照提示詞</div>
+  <h2 class="h-xl" style="font-size:3.6vw" data-anim>六張參考圖</h2>
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:1.2vw;margin-top:3vh;align-items:start">
+    <figure class="frame-img" style="height:52vh;background:transparent" data-anim><img src="assets/workshop2h/bento.jpg" alt="Bento · 並列" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">Bento · 並列</figcaption></figure><figure class="frame-img" style="height:52vh;background:transparent" data-anim><img src="assets/workshop2h/comparison.jpg" alt="Comparison · 比較" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">Comparison · 比較</figcaption></figure><figure class="frame-img" style="height:52vh;background:transparent" data-anim><img src="assets/workshop2h/step.jpg" alt="Step · 順序" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">Step · 順序</figcaption></figure><figure class="frame-img" style="height:52vh;background:transparent" data-anim><img src="assets/workshop2h/founder.jpg" alt="Founder · 人物" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">Founder · 人物</figcaption></figure><figure class="frame-img" style="height:52vh;background:transparent" data-anim><img src="assets/workshop2h/sticker.jpg" alt="Sticker · 角色" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">Sticker · 角色</figcaption></figure><figure class="frame-img" style="height:52vh;background:transparent" data-anim><img src="assets/workshop2h/lookbook.jpg" alt="Lookbook · 系列" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">Lookbook · 系列</figcaption></figure>
+  </div>
+</div>
+  <div class="foot">
+    <div>Page · 參考圖</div>
+    <div>圖中商品宣稱僅供練習；肖像為示範圖，不代表真實人物</div>
+  </div>
+</section>
+
+<!-- ============ 19 / 51 · Pick in One Minute · 一分鐘選型 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Pick in One Minute · 一分鐘選型</div>
+    <div>19 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 一分鐘選型</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>★ Quick Pick · 拿到需求先問這句</div>
+<h2 class="h-xl" data-anim>一分鐘<em>選型</em></h2><div style="margin-top:3vh">      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">並列重點</div><div class="v">Bento Grid 便當格</div><div class="m">並列</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">公平比較</div><div class="v">Comparison 對比</div><div class="m">比較</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">流程教學</div><div class="v">Step by Step 步驟</div><div class="m">順序</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">人物故事</div><div class="v">Founder Portrait 肖像</div><div class="m">人物</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">角色反應</div><div class="v">Sticker Set 貼圖組</div><div class="m">角色</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">系列展示</div><div class="v">Lookbook Grid 系列</div><div class="m">系列</div></div></div><div class="callout" style="margin-top:2.4vh" data-anim><strong>一句需求同時命中兩種時，先問：</strong>讀者最後要記住一個結論，還是看完整個系列？</div>
+</div>
+  <div class="foot">
+    <div>Page · 一分鐘選型</div>
+    <div>★ 速查頁</div>
+  </div>
+</section>
+
+<!-- ============ 20 / 51 · Quiz · 先判斷兩題 ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>Quiz · 先判斷兩題</div>
+    <div>20 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Quiz · 先寫答案與一句理由，再翻開</div>
+<h2 class="h-xl" data-anim>兩題<em>判斷</em></h2><div class="pipeline-section"><div class="pipeline-label">講師按 → 鍵：題目 → 答案 → 題目 → 答案</div><div class="pipeline" data-cols="4"><div class="step" data-anim="step"><div class="step-nb">題一</div><div class="step-title">比較兩種果乾</div><div class="step-desc">讀者要比較兩種果乾的成分、工法與包裝，該用哪一種結構？</div></div>
+<div class="step" data-anim="step"><div class="step-nb">答案</div><div class="step-title">Comparison</div><div class="step-desc">要逐項對照同一批條件，所以用兩欄對比。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">題二</div><div class="step-title">看懂五個步驟</div><div class="step-desc">讀者要依序看懂五個製作步驟，該用哪一種結構？</div></div>
+<div class="step" data-anim="step"><div class="step-nb">答案</div><div class="step-title">Step by Step</div><div class="step-desc">閱讀順序固定，打亂就看不懂，所以用步驟圖。</div></div></div></div><div class="callout" style="margin-top:3vh" data-anim>選了 Bento Grid 的學員，請他檢查是否把「並列賣點」誤當成「比較」或「流程」。</div>
+</div>
+  <div class="foot">
+    <div>Page · 選型練習</div>
+    <div>互動翻頁 · 先問再揭曉</div>
+  </div>
+</section>
+
+<!-- ============ 21 / 51 · Your Pick · 選自己的形式 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Your Pick · 選自己的形式</div>
+    <div>21 / 51</div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Practice · 寫下選型與理由</div>
+  <h2 class="h-xl" style="font-size:4.4vw;line-height:1.15" data-anim>選一種，<br><em>說出理由</em></h2>
+  <p class="h-md" style="font-family:var(--serif-zh);font-size:2vw;line-height:1.6;margin-top:3vh" data-anim>我選＿＿，<br>因為讀者需要看懂＿＿；<br>第一視覺是＿＿。</p>
+  <p class="body-zh" style="margin-top:3vh" data-anim>再用參考圖指出這個形式少不了的結構條件。</p>
+</div>
+<div style="margin-top:4vh"><div class="callout" style="font-family:var(--sans-zh);white-space:pre-line;font-size:max(14px,1.15vw);line-height:1.7" data-anim><div class="kicker" style="margin-bottom:1.2vh;opacity:.7">可複製提示詞 · 貼進 ChatGPT 或 Gemini</div>只根據下面這句任務句，從便當格、對比、步驟、肖像、貼圖組、服飾系列六種形式中推薦一種，並用兩句話說明理由。
+任務句：（貼上你的任務句）</div>
+  <p class="body-zh" style="margin-top:2.4vh" data-anim>AI 推薦的形式和你不同？先重寫目的，或換一種結構。</p>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 選自己的形式</div>
+    <div>開新對話、只貼任務句</div>
+  </div>
+</section>
+
+<!-- ============ 22 / 51 · Act III · 施工單 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>Act III · 施工單</div>
+    <div>22 / 51</div>
+  </div>
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>06 · 20 MIN · 全課核心</div><h1 class="h-hero" style="font-size:8.4vw" data-anim>提示詞是一張施工單</h1><h2 class="h-sub" data-anim>為什麼生圖要用模板</h2><p class="lead" style="max-width:58vw" data-anim>上一段選好了形式，這一段把圖背後的設定讀成一張施工單。<br>先弄懂為什麼要這樣寫，換題目時才知道哪些能改。</p></div>
+  <div class="foot">
+    <div>Act III 開幕</div>
+    <div>— 比喻 · 八欄 · 填施工單 —</div>
+  </div>
+</section>
+
+<!-- ============ 23 / 51 · One Line vs Work Order · 一句話 vs 施工單 ============ -->
+<section class="slide light" data-animate="directional">
+  <div class="chrome">
+    <div>One Line vs Work Order · 一句話 vs 施工單</div>
+    <div>23 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Compare · 同一個需求，兩種交代方式</div>
+<h2 class="h-xl" data-anim>你交代的越少，<em>AI 猜的越多</em></h2>
+<div class="grid-2-6-6" style="gap:5vw 4vh;margin-top:3vh">
+  <div data-anim="left" style="padding:3vh 2vw;border-left:3px solid currentColor;opacity:.6">
+    <div class="kicker">只說一句</div>
+    <h3 class="h-md" style="margin-top:2vh;font-size:2.2vw">「幫我做一張好看的芒果乾貼文」</h3>
+    <ul style="margin-top:3vh;padding-left:1.2em;display:flex;flex-direction:column;gap:1.2vh;font-size:max(14px,1.1vw);line-height:1.55">
+      <li>比例：AI 自己選橫的還是直的</li>
+      <li>版面：幾格、誰最大，AI 自己排</li>
+      <li>照片與文字：AI 自己配</li>
+      <li>顏色與字體：套它最熟悉的樣子</li>
+      <li>結果：常是千百張圖的平均值</li>
+    </ul>
+  </div>
+  <div data-anim="right" style="padding:3vh 2vw;border-left:3px solid currentColor">
+    <div class="kicker">給一張施工單</div>
+    <h3 class="h-md" style="margin-top:2vh;font-size:2.2vw">八個欄位，一欄定一件事</h3>
+    <ul style="margin-top:3vh;padding-left:1.2em;display:flex;flex-direction:column;gap:1.2vh;font-size:max(14px,1.1vw);line-height:1.55">
+      <li>整體、主題：多大、說什麼</li>
+      <li>格線、格內容：怎麼分、放什麼</li>
+      <li>色板與風格、字體：長什麼樣</li>
+      <li>格間距、限制：留多少空、什麼不准出現</li>
+      <li>結果：照你的需求長出來</li>
+    </ul>
+  </div>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 一句話 vs 施工單</div>
+    <div>講師提問：你沒交代的事，誰替你決定？</div>
+  </div>
+</section>
+
+<!-- ============ 24 / 51 · The Metaphor · 裝潢師傅 ============ -->
+<section class="slide dark" data-animate="quote">
+  <div class="chrome">
+    <div>The Metaphor · 裝潢師傅</div>
+    <div>24 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 施工單</a></div>
+  </div>
+
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh">
+  <div class="kicker" data-anim>Metaphor · 記住這個畫面</div>
+  <blockquote style="font-family:var(--serif-zh);font-weight:700;font-size:3.8vw;line-height:1.35;max-width:84vw">
+    <span data-anim="line" style="display:block">生圖 AI 像手很快、</span>
+    <span data-anim="line" style="display:block">但沒來過你店裡的<em>裝潢師傅</em>。</span>
+  </blockquote>
+  <p class="lead" style="max-width:66vw;opacity:.82" data-anim>你只說「幫我裝得溫馨一點」，師傅就自己決定隔幾間、牆刷什麼色、家具擺哪裡。結果往往是他最常做的樣子，不是你要的。<br>提示詞模板就是交給師傅的<strong>施工單</strong>：每一欄都把一件他原本要猜的事先定下來。</p>
+</div>
+  <div class="foot">
+    <div>Page · 比喻</div>
+    <div>後面都用同一組詞：施工單、平面圖、色票、施工禁忌</div>
+  </div>
+</section>
+
+<!-- ============ 25 / 51 · Fields 1/2 · 施工單八欄（上） ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Fields 1/2 · 施工單八欄（上）</div>
+    <div>25 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 欄位對照表</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>★ Field Map · 沒寫時 AI 會猜什麼</div>
+<h2 class="h-xl" data-anim>施工單八欄 <em>1/2</em></h2><div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">整體</div><div class="v">沒寫：可能自選橫圖或直圖，忽略發布情境<br>寫了：畫面比例、用途與整體感受</div><div class="m">總覽</div></div>
+      <div class="rowline" data-anim><div class="k">主題</div><div class="v">沒寫：常自行補上品牌名、標題或它以為的賣點<br>寫了：這張圖在說什麼、哪些文字與事實能用</div><div class="m">說什麼</div></div>
+      <div class="rowline" data-anim><div class="k">Grid 系統</div><div class="v">沒寫：可能改變格數、主次或閱讀順序<br>寫了：分幾格、大小如何、從哪裡開始看</div><div class="m">平面圖</div></div>
+      <div class="rowline" data-anim><div class="k">格內容</div><div class="v">沒寫：常用常見商品照、自行配文字<br>寫了：每格的照片、物件、動作與指定文字</div><div class="m">每間房</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 八欄（上）</div>
+    <div>★ 講義有完整對照表</div>
+  </div>
+</section>
+
+<!-- ============ 26 / 51 · Fields 2/2 · 施工單八欄（下） ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Fields 2/2 · 施工單八欄（下）</div>
+    <div>26 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 欄位對照表</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>★ Field Map · 沒寫時 AI 會猜什麼</div>
+<h2 class="h-xl" data-anim>施工單八欄 <em>2/2</em></h2><div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">色板與風格</div><div class="v">沒寫：常套用它熟悉的配色與調性<br>寫了：背景、主色、強調色與畫面質感</div><div class="m">色票</div></div>
+      <div class="rowline" data-anim><div class="k">字體</div><div class="v">沒寫：可能混用字體、字重或語系<br>寫了：標題與說明的字體分工、數量與語系</div><div class="m">字</div></div>
+      <div class="rowline" data-anim><div class="k">格間距</div><div class="v">沒寫：可能格子過擠、邊界不一致<br>寫了：每格之間穩定的留白</div><div class="m">牆距</div></div>
+      <div class="rowline" data-anim><div class="k">限制</div><div class="v">沒寫：可能多出人物、雜色、多餘文字<br>寫了：要排除的元素與要守住的邊界</div><div class="m">施工禁忌</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 八欄（下）</div>
+    <div>「沒寫時」是常見傾向，不是每次都會發生</div>
+  </div>
+</section>
+
+<!-- ============ 27 / 51 · Keep vs Swap · 結構欄與內容欄 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Keep vs Swap · 結構欄與內容欄</div>
+    <div>27 / 51</div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Two Kinds · 換題材時，哪些留、哪些換</div>
+  <h2 class="h-xl" style="font-size:4.4vw;line-height:1.15" data-anim>格局留著，<br><em>家具換新</em></h2>
+  <div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">結構欄</div><div class="v">比例、格線、間距、限制 → 像房子的格局，換題材時保留</div><div class="m">保留</div></div>
+      <div class="rowline" data-anim><div class="k">內容欄</div><div class="v">主題、每格照片與文字、色板 → 像家具和油漆，換成你自己的</div><div class="m">替換</div></div></div>
+  <div class="callout" style="margin-top:3vh" data-anim>剛才的手工皂就是這樣做的：左側大格、右側三小格、底部橫格都沒動，商品、文字與色票換成手工皂。</div>
+</div>
+<div class="grid-2-6-6" style="gap:1.6vw"><figure class="frame-img" style="height:58vh;background:transparent" data-anim><img src="assets/workshop2h/bento.jpg" alt="芒果乾 · 原本的家具" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">芒果乾 · 原本的家具</figcaption></figure><figure class="frame-img" style="height:58vh;background:transparent" data-anim><img src="assets/workshop2h/bento-soap.jpg" alt="手工皂 · 同一個格局" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">手工皂 · 同一個格局</figcaption></figure></div>
+</div>
+  <div class="foot">
+    <div>Page · 結構欄 vs 內容欄</div>
+    <div>接回線稿段：格局沒動，只換家具</div>
+  </div>
+</section>
+
+<!-- ============ 28 / 51 · Read Bento · 拆解便當格施工單 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Read Bento · 拆解便當格施工單</div>
+    <div>28 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · Bento 完整提示詞</a></div>
+  </div>
+<div class="frame grid-2-7-5" style="padding-top:5vh">
+
+<div><figure class="frame-img" style="height:64vh;background:transparent" data-anim><img src="assets/workshop2h/bento.jpg" alt="Bento 完整提示詞生成的範例" style="object-fit:contain;object-position:center top"><figcaption class="img-cap">Bento 完整提示詞生成的範例</figcaption></figure></div>
+<div>
+  <div class="kicker" data-anim>5 MIN · 先畫出平面圖，再看每間房</div>
+  <h2 class="h-xl" style="font-size:3.8vw;line-height:1.15" data-anim>便當格的<em>平面圖</em></h2>
+  <div style="margin-top:2.4vh">      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">整體</div><div class="v">4:5 直立，適合 IG / Threads</div><div class="m">比例</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">左上大格</div><div class="v">日曬芒果乾特寫｜自然日曬</div><div class="m">#01</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">右側三格</div><div class="v">鮮果｜在地鮮採 · 玻璃罐｜極簡包裝 · 配茶｜午茶首選</div><div class="m">#02–04</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">底部橫格</div><div class="v">群募早鳥的行動句</div><div class="m">#05</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">色票</div><div class="v">暖米白 ＋ 碳灰 ＋ 芒果金</div><div class="m">3 色</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">施工禁忌</div><div class="v">人物、手持、農會風紅綠色、雜亂照片</div><div class="m">限制</div></div></div>
+  <p class="body-zh" style="margin-top:2.4vh" data-anim>畫不出五格，就回提示詞補格數、主次與閱讀順序。</p>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 拆解 Bento</div>
+    <div>其餘五種也用同一方法拆</div>
+  </div>
+</section>
+
+<!-- ============ 29 / 51 · Room Types · 六種房型、不同必填欄 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Room Types · 六種房型、不同必填欄</div>
+    <div>29 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Required · 回看選型表「生成時先鎖定」那一欄</div>
+<h2 class="h-xl" data-anim>不同房型，<em>必填欄不同</em></h2><div class="grid-6" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">便當格</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">格數與主次</div><div class="stat-note">幾格、哪格最大、從哪裡開始看。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">對比圖</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">兩欄同一批項目</div><div class="stat-note">左右比的必須是同一組條件，資料要有來源。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">步驟圖</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">順序</div><div class="stat-note">每步一個動作、視線往下走、最後回到商品。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">肖像</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">光線與鏡位</div><div class="stat-note">本人同意或虛構人物、避開名人外貌、商品清楚。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">貼圖組</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">角色每格長得一樣</div><div class="stat-note">角色細節、畫風固定，動作不重複。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">服飾系列</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">整組統一</div><div class="stat-note">模特、鏡位、光線、背景與色板一致。</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 六種必填欄</div>
+    <div>這一欄就是各自施工單的必填欄</div>
+  </div>
+</section>
+
+<!-- ============ 30 / 51 · Let AI Fill · 讓 AI 幫你填施工單 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Let AI Fill · 讓 AI 幫你填施工單</div>
+    <div>30 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 填施工單</a></div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Practice · 15 MIN · 改寫自己的版本</div>
+  <h2 class="h-xl" style="font-size:4.4vw;line-height:1.15" data-anim>讓 AI 幫你<br><em>填施工單</em></h2>
+  <p class="body-zh" style="margin-top:2.4vh" data-anim>開新對話，一次貼進三樣東西：</p>
+  <div style="margin-top:2vh">      <div class="rowline" data-anim><div class="k">1</div><div class="v">所選形式的完整提示詞全文</div><div class="m">範本</div></div>
+      <div class="rowline" data-anim><div class="k">2</div><div class="v">自己的任務句</div><div class="m">目的</div></div>
+      <div class="rowline" data-anim><div class="k">3</div><div class="v">已確認的商品事實</div><div class="m">事實</div></div></div>
+</div>
+<div style="margin-top:4vh"><div class="callout" style="font-family:var(--sans-zh);white-space:pre-line;font-size:max(14px,1.15vw);line-height:1.7" data-anim><div class="kicker" style="margin-bottom:1.2vh;opacity:.7">可複製提示詞 · 講義同款</div>依據我貼上的完整提示詞全文、任務句與已確認的商品事實，改寫成我的版本。
+只替換內容欄：主題、每格照片與文字、色板。
+保留結構欄：比例、格線、間距與限制。
+最後另外列出你不得不自己猜的地方，依影響大小排序；別把猜測寫進新版本。</div>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · AI 填施工單</div>
+    <div>★ 講義有六段完整提示詞可複製</div>
+  </div>
+</section>
+
+<!-- ============ 31 / 51 · Check the Guesses · 只看 AI 的猜測 ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>Check the Guesses · 只看 AI 的猜測</div>
+    <div>31 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Review · 學員只做決定，不做苦工</div>
+<h2 class="h-xl" data-anim>只看排在前面的 <em>3 處猜測</em></h2>
+<p class="lead" style="margin-top:2vh;max-width:64vw" data-anim>AI 列出的猜測，就是你沒交代清楚的地方。看前 3 處，補上真實資訊或刪掉那段內容。</p><div class="pipeline-section"><div class="pipeline-label">時間分配 · 只複製所選的一段提示詞，不必生成六張</div><div class="pipeline" data-cols="3"><div class="step" data-anim="step"><div class="step-nb">5 分</div><div class="step-title">拆解</div><div class="step-desc">用便當格練習：畫出平面圖，對到每一格內容。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">5 分</div><div class="step-title">填事實</div><div class="step-desc">整理自己的任務句與已確認的商品事實、素材。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">10 分</div><div class="step-title">改寫</div><div class="step-desc">交給 AI 改寫，看猜測清單，再畫一份文字線稿。</div></div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 看猜測清單</div>
+    <div>課堂只選一段完整提示詞</div>
+  </div>
+</section>
+
+<!-- ============ 32 / 51 · Break · 休息與準備 ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Break · 休息與準備</div>
+    <div>32 / 51</div>
+  </div>
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>08 · BREAK / PREP 10 MIN</div><h1 class="h-hero" style="font-size:8.4vw" data-anim>空白施工單</h1><h2 class="h-sub" data-anim>休息十分鐘，順便把工作紙填完</h2><p class="lead" style="max-width:58vw" data-anim>前面讀過的完整提示詞是填好的範本，<br>這張工作紙是交給你的空白版。填完就能交給 AI 變成提示詞。</p></div>
+  <div class="foot">
+    <div>休息段</div>
+    <div>— 工作紙 · 生成前檢查 —</div>
+  </div>
+</section>
+
+<!-- ============ 33 / 51 · Worksheet · 工作紙四段 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Worksheet · 工作紙四段</div>
+    <div>33 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 工作紙</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Worksheet · 十六行，分成四段看</div>
+<h2 class="h-xl" data-anim>工作紙怎麼填</h2><div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">1 · 任務與事實</div><div class="v">任務句、已確認事實與尚未確認的資訊、選的結構與原因</div><div class="m">前三行</div></div>
+      <div class="rowline" data-anim><div class="k">2 · 比例與版面</div><div class="v">生成比例、格數或步數、閱讀順序、主次、每格主體與文字、色板、材質光線鏡位、參考圖分工</div><div class="m">中段</div></div>
+      <div class="rowline" data-anim><div class="k">3 · 保留與排除</div><div class="v">保留的內容、可以調整的、排除的內容、指定的繁體中文短句</div><div class="m">施工禁忌</div></div>
+      <div class="rowline" data-anim><div class="k">4 · 驗收與下一步</div><div class="v">格數順序、商品一致、材質光線、文字逐字、裁切安全；下次只改哪一項</div><div class="m">收尾</div></div></div><div class="callout" style="margin-top:3vh" data-anim><strong>兩個尺寸別搞混：</strong>「生成比例」寫給生圖工具，依形式決定；「Canva 練習完稿」固定 4:5、1080×1350。貼圖組生成時保持橫向四欄兩列，進 Canva 再等比例放入。</div>
+</div>
+  <div class="foot">
+    <div>Page · 工作紙</div>
+    <div>★ 講義有可整塊複製的工作紙</div>
+  </div>
+</section>
+
+<!-- ============ 34 / 51 · Before Generating · 生成前檢查 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Before Generating · 生成前檢查</div>
+    <div>34 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Stop · 按下生成之前</div>
+<h2 class="h-xl" data-anim>三件事<em>先確認</em></h2><div class="grid-3" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">01 · 份量</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">一張圖讀得完</div><div class="stat-note">內容已經縮到一張圖能讀完。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">02 · 主次</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">只有一個第一視覺</div><div class="stat-note">讀者第一眼只會停在一個地方。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">03 · 權利</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">素材有使用權</div><div class="stat-note">自有照片、人物、品牌素材都確認能用。</div></div></div><div class="callout" style="margin-top:4vh" data-anim>人物同意、素材授權或資料來源任一項不清楚，就改用講義的結構練習圖或虛構素材。</div>
+</div>
+  <div class="foot">
+    <div>Page · 生成前檢查</div>
+    <div>權利不清楚就換練習素材</div>
+  </div>
+</section>
+
+<!-- ============ 35 / 51 · Act IV · 實作 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>Act IV · 實作</div>
+    <div>35 / 51</div>
+  </div>
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>09 · 25 MIN</div><h1 class="h-hero" style="font-size:8.4vw" data-anim>AI 社群視覺實作</h1><h2 class="h-sub" data-anim>生成、交給 AI 驗收、一次只改一個地方</h2><p class="lead" style="max-width:58vw" data-anim>上一段填好了空白施工單，<br>現在把它變成提示詞，生成第一版圖片。</p></div>
+  <div class="foot">
+    <div>Act IV 開幕</div>
+    <div>— 生成 · 驗收 · 修正 —</div>
+  </div>
+</section>
+
+<!-- ============ 36 / 51 · Three Steps · 實作三步 ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>Three Steps · 實作三步</div>
+    <div>36 / 51 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 實作步驟</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Loop · 25 分鐘跑一圈</div>
+<h2 class="h-xl" data-anim>實作<em>三步</em></h2><div class="pipeline-section"><div class="pipeline-label">講師按 → 鍵逐步點亮</div><div class="pipeline" data-cols="3"><div class="step" data-anim="step"><div class="step-nb">01 · Generate</div><div class="step-title">生成第一版</div><div class="step-desc">把改寫好的提示詞全文貼進 ChatGPT 或 Gemini，明確要求產出圖片。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">02 · Check</div><div class="step-title">交給 AI 驗收</div><div class="step-desc">開新對話，上傳生成圖並貼上提示詞，請 AI 列出最多 3 處不一致。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">03 · Fix One</div><div class="step-title">一次只改一個地方</div><div class="step-desc">挑最影響任務句的一項，套一句修正句再生成一次，留下前後比較。</div></div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 實作三步</div>
+    <div>三步驟 · 講師逐步點亮</div>
+  </div>
+</section>
+
+<!-- ============ 37 / 51 · Generate · 生成第一版 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Generate · 生成第一版</div>
+    <div>37 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Step 01 · 生成第一版</div>
+<h2 class="h-xl" data-anim>預期看到什麼、<em>卡住怎麼辦</em></h2>
+<div class="grid-2-6-6" style="gap:4vw;margin-top:3vh">
+  <div data-anim>
+    <div class="kicker">預期結果</div>
+    <ul style="margin-top:2vh;padding-left:1.2em;display:flex;flex-direction:column;gap:1.4vh;font-size:max(14px,1.1vw);line-height:1.6">
+      <li>五種社群主視覺接近 4:5</li>
+      <li>貼圖組是橫向四欄兩列預覽</li>
+      <li>畫面有所選提示詞的主要區塊與位置</li>
+      <li>最後尺寸 1080×1350 交給 Canva 設定</li>
+      <li>有參考圖可上傳，並說明只參考版面與自然質感</li>
+    </ul>
+  </div>
+  <div data-anim>
+    <div class="kicker">卡住時</div>
+    <ul style="margin-top:2vh;padding-left:1.2em;display:flex;flex-direction:column;gap:1.4vh;font-size:max(14px,1.1vw);line-height:1.6">
+      <li>只回文字建議：先確認當天帳號能不能生圖</li>
+      <li>功能用不了：下載所選形式的範例圖，沿用示範主題練版面</li>
+      <li>記下原提示詞，之後可以重跑</li>
+      <li>直接進 Canva 練習，不卡在這一步</li>
+    </ul>
+  </div>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 生成第一版</div>
+    <div>範例圖只作練習，不當自己品牌的成品</div>
+  </div>
+</section>
+
+<!-- ============ 38 / 51 · AI Check · 交給 AI 驗收 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>AI Check · 交給 AI 驗收</div>
+    <div>38 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 驗收結構與文字</a></div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Step 02 · 開新對話</div>
+  <h2 class="h-xl" style="font-size:4.4vw;line-height:1.15" data-anim>比對交給 AI，<br><em>決定留給你</em></h2>
+  <div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">上傳</div><div class="v">第一版生成圖</div><div class="m">圖</div></div>
+      <div class="rowline" data-anim><div class="k">貼上</div><div class="v">所選提示詞全文</div><div class="m">文</div></div>
+      <div class="rowline" data-anim><div class="k">決定</div><div class="v">AI 列出的每一處：採用、修正或重生</div><div class="m">你</div></div></div>
+  <p class="body-zh" style="margin-top:2.4vh" data-anim>肖像照改問「畫面是否沒有文字」。把最影響任務句的那一項記在筆記。</p>
+</div>
+<div style="margin-top:4vh"><div class="callout" style="font-family:var(--sans-zh);white-space:pre-line;font-size:max(14px,1.15vw);line-height:1.7" data-anim><div class="kicker" style="margin-bottom:1.2vh;opacity:.7">可複製提示詞 · 講義同款</div>比對我上傳的生成圖與下方所選提示詞全文。
+依序檢查格數、照片位置、閱讀順序、商品或角色、繁體中文錯字。
+只列出最影響任務句的 3 處以內不一致，每處寫出圖上現況與提示詞要求。</div></div>
+</div>
+  <div class="foot">
+    <div>Page · AI 驗收</div>
+    <div>學員只看 3 處以內</div>
+  </div>
+</section>
+
+<!-- ============ 39 / 51 · Why One · 為什麼一次只改一個 ============ -->
+<section class="slide dark" data-animate="quote">
+  <div class="chrome">
+    <div>Why One · 為什麼一次只改一個</div>
+    <div>39 / 51</div>
+  </div>
+
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh">
+  <div class="kicker" data-anim>Step 03 · 一次只改一個地方</div>
+  <blockquote style="font-family:var(--serif-zh);font-weight:700;font-size:4vw;line-height:1.3;max-width:82vw">
+    <span data-anim="line" style="display:block">一次改三件事，變好了，</span>
+    <span data-anim="line" style="display:block">也不知道是<em>哪一句</em>的功勞。</span>
+  </blockquote>
+  <p class="lead" style="max-width:64vw;opacity:.8" data-anim>保存初稿與修正版，指出哪一項檢查從沒過變成通過。第一版全過了，也只挑一個細節比較改前改後，再決定哪一版值得用。</p>
+</div>
+  <div class="foot">
+    <div>Page · 一次只改一個</div>
+    <div>額度不足：先寫好修正句，改用練習圖進 Canva</div>
+  </div>
+</section>
+
+<!-- ============ 40 / 51 · Fix Lines · 修正句速查 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Fix Lines · 修正句速查</div>
+    <div>40 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 修正句表</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>★ Quick Fix · 每次只選一句</div>
+<h2 class="h-xl" data-anim>六句<em>修正句</em></h2><div style="margin-top:2.4vh">      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">主次不清</div><div class="v">保留所有內容，只把主區塊放大到次區塊的兩倍；其他位置不變。</div><div class="m">主次</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">閱讀順序混亂</div><div class="v">保留色板與內容，重排視線為標題 → 主區塊 → 次區塊 → CTA。（商品優先就先改順序）</div><div class="m">順序</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">文字區太小</div><div class="v">保留主體與指定文案，只把主標區加高，讓整句繁體中文完整可讀；其他位置不變。</div><div class="m">文字區</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">中文字錯誤</div><div class="v">保留構圖、商品與其他文字，只把「錯字」改成「正字」；不要新增或刪除其他文字。</div><div class="m">錯字</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">色彩太散</div><div class="v">保留構圖，只使用所選提示詞【色板】指定的三種主色；其他顏色改為自然材質色。</div><div class="m">色彩</div></div>
+      <div class="rowline" style="padding:1.2vh 0" data-anim><div class="k">系列不一致</div><div class="v">保留人物或商品差異，統一背景、相機高度、光線方向與後製色調。</div><div class="m">系列</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 修正句</div>
+    <div>修正前先確認第一視覺沒被推翻</div>
+  </div>
+</section>
+
+<!-- ============ 41 / 51 · Checkpoint · 可以進 Canva 了嗎 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Checkpoint · 可以進 Canva 了嗎</div>
+    <div>41 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Checkpoint · 三項都打勾再往下</div>
+<h2 class="h-xl" data-anim>可以進 <em>Canva</em> 了嗎</h2><div class="grid-3" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">比例</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">4:5 或四欄兩列</div><div class="stat-note">五種主視覺接近 4:5；貼圖組是橫向四欄兩列預覽。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">不一致</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">都已決定</div><div class="stat-note">AI 列出的每一處，都已決定採用、修正或重生。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">主體</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">第一視覺清楚</div><div class="stat-note">第一視覺清楚、主體完整。</div></div></div><div class="callout" style="margin-top:4vh" data-anim>通過後下載 PNG，保留原始生成版本。貼圖組進 Canva 後等比例完整置入，不先裁成 4:5。</div>
+</div>
+  <div class="foot">
+    <div>Page · Checkpoint</div>
+    <div>沒通過：回選型或修正句</div>
+  </div>
+</section>
+
+<!-- ============ 42 / 51 · Act V · Canva ============ -->
+<section class="slide hero light">
+  <div class="chrome">
+    <div>Act V · Canva</div>
+    <div>42 / 51</div>
+  </div>
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>10 · 25 MIN</div><h1 class="h-hero" style="font-size:8.4vw" data-anim>Canva 完稿與尺寸延展</h1><h2 class="h-sub" data-anim>從生成圖到兩張可發布的 PNG</h2><p class="lead" style="max-width:58vw" data-anim>上一段留下了通過檢查的生成圖，<br>這一段把它放進 Canva，做成 4:5 主視覺與 1:1 延展圖。</p></div>
+  <div class="foot">
+    <div>Act V 開幕</div>
+    <div>— 完稿 · 延展 · 輸出 —</div>
+  </div>
+</section>
+
+<!-- ============ 43 / 51 · Four Steps · 完稿四步 ============ -->
+<section class="slide dark" data-animate="pipeline">
+  <div class="chrome">
+    <div>Four Steps · 完稿四步</div>
+    <div>43 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 完稿步驟</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Finish · 25 分鐘四個動作</div>
+<h2 class="h-xl" data-anim>完稿<em>四步</em></h2><div class="pipeline-section"><div class="pipeline-label">講師按 → 鍵逐步點亮</div><div class="pipeline" data-cols="4"><div class="step" data-anim="step"><div class="step-nb">01 · 4:5</div><div class="step-title">建立 1080×1350</div><div class="step-desc">自訂尺寸、上傳 AI 底圖。比例符合就鋪滿鎖定；不符就等比例縮到整張可見，用品牌底色補空白。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">02 · 文字</div><div class="step-title">核對或補上正式中文</div><div class="step-desc">只補缺少或要重建的字，AI 已正確生成的字保持原樣，不重複疊字。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">03 · 1:1</div><div class="step-title">延展為 1080×1080</div><div class="step-desc">新建正方形，複製 4:5 元素。先固定主體與主標，再把次要內容往內收。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">04 · 輸出</div><div class="step-title">縮小檢查再輸出</div><div class="step-desc">縮到約 25%，看標題、主體、行動句的層級還清不清楚，再各自輸出 PNG。</div></div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 完稿四步</div>
+    <div>四步驟 · 講師逐步點亮</div>
+  </div>
+</section>
+
+<!-- ============ 44 / 51 · Typo Fix · 錯字三段處理 ============ -->
+<section class="slide light" data-animate="pipeline">
+  <div class="chrome">
+    <div>Typo Fix · 錯字三段處理</div>
+    <div>44 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Typo · 由輕到重，一段不行再下一段</div>
+<h2 class="h-xl" data-anim>錯字的<em>三段處理</em></h2><div class="pipeline-section"><div class="pipeline-label">講師按 → 鍵逐步點亮</div><div class="pipeline" data-cols="3"><div class="step" data-anim="step"><div class="step-nb">第一段</div><div class="step-title">請 AI 只修那個字</div><div class="step-desc">用錯字修正句，只換掉錯的字，其他不動。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">第二段</div><div class="step-title">遮蓋後在 Canva 重建</div><div class="step-desc">還是錯，就用和背景相符的色塊蓋住，在 Canva 重打。</div></div>
+<div class="step" data-anim="step"><div class="step-nb">第三段</div><div class="step-title">要一張無字底圖</div><div class="step-desc">遮不乾淨，就回 AI 取得留好文字空間的無字底圖，再排字。</div></div></div></div><div class="callout" style="margin-top:3vh" data-anim>扁平圖裡的字無法移動。需要重排時，回去取得無字底圖，不裁切、不壓扁，也不用付費分離功能。</div>
+</div>
+  <div class="foot">
+    <div>Page · 錯字處理</div>
+    <div>錯字無法排除：標成練習稿，不拿去發布</div>
+  </div>
+</section>
+
+<!-- ============ 45 / 51 · Text Rules · 文字與色彩規則 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Text Rules · 文字與色彩規則</div>
+    <div>45 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Hierarchy · 三種文字各管一件事</div>
+<h2 class="h-xl" data-anim>文字<em>各司其職</em></h2><div class="grid-6" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">主標</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">只說一件事</div><div class="stat-note">讀者看完只記得這一句。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">短標</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">補充情境</div><div class="stat-note">說明是什麼、給誰、什麼時候用。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">行動句</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">告訴下一步</div><div class="stat-note">例如「立即預購」，讓讀者知道要做什麼。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">字體</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">2 種</div><div class="stat-note">標題一種、說明一種。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">字級</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">3 級</div><div class="stat-note">主標、短標、說明三個大小。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">主色</div><div class="stat-nb" style="font-size:2.4vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">≤ 3 個</div><div class="stat-note">沿用施工單的色票。</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 文字規則</div>
+    <div>完稿文字以所選提示詞的指定文字為準</div>
+  </div>
+</section>
+
+<!-- ============ 46 / 51 · Resize · 4:5 延展成 1:1 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>Resize · 4:5 延展成 1:1</div>
+    <div>46 / 51 <a class="chrome-link" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 尺寸延展</a></div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Resize · 不壓扁、不硬裁</div>
+  <h2 class="h-xl" style="font-size:4.4vw;line-height:1.15" data-anim>直的變方的，<br><em>先固定主角</em></h2>
+  <div style="margin-top:3vh">      <div class="rowline" data-anim><div class="k">1</div><div class="v">建立新的 1080×1080，複製 4:5 的元素</div><div class="m">新畫布</div></div>
+      <div class="rowline" data-anim><div class="k">2</div><div class="v">先固定主體與主標的位置</div><div class="m">主角</div></div>
+      <div class="rowline" data-anim><div class="k">3</div><div class="v">次要內容往內收，保持原比例與完整內容</div><div class="m">配角</div></div>
+      <div class="rowline" data-anim><div class="k">練習圖</div><div class="v">整張等比例放進正方形，用提示詞的背景色補滿留白，再補字</div><div class="m">扁平圖</div></div></div>
+</div>
+<div style="margin-top:4vh"><div class="callout" style="font-family:var(--sans-zh);white-space:pre-line;font-size:max(14px,1.15vw);line-height:1.7" data-anim><div class="kicker" style="margin-bottom:1.2vh;opacity:.7">上傳兩張 PNG ＋ 任務句</div>扮演第一次滑到這組圖的讀者。
+分別看 4:5 與 1:1 兩張圖，各說出你第一眼看到什麼、看完會想做什麼。
+最後指出兩張圖的第一視覺、文字或商品哪裡不一致。</div>
+  <p class="body-zh" style="margin-top:2.4vh" data-anim>兩張的第一視覺、文字完整度或商品不一致，就回該尺寸調整後重新輸出。</p>
+</div>
+</div>
+  <div class="foot">
+    <div>Page · 尺寸延展</div>
+    <div>單人完成：AI 扮演讀者</div>
+  </div>
+</section>
+
+<!-- ============ 47 / 51 · Final Check · 完稿檢核表 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Final Check · 完稿檢核表</div>
+    <div>47 / 51 <a class="chrome-link starred" href="https://skypai0326.github.io/courses/courses/gen-image/workshop-2h-poster-social.html" target="_blank" rel="noopener" title="開啟詳細講義（新分頁）">講義 · 完稿檢核</a></div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>★ Final Check · 對回開場的過關標準</div>
+<h2 class="h-xl" data-anim>完稿<em>檢核表</em></h2><div style="margin-top:2.4vh">      <div class="rowline" data-anim><div class="k">版型</div><div class="v">所選結構與內容關係相符，主目的清楚</div><div class="m">回選型表</div></div>
+      <div class="rowline" data-anim><div class="k">結構</div><div class="v">第一眼、第二眼、第三眼說得出來，主體完整、留白足夠</div><div class="m">回線稿／修正句</div></div>
+      <div class="rowline" data-anim><div class="k">文字</div><div class="v">和指定繁體中文逐字相符，沒有多字、缺字、遮擋</div><div class="m">局部修／Canva 重建</div></div>
+      <div class="rowline" data-anim><div class="k">色彩</div><div class="v">最多三個主色，對比足以閱讀</div><div class="m">回 Canva 色板</div></div>
+      <div class="rowline" data-anim><div class="k">權利</div><div class="v">素材有權使用；真人已同意；數據有來源</div><div class="m">換練習素材</div></div>
+      <div class="rowline" data-anim><div class="k">輸出</div><div class="v">1080×1350 與 1080×1080 都是 PNG，沒裁到重要內容</div><div class="m">回該尺寸重排</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 檢核表</div>
+    <div>最右欄：沒過時回哪裡</div>
+  </div>
+</section>
+
+<!-- ============ 48 / 51 · AI Review · 交給 AI 檢核 ============ -->
+<section class="slide light">
+  <div class="chrome">
+    <div>AI Review · 交給 AI 檢核</div>
+    <div>48 / 51</div>
+  </div>
+<div class="frame grid-2-6-6" style="padding-top:5vh">
+
+<div>
+  <div class="kicker" data-anim>Review · 最後一次交給 AI</div>
+  <h2 class="h-xl" style="font-size:4.4vw;line-height:1.15" data-anim>AI 找問題，<br><em>你做決定</em></h2>
+  <p class="body-zh" style="margin-top:3vh" data-anim>上傳兩張 PNG，貼上檢核表。AI 列出不一致後，只看最影響發布的 3 處以內，決定採用、修正或重新輸出。</p>
+</div>
+<div style="margin-top:4vh"><div class="callout" style="font-family:var(--sans-zh);white-space:pre-line;font-size:max(14px,1.15vw);line-height:1.7" data-anim><div class="kicker" style="margin-bottom:1.2vh;opacity:.7">可複製提示詞 · 講義同款</div>對照我上傳的 1080×1350 與 1080×1080 兩張 PNG，以及下方檢核表。
+比較兩張圖的版型、前三個閱讀停點、指定繁體中文、主色數量、素材權利說明與重要內容裁切。
+只列出最影響發布的 3 處以內不一致，每處寫出對應的檢核面向。</div></div>
+</div>
+  <div class="foot">
+    <div>Page · AI 檢核</div>
+    <div>學員只看 3 處以內</div>
+  </div>
+</section>
+
+<!-- ============ 49 / 51 · Portfolio · 成果資料夾 ============ -->
+<section class="slide dark">
+  <div class="chrome">
+    <div>Portfolio · 成果資料夾</div>
+    <div>49 / 51</div>
+  </div>
+<div class="frame " style="padding-top:5vh">
+<div class="kicker" data-anim>Deliver · 五樣東西放同一個資料夾</div>
+<h2 class="h-xl" data-anim>今天帶走<em>什麼</em></h2><div class="grid-6" style="margin-top:4vh;gap:3vh 3vw"><div class="stat-card" data-anim><div class="stat-label">01</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">任務句</div><div class="stat-note">這張圖要讓誰在哪裡看懂什麼。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">02</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">填好的施工單</div><div class="stat-note">工作紙：結構欄＋內容欄。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">03</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">完整生成提示詞</div><div class="stat-note">可以重跑、可以換題材。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">04</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">兩張 PNG</div><div class="stat-note">1080×1350 與 1080×1080。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">05</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">檢核表</div><div class="stat-note">AI 列出的問題與你的決定。</div></div>
+<div class="stat-card" data-anim><div class="stat-label">+ 下次</div><div class="stat-nb" style="font-size:2.2vw;font-family:var(--serif-zh);letter-spacing:0;line-height:1.2">換主題時</div><div class="stat-note">保留格局與施工禁忌，只替換家具與色票。</div></div></div>
+</div>
+  <div class="foot">
+    <div>Page · 成果資料夾</div>
+    <div>下次換主題就從施工單開始</div>
+  </div>
+</section>
+
+<!-- ============ 50 / 51 · Takeaway · 帶走一句話 ============ -->
+<section class="slide hero light" data-animate="quote">
+  <div class="chrome">
+    <div>Takeaway · 帶走一句話</div>
+    <div>50 / 51</div>
+  </div>
+
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh">
+  <div class="kicker" data-anim>Takeaway · 全課一句話</div>
+  <blockquote style="font-family:var(--serif-zh);font-weight:700;font-size:4.6vw;line-height:1.3;max-width:84vw">
+    <span data-anim="line" style="display:block">先定版型，再讓 AI 執行；</span>
+    <span data-anim="line" style="display:block">正式文字<em>最後由你驗收</em>。</span>
+  </blockquote>
+  <p class="lead" style="max-width:62vw;opacity:.8" data-anim>任務句 → 版型 → 施工單 → 生成與修正 → 完稿與檢核。<br>這條路換成任何品牌、任何主題都還能用。</p>
+</div>
+  <div class="foot">
+    <div>Page · 金句</div>
+    <div>— · —</div>
+  </div>
+</section>
+
+<!-- ============ 51 / 51 · Thank You · 弄一下工作室 ============ -->
+<section class="slide hero dark">
+  <div class="chrome">
+    <div>Thank You · 弄一下工作室</div>
+    <div>51 / 51</div>
+  </div>
+
+<div class="frame" style="display:grid;gap:5vh;align-content:center;min-height:80vh">
+  <div class="kicker" data-anim>End of Workshop · 120 MIN</div>
+  <h1 class="h-hero" style="font-size:8.8vw" data-anim>下一張圖，<br>從施工單開始</h1>
+  <p class="lead" style="max-width:60vw" data-anim>你帶走的不只兩張圖，是一張<em>可以一直重複使用的施工單</em>。</p>
+  <div class="meta-row" data-anim><span>從 AI 生圖到設計完稿</span><span>·</span><span>gen-image</span><span>·</span><span>2H Workshop</span></div>
+  <div class="meta-row" style="margin-top:1.6vh;opacity:.74" data-anim><span>Contact</span><span>·</span><span><a href="mailto:sky8697@gmail.com" style="color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px">sky8697@gmail.com</a></span><span>·</span><span>弄一下工作室</span></div>
+</div>
+  <div class="foot">
+    <div>Thank you · 謝謝參與這兩小時</div>
+    <div>— gen-image / 2H —</div>
+  </div>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+
+// =============== 导航（翻页 / 圆点 / 键盘 / 滚轮 / 触屏） ===============
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+
+// 关键：矫正 deck 宽度为 total * 100vw，否则翻页会错位
+deck.style.width=(total*100)+'vw';
+
+slides.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));
+  b.onclick=()=>go(i);
+  nav.appendChild(b);
+});
+
+function go(n){
+  if(lock)return;
+  idx=Math.max(0,Math.min(total-1,n));
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
+  const el=slides[idx];
+  const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
+  document.body.classList.toggle('light-bg',th==='light');
+  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
+  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+/* =============== ESC 索引视图 =============== */
+let overviewOn=false;
+const ov=document.createElement('div');
+ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+
+function buildOverview(){
+  ov.innerHTML='';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{
+    const card=document.createElement('div');
+    card.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    card.onmouseenter=()=>card.style.borderColor='rgba(var(--paper-rgb),.6)';
+    card.onmouseleave=()=>card.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const clone=s.cloneNode(true);
+    clone.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    wrap.appendChild(clone);
+    const label=document.createElement('div');
+    label.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.7';
+    label.textContent=(i+1)+' / '+total;
+    card.appendChild(wrap);
+    card.appendChild(label);
+    card.onclick=()=>{toggleOverview();go(i)};
+    grid.appendChild(card);
+  });
+  ov.appendChild(grid);
+}
+
+function toggleOverview(){
+  overviewOn=!overviewOn;
+  if(overviewOn){buildOverview();ov.style.display='block';}
+  else{ov.style.display='none';}
+}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return;}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){
+    if(window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+1);
+    return;
+  }
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);
+  if(e.key==='End')go(total-1);
+});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>50){
+    if(wheelAcc>0 && window.__pipeAdvance && window.__pipeAdvance()){
+      wheelAcc=0;
+    }else{
+      go(idx+(wheelAcc>0?1:-1));wheelAcc=0;
+    }
+  }
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150);
+},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0].clientX-tx);
+  const dy=(e.changedTouches[0].clientY-ty);
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){
+    if(dx<0 && window.__pipeAdvance && window.__pipeAdvance()) return;
+    go(idx+(dx<0?1:-1));
+  }
+},{passive:true});
+
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
+     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
+     加载完成后挂 window.__playSlide / window.__pipeAdvance,
+     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
+     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
+-->
+<script type="module">
+let motion;
+try {
+  motion = await import('./assets/motion.min.js');
+} catch(e1) {
+  try {
+    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+  } catch(e2) {
+    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
+    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+  }
+}
+
+if(motion){
+  const { animate, stagger } = motion;
+  document.body.classList.add('motion-ready');
+  const EASE = [.22, 1, .36, 1];
+  const slides = [...document.querySelectorAll('.slide')];
+  let pipeStep = -1;
+  let lastIdx = -1;
+
+  function resetAnims(slide){
+    slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.style.opacity='';
+      el.style.transform='';
+    });
+  }
+
+  function playSlide(i){
+    const slide = slides[i];
+    if(!slide) return;
+    lastIdx = i;
+    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+
+    if(recipe === 'pipeline'){
+      pipeStep = -1;
+      // 預設自閱模式：全顯。URL ?pipeline=1 才走講師 strict
+      var strict = new URL(location.href).searchParams.get('pipeline') === '1';
+      var op = strict ? '0.15' : '1';
+      if (strict) document.body.classList.add('pipeline-strict');
+      slide.querySelectorAll('[data-anim]').forEach(el=>{
+        el.style.opacity=op;
+        el.style.transform='none';
+      });
+      return;
+    }
+
+    resetAnims(slide);
+    const all = [...slide.querySelectorAll('[data-anim]')];
+    if(!all.length) return;
+
+    if(recipe === 'directional'){
+      const lefts  = all.filter(el=>el.dataset.anim==='left');
+      const divs   = all.filter(el=>el.dataset.anim==='divider');
+      const rights = all.filter(el=>el.dataset.anim==='right');
+      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
+      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
+      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
+      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+      return;
+    }
+
+    if(recipe === 'quote'){
+      const lines = all.filter(el=>el.dataset.anim==='line');
+      const others = all.filter(el=>el.dataset.anim!=='line');
+      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
+      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+      return;
+    }
+
+    if(recipe === 'hero'){
+      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+      return;
+    }
+
+    // default: cascade
+    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+  }
+
+  function pipeAdvance(){
+    const slide = slides[lastIdx];
+    if(!slide || slide.dataset.animate !== 'pipeline') return false;
+    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep >= steps.length - 1) return false;
+    pipeStep++;
+    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
+    if(pipeStep > 0 && arrows[pipeStep-1]){
+      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
+    }
+    return true;
+  }
+
+  window.__playSlide = playSlide;
+  window.__pipeAdvance = pipeAdvance;
+
+  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
+  playSlide(0);
+}
+</script>
+
+<script>
+/* mobile-reader-mode v6 — Codex consult 0e6bc391 採納
+   觸發：max-width 900 / max-height 700 / pointer coarse；URL ?deck=1 強制 deck mode */
+(function(){
+  var url = new URL(window.location.href);
+  var force = url.searchParams.get('deck'); /* '1' = 強制桌機 deck mode */
+  if (force === '1') return;
+  var mq = window.matchMedia('(max-width: 768px), (max-width: 1400px) and (max-height: 600px) and (orientation: landscape)');
+  function apply(){
+    if (mq.matches) {
+      document.documentElement.classList.add('mobile-reader');
+      /* 停掉 deck 翻頁綁定 */
+      var deck = document.getElementById('deck');
+      if (deck) deck.style.transition = 'none';
+      /* 阻擋鍵盤 / wheel / touch swipe handler 干擾捲動 */
+      window.addEventListener('keydown', function(e){
+        if (['ArrowLeft','ArrowRight','PageUp','PageDown',' '].indexOf(e.key) >= 0) {
+          e.stopImmediatePropagation();
+        }
+      }, {capture:true});
+      /* 加切回 deck mode 的 toggle */
+      if (!document.querySelector('.reader-toggle')) {
+        var a = document.createElement('a');
+        a.href = '?deck=1';
+        a.className = 'reader-toggle';
+        a.textContent = '桌機翻頁模式';
+        document.body.appendChild(a);
+      }
+    } else {
+      document.documentElement.classList.remove('mobile-reader');
+    }
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply);
+  // v7.0 Codex 修：reader mode 下 guard touch swipe + 暫停 WebGL loop
+  Object.defineProperty(window, '__readerActive', { get: function(){ return document.documentElement.classList.contains('mobile-reader'); } });
+  ['touchstart','touchend','wheel'].forEach(function(ev){
+    window.addEventListener(ev, function(e){ if(window.__readerActive) e.stopImmediatePropagation(); }, {capture:true, passive:true});
+  });
+  // 暫停 WebGL requestAnimationFrame loop（避免 reader mode 浪費 GPU）
+  if (window.__readerActive) {
+    var origRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = function(cb){ if (!window.__readerActive) return origRAF(cb); /* skip in reader */ };
+  }
+})();
+</script>
+
+<!-- mobile-overlay v1 (D1) -->
+<div class="deck-mobile-overlay" role="dialog" aria-modal="true" aria-labelledby="dmo-title">
+  <div class="o-kicker">手機提醒 · A NOTE FOR MOBILE</div>
+  <h2 id="dmo-title">這份簡報為<em>現場投影</em>設計，<br>手機建議閱讀講義</h2>
+  <div class="o-sub">講師簡報集是給投影/桌機觀看的形式。手機觀看時排版會被壓縮、互動受限。建議改開講義頁取得最佳閱讀體驗。</div>
+  <div class="o-cta">
+    <a class="o-btn o-btn-primary" id="dmo-handout" href="#">📖 開啟講義</a>
+    <button class="o-btn o-btn-secondary" id="dmo-summary">仍要看簡報摘要</button>
+  </div>
+  <div class="o-foot">弄一下工作室 · Lecturer Decks</div>
+</div>
+
+<script>
+/* mobile-overlay v1 — D1 採納 Codex consult 5ac1020f */
+(function(){
+  if (new URL(location.href).searchParams.get('summary') === '1') return;
+  if (sessionStorage.getItem('dmo-dismissed') === '1') return;
+  function show(){
+    if (!document.documentElement.classList.contains('mobile-reader')) return;
+    var overlay = document.querySelector('.deck-mobile-overlay');
+    if (!overlay) return;
+    /* 抽第一個 chrome-link href 當講義 CTA */
+    var firstLink = document.querySelector('.chrome-link');
+    var btn = overlay.querySelector('#dmo-handout');
+    if (firstLink && firstLink.href) {
+      btn.href = firstLink.href;
+    } else {
+      btn.setAttribute('disabled', '');
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '此 deck 無對應講義';
+    }
+    overlay.querySelector('#dmo-summary').addEventListener('click', function(){
+      sessionStorage.setItem('dmo-dismissed', '1');
+      document.documentElement.classList.remove('overlay-shown');
+    });
+    document.documentElement.classList.add('overlay-shown');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else {
+    setTimeout(show, 100); /* 等 mobile-reader class apply */
+  }
+})();
+</script>
+</body>
+</html>
