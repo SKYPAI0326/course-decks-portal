@@ -14,7 +14,7 @@
 ```
 course-decks-portal/
 ├── index.html              ← 總入口頁
-├── {course}-decks/         ← 17 個課程簡報子資料夾，各含 index.html + deck HTML + assets
+├── {course}-decks/         ← 18 個課程簡報子資料夾，各含 index.html + deck HTML + assets
 └── deckcheck/ · *.py       ← 排版檢查工具
 ```
 
@@ -23,7 +23,7 @@ course-decks-portal/
 
 ---
 
-## 課程清單（17 課程 · 98 deck · 2595 頁 · 440.5 hr）
+## 課程清單（18 課程 · 99 deck · 2738 頁 · 440.5 hr）
 
 | 課程資料夾 | 課程 | 時數 | Deck | 頁數 | 主題色 |
 |---|---|---:|---:|---:|---|
@@ -44,6 +44,7 @@ course-decks-portal/
 | [prompt-basic-decks](prompt-basic-decks/) | 從「問 AI」到「交辦 AI」 | 6hr | 1 | 32 | 靛藍瓷 |
 | [simple-ai-decks](simple-ai-decks/) | 創業 AI 實戰 | 3hr | 1 | 22 | 森林墨 |
 | [ccs-foundations-decks](ccs-foundations-decks/) | CCS GenAI Foundations 認證 | 自學 | 1 | 28 | 靛藍瓷 |
+| [uiux-designer-decks](uiux-designer-decks/) | UI/UX 設計入門（第一章） | — | 1 | 143 | 靛藍瓷 |
 
 ---
 
@@ -60,7 +61,7 @@ course-decks-portal/
 
 ## 排版檢查機制（兩段式）
 
-跨 98 deck × 2,595 頁規模下，靠人眼很難抓出「內容被切」「callout 太擠」這類問題。
+跨 99 deck × 2,738 頁規模下，靠人眼很難抓出「內容被切」「callout 太擠」這類問題。
 檢查工具會自動掃描本 repo 內所有 `*-decks/` 子資料夾。
 
 ### Stage A · 靜態啟發式 lint（秒級）

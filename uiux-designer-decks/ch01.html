@@ -1,0 +1,3775 @@
+<!DOCTYPE html>
+<!-- 來源：CH01-R0～L12 制度前定稿（_src/*.tpl）。段落編號依 共學專案/工具/定稿檢查.py --編號，對各篇 <main> 正文抽出檔產生。 -->
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第一章｜讓畫面看得清楚：色彩、字型與閱讀順序｜UI/UX 設計入門｜講師投影片</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* 主題色：靛藍瓷（guizang-ppt-skill themes.md） */
+    --ink:#0a1f3d;
+    --ink-rgb:10,31,61;
+    --paper:#f1f3f5;
+    --paper-rgb:241,243,245;
+    --paper-tint:#e4e8ec;
+    --ink-tint:#152a4a;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display",Georgia,serif;
+    --serif-zh:"Noto Serif SC","Noto Serif TC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC","Noto Sans TC",source-han-sans-sc,"PingFang TC","Microsoft JhengHei",sans-serif;
+    /* 版面單位：以 16:9 畫面為基準，寬或高較受限的那一邊決定大小 */
+    --u:min(1vw,1.7778vh);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased}
+
+  /* WebGL 雙背景 */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* Deck 容器與翻頁 */
+  #deck{position:fixed;inset:0;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .8s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:9vh 5vw 8vh;display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+  .slide.light{color:var(--ink)}
+  .slide.dark{color:var(--paper)}
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.light::before{background:rgba(var(--paper-rgb),.86);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.18);backdrop-filter:none}
+
+  /* 投影片外的固定框（頁碼、篇代號、來源註記；不在任何 section 內） */
+  #chrome{position:fixed;left:5vw;right:5vw;top:3vh;z-index:30;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:max(11px,calc(var(--u)*.8));letter-spacing:.14em;color:var(--paper);opacity:.62;pointer-events:none;transition:color .6s}
+  #chrome .sep{display:inline-block;width:32px;height:1px;background:currentColor;opacity:.4;vertical-align:middle;margin:0 1em}
+  #srcnote{position:fixed;left:5vw;bottom:3vh;z-index:30;font-family:var(--mono);font-size:max(10px,calc(var(--u)*.7));letter-spacing:.08em;color:var(--paper);opacity:.45;pointer-events:none;transition:color .6s}
+  #hint{position:fixed;right:5vw;bottom:3vh;z-index:30;font-family:var(--mono);font-size:max(10px,calc(var(--u)*.7));letter-spacing:.14em;color:var(--paper);opacity:.45;pointer-events:none;transition:color .6s}
+  body.light-bg #chrome,body.light-bg #srcnote,body.light-bg #hint{color:var(--ink)}
+
+  /* 字體層級 */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .center-v{justify-content:center}
+  .kicker{font-family:var(--mono);font-size:max(11px,calc(var(--u)*.95));letter-spacing:.16em;opacity:.66;margin-bottom:1.6vh}
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:calc(var(--u)*6.2);line-height:1.08;letter-spacing:-.01em;margin-bottom:3vh}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:calc(var(--u)*2.9);line-height:1.22;margin-bottom:2.6vh}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:calc(var(--u)*1.65);line-height:1.35;margin-bottom:1.2vh}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:calc(var(--u)*1.7);line-height:1.55;opacity:.9}
+  .hero .lead{max-width:62vw}
+  .meta-row{margin-top:2.4vh;font-family:var(--mono);font-size:max(12px,calc(var(--u)*1));letter-spacing:.12em;opacity:.7}
+  .body-zh{font-size:calc(var(--u)*1.3);line-height:1.7}
+  .cap{font-size:calc(var(--u)*1.05);line-height:1.6;opacity:.72}
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;position:relative;z-index:1;font-synthesis-style:none}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.26em;z-index:-1;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.14)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.22)}
+  code{font-family:var(--mono);font-size:.92em;padding:.05em .35em;border-radius:3px;background:rgba(var(--ink-rgb),.08)}
+  b{font-weight:700}
+
+  /* 版面 */
+  .body{flex:1;min-height:0;display:flex;flex-direction:column;gap:2.2vh}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:3vw;align-items:start}
+  .body.split{display:grid}
+  .split.img-r{grid-template-columns:5fr 6fr;align-items:start}
+  .split > *{min-width:0}
+  .grid-3c{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw}
+  .card-box{border:1px solid rgba(var(--ink-rgb),.2);background:rgba(255,255,255,.6);border-radius:6px;padding:2.2vh 1.6vw}
+  .card-box .pts{margin-top:.6vh}
+
+  ul.pts,ol.pts{padding-left:1.4em;display:flex;flex-direction:column;gap:1.1vh}
+  .pts li{font-size:calc(var(--u)*1.3);line-height:1.6}
+  .pts.big li{font-size:calc(var(--u)*1.55)}
+  .pts ul{padding-left:1.2em;margin-top:.8vh;display:flex;flex-direction:column;gap:.6vh}
+  .pts ul li{font-size:calc(var(--u)*1.2)}
+  .card-box .pts li{font-size:calc(var(--u)*1.2)}
+  .see{font-size:calc(var(--u)*1.25);line-height:1.6;padding:1.2vh 1.1vw;border-left:3px solid var(--ink);background:rgba(var(--ink-rgb),.06);margin-top:1.6vh}
+  .warn{font-size:calc(var(--u)*1.15);line-height:1.6;padding:1vh 1.1vw;border-left:3px dashed rgba(var(--ink-rgb),.6);background:rgba(var(--ink-rgb),.04);margin-top:1.4vh}
+  .callout{padding:1.4vh 1.6vw;border-left:3px solid currentColor;font-family:var(--serif-zh);font-size:calc(var(--u)*1.3);line-height:1.6;background:rgba(var(--ink-rgb),.05)}
+  .callout.q{font-size:calc(var(--u)*1.4)}
+  .callout.tree{font-family:var(--sans-zh);line-height:1.95}
+  .next{margin-top:auto;padding-top:1.6vh;border-top:1px solid rgba(var(--ink-rgb),.2);font-size:calc(var(--u)*1.2);line-height:1.6;opacity:.85}
+  .next::before{content:"→ ";font-family:var(--mono)}
+  .copy{white-space:pre-wrap;font-family:var(--mono),var(--sans-zh);font-size:calc(var(--u)*1.1);line-height:1.75;padding:1.2vh 1.1vw;background:rgba(255,255,255,.7);border:1px dashed rgba(var(--ink-rgb),.3);border-radius:4px}
+  .btn{display:inline-flex;align-items:center;gap:.5em;padding:1vh 1.4vw;border-radius:999px;background:var(--ink);color:var(--paper)!important;text-decoration:none;font-size:calc(var(--u)*1.15);font-weight:500}
+  .btn::after{content:"↗"}
+  .num{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;padding:0 .3em;margin-right:.35em;border-radius:999px;background:var(--ink);color:var(--paper);font-family:var(--serif-en);font-size:.62em;vertical-align:.25em}
+  .num + .num{margin-left:-.1em}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:calc(var(--u)*1.2);line-height:1.5;background:rgba(255,255,255,.55)}
+  table.tb.small{font-size:calc(var(--u)*1.05)}
+  .tb th,.tb td{border:1px solid rgba(var(--ink-rgb),.2);padding:.9vh .8vw;text-align:left;vertical-align:top}
+  .tb th{background:rgba(var(--ink-rgb),.08);font-weight:600}
+  .tb .cap{font-size:.85em}
+  .sw{display:inline-block;width:1em;height:1em;border:1px solid rgba(var(--ink-rgb),.3);border-radius:3px;vertical-align:-.12em;margin-right:.35em}
+  .sw.lg{width:1.5em;height:1.5em;vertical-align:-.35em}
+
+  figure{margin:0}
+  figure.shot{display:flex;flex-direction:column;align-items:center;min-width:0}
+  figure.shot img{display:block;max-width:100%;max-height:68vh;width:auto;height:auto;object-fit:contain;border:1px solid rgba(var(--ink-rgb),.2);border-radius:6px;background:#fff;box-shadow:0 6px 24px rgba(var(--ink-rgb),.12)}
+  figure.shot.small-img img{max-height:52vh}
+  figure figcaption{font-size:calc(var(--u)*1);opacity:.72;text-align:center;margin-top:.8vh;line-height:1.4}
+  .phones{display:grid;grid-template-columns:repeat(4,auto);justify-content:center;gap:2vw}
+  .phones img{display:block;max-height:58vh;width:auto;max-width:100%;border:1px solid rgba(var(--ink-rgb),.2);border-radius:10px}
+  .pair{display:flex;gap:2vw;justify-content:center;align-items:flex-start}
+  .pair img{display:block;max-height:56vh;width:auto;max-width:100%;border:1px solid rgba(var(--ink-rgb),.2);border-radius:6px;background:#fff}
+  ol.flow{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw;counter-reset:f}
+  ol.flow li{counter-increment:f;position:relative;padding:1.6vh 1vw;border-top:2px solid var(--ink);font-size:calc(var(--u)*1.2);line-height:1.5}
+  ol.flow li::before{content:counter(f);display:block;font-family:var(--serif-en);font-style:italic;font-size:1.4em;opacity:.5;margin-bottom:.6vh}
+  ol.flow li:not(:last-child)::after{content:"→";position:absolute;right:-1vw;top:1.6vh;opacity:.5}
+  .ratio-row{display:flex;align-items:center;flex-wrap:wrap;gap:.6em;font-size:calc(var(--u)*1.45);padding:1.6vh 1.4vw;border:1px solid rgba(var(--ink-rgb),.2);border-radius:6px;background:rgba(255,255,255,.6)}
+  .ratio-row .lbl{min-width:7em;font-weight:600}
+  .ratio-row .on{opacity:.6;font-size:.85em}
+  .ratio-row .val{margin-left:auto;font-family:var(--serif-en);font-weight:700;font-size:1.5em}
+  .ratio-row .tag-g,.ratio-row .tag-r{font-size:.8em;padding:.2em .7em;border-radius:999px;color:#fff}
+  .ratio-row .tag-g{background:#15803D}
+  .ratio-row .tag-r{background:#B91C1C}
+  .err-sample{align-self:flex-start;color:#B91C1C;background:#fff;font-size:calc(var(--u)*1.8);padding:1.6vh 1.6vw;border:1px solid rgba(var(--ink-rgb),.15);border-radius:6px}
+  .slide.dark .pts li{color:var(--paper)}
+  .done-list{margin:2vh 0 3vh}
+
+  /* 講義示意圖（照 _src/*.tpl 原樣，依篇各自限定範圍） */
+  .demo{--text:#1E293B;--muted:#5F6C80;--line:#CBD5E1;color:var(--text);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.75;font-size:17px}
+  .demo-r0 .vargrid{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start;margin:8px 0}
+  .demo-r0 .phone{position:relative;width:260px;height:565px;background:#F5F7FA;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .demo-r0 .card{position:absolute;left:16px;top:78px;width:228px;height:134px;background:#fff;border-radius:4px}
+  .demo-r0 .card .t{position:absolute;left:10px;top:10px;font-size:15.5px;font-weight:700;color:#1E293B}
+  .demo-r0 .card .m{position:absolute;left:10px;top:41px;font-size:10.5px;color:#1E293B}
+  .demo-r0 .card .h{position:absolute;left:10px;top:67px;font-size:9px;color:#5F6C80}
+  .demo-r0 .card .b{position:absolute;left:10px;top:92px;width:208px;height:31px;background:#245B45;border-radius:5px;color:#fff;font-size:10.5px;display:flex;align-items:center;justify-content:center;font-weight:500}
+  .demo-r0 .pin{position:absolute;width:24px;height:24px;border-radius:50%;background:#DC2626;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff}
+  .demo-r0 .swatches{list-style:none;padding:0;margin:0}
+  .demo-r0 .swatches li{display:grid;grid-template-columns:26px 34px 1fr;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:8px}
+  .demo-r0 .swatches .n{width:24px;height:24px;border-radius:50%;background:#DC2626;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .demo-r0 .swatches .c{width:34px;height:34px;border-radius:6px;border:1px solid var(--line)}
+  .demo-r0 .swatches b{display:block;line-height:1.3}
+  .demo-r0 .swatches span{font-size:14px;color:var(--muted);line-height:1.4;display:block}
+  .demo-r0{font-size:max(17px,calc(var(--u)*1.2))}
+  .demo-r0 .swatches span{font-size:max(14px,calc(var(--u)*1))}
+
+  .demo-l2 .ba{display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;gap:8px;margin:12px 0 18px;text-align:center}
+  .demo-l2 .ba .ph{position:relative;width:180px;height:391px;margin:0 auto;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .demo-l2 .ba .ph.done{background:#F5F7FA}
+  .demo-l2 .ba .card{position:absolute;left:11px;top:54px;width:158px;height:93px;background:#fff;border-radius:3px}
+  .demo-l2 .ba .t{position:absolute;left:7px;top:7px;font-size:11px;font-weight:700;color:#1E293B}
+  .demo-l2 .ba .m{position:absolute;left:7px;top:29px;font-size:7.2px;color:#1E293B}
+  .demo-l2 .ba .h{position:absolute;left:7px;top:47px;font-size:6.3px;color:#5F6C80}
+  .demo-l2 .ba .b{position:absolute;left:7px;top:64px;width:144px;height:21px;background:#245B45;border-radius:3px;color:#fff;font-size:7.2px;display:flex;align-items:center;justify-content:center}
+  .demo-l2 .ba .arrow{font-size:28px;color:var(--muted)}
+  .demo-l2 .ba figcaption{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.4;opacity:1}
+  .demo-l2 .ba figure{margin:0}
+
+  .demo-l6 .ba{display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;gap:8px;margin:12px 0 18px;text-align:center}
+  .demo-l6 .ba figure{margin:0}
+  .demo-l6 .ba .ph{position:relative;width:180px;height:391px;margin:0 auto;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#F5F7FA}
+  .demo-l6 .ba .card{position:absolute;left:11px;top:54px;width:158px;height:93px;background:#fff;border-radius:3px;overflow:hidden}
+  .demo-l6 .ba .t{position:absolute;left:7px;top:7px;font-size:11px;font-weight:700;color:#1E293B}
+  .demo-l6 .ba .m{position:absolute;left:7px;top:29px;width:144px;font-size:7.2px;line-height:9.6px;color:#1E293B;text-align:left}
+  .demo-l6 .ba .h{position:absolute;left:7px;top:47px;font-size:6.3px;color:#5F6C80}
+  .demo-l6 .ba .b{position:absolute;left:7px;top:64px;width:144px;height:21px;background:#245B45;border-radius:3px;color:#fff;font-size:7.2px;display:flex;align-items:center;justify-content:center}
+  .demo-l6 .ba .arrow{font-size:28px;color:var(--muted)}
+  .demo-l6 .ba figcaption{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.4;opacity:1}
+
+  .demo-l9 .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:4px 0 8px;text-align:center}
+  .demo-l9 .three figure{margin:0}
+  .demo-l9 .three .ph{position:relative;width:160px;height:348px;margin:0 auto;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#F5F7FA}
+  .demo-l9 .three .card{position:absolute;left:10px;top:48px;width:140px;height:83px;background:#fff;border-radius:3px}
+  .demo-l9 .three .t{position:absolute;left:6px;top:6px;font-size:10px;font-weight:700;color:#1E293B}
+  .demo-l9 .three .m{position:absolute;left:6px;top:26px;font-size:6.4px;color:#1E293B}
+  .demo-l9 .three .h{position:absolute;left:6px;top:42px;font-size:5.6px;color:#5F6C80}
+  .demo-l9 .three .b{position:absolute;left:6px;top:57px;width:128px;height:19px;background:#245B45;border-radius:3px;color:#fff;font-size:6.4px;display:flex;align-items:center;justify-content:center}
+  .demo-l9 .three .blur .card{filter:blur(1.6px)}
+  .demo-l9 .three .gray{filter:grayscale(1)}
+  .demo-l9 .three figcaption{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.4;opacity:1}
+
+  /* 示意圖是固定像素尺寸：畫面較矮時整體縮小 */
+  @media (max-height:860px){ .demo{zoom:.8} }
+  @media (max-height:700px){ .demo{zoom:.66} }
+  @media (max-height:860px){ .demo-l9{zoom:.72} }
+  @media (max-height:700px){ .demo-l9{zoom:.58} }
+
+  /* 講者備註：預設隱藏，按 N 顯示 */
+  aside.notes{display:none}
+  body.show-notes .slide aside.notes{display:block;position:absolute;left:5vw;right:5vw;bottom:7vh;max-height:42vh;overflow:auto;z-index:20;padding:1.6vh 1.4vw;border-radius:8px;background:rgba(var(--ink-rgb),.95);color:var(--paper);border:1px solid rgba(var(--paper-rgb),.25);box-shadow:0 10px 40px rgba(0,0,0,.35);font-size:max(14px,calc(var(--u)*1.1));line-height:1.7}
+  body.show-notes .slide.dark aside.notes{background:rgba(var(--paper-rgb),.97);color:var(--ink)}
+  aside.notes p + p{margin-top:.6vh}
+  #notes-toggle{display:none}
+
+  /* Esc 篇目跳轉（投影片外） */
+  #index{position:fixed;inset:0;z-index:60;display:none;overflow:auto;padding:8vh 8vw;background:rgba(var(--ink-rgb),.95);backdrop-filter:blur(10px);color:var(--paper)}
+  body.show-index #index{display:block}
+  #index h2{font-family:var(--mono);font-weight:500;font-size:max(12px,calc(var(--u)*.9));letter-spacing:.2em;opacity:.6;margin-bottom:3vh}
+  #index ol{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:1.2vh 3vw}
+  #index button{all:unset;cursor:pointer;display:flex;gap:1.2em;align-items:baseline;width:100%;padding:1.2vh 0;border-bottom:1px solid rgba(var(--paper-rgb),.18);font-family:var(--serif-zh);font-size:max(15px,calc(var(--u)*1.35))}
+  #index button:hover,#index button.cur{color:#fff;border-bottom-color:rgba(var(--paper-rgb),.7)}
+  #index .k{font-family:var(--mono);font-size:.7em;opacity:.6;min-width:7em}
+
+  /* 手機閱讀模式：窄螢幕改成直向捲動 */
+  html.mobile-reader,html.mobile-reader body{overflow:auto!important;height:auto!important}
+  html.mobile-reader #deck{position:static!important;transform:none!important;display:block!important;width:100%!important;height:auto!important}
+  html.mobile-reader .slide{width:100%!important;height:auto!important;padding:16px 18px 22px!important;overflow:visible!important;border-bottom:3px solid rgba(127,127,127,.3)}
+  html.mobile-reader .slide.light{background:var(--paper)}
+  html.mobile-reader .slide.dark{background:var(--ink)}
+  html.mobile-reader .slide::before{display:none}
+  html.mobile-reader canvas.bg,html.mobile-reader #chrome,html.mobile-reader #srcnote,html.mobile-reader #hint{display:none!important}
+  html.mobile-reader .frame{overflow:visible}
+  html.mobile-reader .h-hero{font-size:clamp(28px,9vw,44px)}
+  html.mobile-reader .h-xl{font-size:clamp(20px,6vw,30px)}
+  html.mobile-reader .h-md{font-size:clamp(16px,4.6vw,22px)}
+  html.mobile-reader .lead{font-size:clamp(15px,4.4vw,20px)}
+  html.mobile-reader .kicker{font-size:11px}
+  html.mobile-reader .body-zh,html.mobile-reader .pts li,html.mobile-reader .pts.big li,html.mobile-reader .card-box .pts li,html.mobile-reader .pts ul li,html.mobile-reader .callout,html.mobile-reader .callout.q,html.mobile-reader .see,html.mobile-reader .warn,html.mobile-reader .next,html.mobile-reader ol.flow li{font-size:15px}
+  html.mobile-reader .cap,html.mobile-reader .copy,html.mobile-reader table.tb,html.mobile-reader table.tb.small,html.mobile-reader .btn,html.mobile-reader figure figcaption{font-size:13px}
+  html.mobile-reader .ratio-row{font-size:15px}
+  html.mobile-reader .err-sample{font-size:17px}
+  html.mobile-reader .split,html.mobile-reader .split.img-r,html.mobile-reader .body.split,html.mobile-reader .grid-3c,html.mobile-reader ol.flow{grid-template-columns:1fr!important}
+  html.mobile-reader ol.flow li::after{display:none}
+  html.mobile-reader .phones{grid-template-columns:repeat(2,1fr)}
+  html.mobile-reader .phones img,html.mobile-reader .pair img,html.mobile-reader figure.shot img{max-height:none;width:100%}
+  html.mobile-reader .pair img{width:auto;max-width:100%}
+  html.mobile-reader .hero .lead{max-width:none}
+  html.mobile-reader .demo{zoom:1;overflow-x:auto}
+  html.mobile-reader .demo-r0 .vargrid{grid-template-columns:1fr}
+  html.mobile-reader .demo-l2 .ba,html.mobile-reader .demo-l6 .ba{zoom:.62}
+  html.mobile-reader .demo-l9 .three{grid-template-columns:1fr}
+  html.mobile-reader table.tb{display:block;overflow-x:auto}
+  html.mobile-reader #notes-toggle{display:block;position:fixed;right:12px;bottom:12px;z-index:50;font:12px var(--mono);padding:8px 14px;border-radius:999px;border:1px solid rgba(var(--ink-rgb),.4);background:var(--paper);color:var(--ink)}
+  html.mobile-reader body.show-notes .slide aside.notes{position:static;max-height:none;margin-top:12px;box-shadow:none;font-size:13px}
+</style>
+</head>
+<body>
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="chrome"><div>UI/UX 設計入門<span class="sep"></span>第一章｜讓畫面看得清楚：色彩、字型與閱讀順序<span class="sep"></span><span id="part"></span></div><div id="pager"></div></div>
+<div id="srcnote">來源：CH01-R0～L12 制度前定稿（_src/*.tpl）</div>
+<div id="hint">← → 翻頁 · N 講者備註 · Esc 篇目</div>
+<div id="index" role="dialog" aria-label="篇目"><h2>篇目 · 點選跳到該篇</h2><ol></ol></div>
+<button id="notes-toggle" type="button">講者備註</button>
+
+<div id="deck">
+<!-- ===== CH01-R0 ===== -->
+<section class="slide dark hero cover" data-source="CH01-R0#b52 CH01-R0#b53">
+  <div class="frame center-v">
+    <div class="kicker">UI/UX 設計入門</div>
+    <h1 class="h-hero">第一章｜讓畫面看得清楚：色彩、字型與閱讀順序</h1>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：整章封面。第一章從顏色和文字開始，先定規則，再用登入畫面檢查。</p>
+    <p><b>對應講義</b>：開場的第一章一節；章名取自第一章目錄頁。</p>
+    <p><b>接下一張</b>：從開場讀起。</p>
+  </aside>
+</section>
+
+<section class="slide dark hero divider" data-source="CH01-R0#b02 CH01-R0#b03">
+  <div class="frame center-v">
+    <div class="kicker">UI/UX 設計入門</div>
+    <h1 class="h-hero">開場</h1>
+    <p class="lead">這門課要解決誰的什麼問題、UI 和 UX 到底在管什麼、我們打算怎麼一步一步教，以及第一章為什麼要從「顏色和文字」開始。</p>
+    <p class="meta-row">這一份只要讀就好，不用動手。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：整門課的開場，先說這一份會回答哪幾個問題，並強調這一份只讀不動手。</p>
+    <p><b>對應講義</b>：開場的標題與導言。</p>
+    <p><b>接下一張</b>：開始之前，先確認大家手邊準備好了沒。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b04 CH01-R0#b05 CH01-R0#b06">
+  <div class="frame">
+    <div class="kicker">開始前</div>
+    <h2 class="h-xl">你需要準備什麼</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li><b>一台電腦</b>，加上 Chrome 或 Edge 瀏覽器。手機不適合。</li>
+        <li><b>一個 Figma 免費帳號</b>，可以直接用 Google 帳號登入。免費方案就夠整門課使用。</li>
+        <li>不需要任何設計或程式基礎，也不用另外安裝軟體。</li>
+      </ul>
+      <p><a class="btn" href="https://www.figma.com/signup" target="_blank" rel="noopener">到 Figma 註冊免費帳號</a></p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：上課要用電腦加 Chrome 或 Edge，以及一個 Figma 免費帳號；不需要設計或程式基礎。</p>
+    <p><b>對應講義</b>：開始前／你需要準備什麼。講義也提醒：註冊畫面作者沒有實際走過，學員卡住要回報。</p>
+    <p><b>接下一張</b>：準備好之後，先聽聽整門課的案子。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b07 CH01-R0#b08 CH01-R0#b09 CH01-R0#b10">
+  <div class="frame">
+    <div class="kicker">故事</div>
+    <h2 class="h-xl">你接到的案子：一間找不到工作的工作室</h2>
+    <div class="body">
+      <p class="body-zh">整門課都在處理同一個案子。我們先聽聽這間工作室的主管怎麼說：</p>
+      <div class="callout q">「我每天早上把當天的工作貼在群組，大家往上滑找自己要做什麼。訊息一多就被洗掉，最後還是跑來問我。」</div>
+      <div class="callout q">「工作室每個人都要看。有人整天坐在電腦前，也有人剛到客戶現場，手上只有手機。我最在意的是：用手機能很快找到待處理的工作。」</div>
+      <div class="callout q">「怎樣算解決？成員能在手機上自己找到待處理的工作，看完內容就把它完成，不用再回群組問我『現在要做哪一件』。」</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：主管的三段話：現況、誰在用、怎樣算解決。</p>
+    <p><b>對應講義</b>：故事／你接到的案子。</p>
+    <p><b>接下一張</b>：這三段話裡沒有提到任何按鈕、顏色或畫面。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b11 CH01-R0#b12">
+  <div class="frame">
+    <div class="kicker">故事</div>
+    <h2 class="h-xl">主管講的是一個<em>問題</em>，不是畫面</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>這段話裡沒有提到任何按鈕、顏色或畫面。</li>
+        <li>問題是：工作散在聊天訊息裡，大家找不到，只好一直問人。</li>
+        <li><b>你是接下這個問題的設計師</b>：設計一個手機 App，讓工作室成員打開就知道今天要做什麼、做完怎麼回報。</li>
+        <li>整門課每一份講義，都是在把這個 App 往前做一步。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：把主管的話收斂成一個問題，再交代學員在故事裡的角色。</p>
+    <p><b>對應講義</b>：故事一節的最後兩段。</p>
+    <p><b>接下一張</b>：要解這個問題，先講清楚 UI 和 UX 各管什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b13 CH01-R0#b14 CH01-R0#b15 CH01-R0#b16">
+  <div class="frame">
+    <div class="kicker">這門課在學什麼</div>
+    <h2 class="h-xl">UI 和 UX 是什麼</h2>
+    <div class="body">
+      <p class="body-zh">打開一個 App，你看到的每個按鈕、每行字、每種顏色，以及按下去之後會發生什麼事，都是有人事先設計好的。</p>
+      <table class="tb">
+        <tr><th>名詞</th><th>白話意思</th><th>出問題時長什麼樣</th></tr>
+        <tr><td><b>UI</b><br><span class="cap">User Interface，使用者介面</span></td><td>畫面<b>長什麼樣</b>：按鈕放哪、字多大、用什麼顏色。</td><td>結帳按鈕顏色太淡，看不出它可以按。</td></tr>
+        <tr><td><b>UX</b><br><span class="cap">User Experience，使用者體驗</span></td><td>用起來<b>順不順</b>：使用者能不能很快找到要按的地方、不會按錯、知道下一步。</td><td>要點五層選單才找得到結帳；按錯了也沒有提示怎麼回去。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用白話對照 UI（長什麼樣）和 UX（順不順），各配一個出問題的例子。</p>
+    <p><b>對應講義</b>：這門課在學什麼／UI 和 UX 是什麼，表格。</p>
+    <p><b>接下一張</b>：順不順聽起來很主觀，下一張把它拆成四個問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b17 CH01-R0#b18 CH01-R0#b19 CH01-R0#b20">
+  <div class="frame">
+    <div class="kicker">再往深一層</div>
+    <h2 class="h-xl">UX 一定要先說清楚「誰、在哪、要完成什麼」</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>要先問清楚</th><th>放到工作室的故事裡</th></tr>
+        <tr><td><b>誰</b>在用</td><td>工作室成員，不是主管，也不是設計師自己。</td></tr>
+        <tr><td>在<b>什麼情況</b>下用</td><td>可能在客戶現場，只有手機，只想很快看一眼。</td></tr>
+        <tr><td>要<b>完成什麼</b></td><td>找到今天待處理的工作，看懂內容，做完標記完成。</td></tr>
+        <tr><td>怎樣算<b>成功</b></td><td><b>做得到</b>：真的找到正確那一件，沒有標錯。<br><b>做得快</b>：不用滑半天，也不用回群組問人。<br><b>做得安心</b>：按下去知道有沒有成功，用完不覺得挫折。</td></tr>
+      </table>
+      <p class="cap">三把尺出自國際標準 ISO 9241-11 對「好用」的定義，原文是有效、有效率、滿意，這裡換成白話。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：同一個 App，換一個人、換一個情況，順不順的答案就不一樣；成功用做得到、做得快、做得安心三把尺判斷。</p>
+    <p><b>對應講義</b>：再往深一層一節的四問表與三把尺說明。之後每張畫面都會回來用這三把尺檢查。</p>
+    <p><b>接下一張</b>：有了這四個答案，UI 和 UX 的分工就清楚了。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b21 CH01-R0#b22 CH01-R0#b23 CH01-R0#b24">
+  <div class="frame">
+    <div class="kicker">這門課在學什麼</div>
+    <h2 class="h-xl">UI 和 UX 的分工</h2>
+    <div class="body">
+      <div class="split">
+        <div class="card-box">
+          <div class="h-md">UX 決定</div>
+          <p class="body-zh">「要讓這個人完成什麼、經過哪幾步」</p>
+          <p class="cap">先登入，再看清單，點一筆看詳情，最後標記完成；標記前要再確認一次，免得按錯。</p>
+        </div>
+        <div class="card-box">
+          <div class="h-md">UI 決定</div>
+          <p class="body-zh">「每一步的畫面上放什麼、怎麼讓人一眼看懂」</p>
+          <p class="cap">清單上哪一行字最大、期限用什麼顏色、「標記完成」按鈕要多醒目。</p>
+        </div>
+      </div>
+      <p class="body-zh">兩者常常一起出問題，所以這門課把它們放在一起學。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：UX 管流程步驟，UI 管每一步的畫面；兩者會一起出問題，例如按鈕淡到看不出能按，成員還是會回群組問人。</p>
+    <p><b>對應講義</b>：UI 和 UX 的分工。</p>
+    <p><b>接下一張</b>：設計師在工作上實際做的是什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b25 CH01-R0#b26 CH01-R0#b27">
+  <div class="frame">
+    <div class="kicker">這門課在學什麼</div>
+    <h2 class="h-xl">設計師在工作上做什麼</h2>
+    <div class="body">
+      <p class="body-zh">在工程師寫程式之前，先把 App 的每一個畫面畫出來，確認「看得清楚、用得順」之後，工程師才照著做。</p>
+      <ol class="flow">
+        <li>聽懂主管和成員的問題</li>
+        <li>決定成員要經過哪幾個畫面</li>
+        <li>把每個畫面畫出來</li>
+        <li>串成可以點的樣品給成員試</li>
+        <li>修好之後交給工程師</li>
+      </ol>
+      <div class="callout">就像蓋房子前先畫設計圖：設計圖上改一條線幾乎不用成本，房子蓋好才發現廁所門開錯邊，就得敲掉重來。</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：設計師的工作流程，以及為什麼在設計階段改比程式寫完再改便宜很多。</p>
+    <p><b>對應講義</b>：設計師在工作上做什麼，含蓋房子的比喻。</p>
+    <p><b>接下一張</b>：畫這些畫面要用的工具是 Figma。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b28 CH01-R0#b29 CH01-R0#b30 CH01-R0#b31 CH01-R0#b32 CH01-R0#b33">
+  <div class="frame">
+    <div class="kicker">用什麼工具</div>
+    <h2 class="h-xl">Figma 是什麼</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>專門用來畫 App 和網站畫面的軟體。打開瀏覽器、登入帳號就能用，不用安裝。</li>
+        <li>可以把它想成「專門畫畫面的簡報軟體」：一樣可以拉框、打字、上色，但多了設計師需要的功能：
+          <ul>
+            <li>把顏色存成有名字的色票，改一次、整份檔案一起變</li>
+            <li>把同一個按鈕做成可以重複使用的零件</li>
+            <li>把畫面串起來，做成可以點來點去的「原型」</li>
+          </ul>
+        </li>
+        <li>檔案存在雲端、會自動儲存，把連結傳給別人，對方就能打開來看。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Figma 的定位與三個設計師專用功能；第一個功能就是第一章要學的顏色變數。</p>
+    <p><b>對應講義</b>：用什麼工具／Figma 是什麼。</p>
+    <p><b>接下一張</b>：用 Figma 最後會做出什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b34 CH01-R0#b35 CH01-R0#b36 CH01-R0#b37 CH01-R0#b38">
+  <div class="frame">
+    <div class="kicker">最後做出什麼</div>
+    <h2 class="h-xl">這門課最後會做出的 App：<em>工作室任務清單</em></h2>
+    <div class="body">
+      <div class="phones">
+        <figure><img src="assets/ch01/raw/app-1-login.png" alt="登入畫面"><figcaption>① 登入</figcaption></figure>
+        <figure><img src="assets/ch01/raw/app-2-list.png" alt="待處理清單"><figcaption>② 看待處理清單</figcaption></figure>
+        <figure><img src="assets/ch01/raw/app-3-detail.png" alt="任務詳情"><figcaption>③ 點進去看詳情</figcaption></figure>
+        <figure><img src="assets/ch01/raw/app-4-confirm.png" alt="確認完成"><figcaption>④ 確認完成</figcaption></figure>
+      </div>
+      <p class="cap">課程最後把設計做成網站後的畫面。先在 Figma 裡一張一張畫，再串成可以點的原型，最後做成真正的網站。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四個畫面剛好是成員不用問人、自己把一件工作做完的完整路線，對照主管說的怎樣算解決。</p>
+    <p><b>對應講義</b>：最後做出什麼／這門課最後會做出的 App。</p>
+    <p><b>接下一張</b>：要做到這裡，我們打算怎麼教。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b39 CH01-R0#b40 CH01-R0#b41 CH01-R0#b42 CH01-R0#b43 CH01-R0#b44 CH01-R0#b45">
+  <div class="frame">
+    <div class="kicker">怎麼教</div>
+    <h2 class="h-xl">我們打算怎麼教</h2>
+    <div class="body split">
+      <div class="card-box">
+        <div class="h-md">一個案子，從頭做到尾</div>
+        <p class="body-zh">每一章都在同一份 Figma 檔裡往下做，前一章做好的東西，下一章會拿來用。每學一個新技巧，你都能回答「這是為了讓成員怎麼樣」。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">先學畫畫面，再整理需求</div>
+        <p class="body-zh">真實工作上通常先訪談、整理需求。這門課刻意倒過來，到第三階段才正式練「把主管的一長串話整理成需求和流程」。</p>
+        <p class="cap">還不會畫畫面時，很難想像一句需求會變成什麼樣子；手上有幾張畫好的畫面，再回頭用需求檢查，就看得出哪裡多做了、哪裡漏了。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：教學設計的兩個決定：只做一個案子，以及先學畫畫面、後整理需求，並說明理由。</p>
+    <p><b>對應講義</b>：怎麼教一節的前兩小節。</p>
+    <p><b>接下一張</b>：整門課的四個階段。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b46 CH01-R0#b47">
+  <div class="frame">
+    <div class="kicker">怎麼教</div>
+    <h2 class="h-xl">整門課的順序</h2>
+    <div class="body">
+      <table class="tb small">
+        <tr><th>階段</th><th>在做什麼</th><th>對工作室成員的意義</th></tr>
+        <tr><td><b>畫面基礎</b></td><td><b>先定顏色和文字的規則</b>（第一章）→ 用格線安排版面 → 做出內容變長時會自動撐開的卡片 → 做出改一次、全部一起更新的按鈕</td><td>在手機上看得清楚，一眼知道哪裡該按；每張畫面長得一致，不會疑惑</td></tr>
+        <tr><td><b>畫面零件</b></td><td>表單和錯誤提示 → 任務清單 → 提示訊息、彈出視窗和底部導覽</td><td>登入打錯知道錯在哪；清單找得到自己的工作；按下去知道成功了沒</td></tr>
+        <tr><td><b>串成原型</b></td><td>把需求整理成流程 → 把畫面串起來能點 → 切換動畫 → 彈出確認視窗 → 長清單捲動</td><td>在程式寫出來之前，主管和成員就能實際點點看</td></tr>
+        <tr><td><b>測試與交付</b></td><td>找人試用、修正 → 整理交付給工程師的檔案 → 做成網站並公開</td><td>確認成員真的不用再回群組問人，再交給工程師做成真的</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四個階段各做什麼，每一步對成員有什麼意義；第一章在畫面基礎的第一格。</p>
+    <p><b>對應講義</b>：整門課的順序，表格。</p>
+    <p><b>接下一張</b>：每一份講義的固定結構。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b48 CH01-R0#b49 CH01-R0#b50 CH01-R0#b51">
+  <div class="frame">
+    <div class="kicker">怎麼教</div>
+    <h2 class="h-xl">每一份講義怎麼用</h2>
+    <div class="body">
+      <p class="body-zh">一章會拆成好幾份，一份只做一件事。每一份都是同樣的三段：</p>
+      <div class="grid-3c">
+        <div class="card-box"><div class="h-md">開始前</div><p class="body-zh">在做什麼、為什麼要做、做完手上會有什麼、需要先準備什麼</p></div>
+        <div class="card-box"><div class="h-md">跟著做</div><p class="body-zh">一步一張 Figma 截圖，紅框標出要看或要點的地方，每一步後面寫「做完會看到」</p></div>
+        <div class="card-box"><div class="h-md">做完之後</div><p class="body-zh">自己檢查的方法、常見問題、這一份學到什麼、下一份要做什麼</p></div>
+      </div>
+      <p class="body-zh">每一章都有一份先做好的<b>範例</b>，不確定的時候打開來對照。做完一份，回報你看到什麼、卡在哪、哪裡看不懂。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：講義的三段式結構，以及範例與回報的用法。</p>
+    <p><b>對應講義</b>：每一份講義怎麼用。</p>
+    <p><b>接下一張</b>：進入第一章，先說為什麼從顏色和文字開始。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b52 CH01-R0#b53 CH01-R0#b54 CH01-R0#b55 CH01-R0#b56">
+  <div class="frame">
+    <div class="kicker">第一章</div>
+    <h2 class="h-xl">第一章為什麼從「顏色和文字」開始</h2>
+    <div class="body">
+      <p class="body-zh">每一張畫面，拆到最小都是「文字」和「顏色」。每畫一張就重新挑一次，做到後來一定對不起來：</p>
+      <ul class="pts">
+        <li>這張的按鈕是深綠，那張變成淺綠，使用者會懷疑「這兩個按鈕功能一樣嗎？」</li>
+        <li>這張標題 24 號字、那張 22 號字，畫面看起來就是不整齊。</li>
+        <li>老闆說「主色換成藍色」，你得一張一張找出所有綠色來改，漏一個就穿幫。</li>
+      </ul>
+      <div class="callout">成員可能站在客戶現場，拿起手機只想很快看一眼。字太淡看不清、該按的按鈕不夠醒目，他就會改回群組問人。顏色和文字，是「做得快、做得安心」最先碰到的一關。</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：沒有規則時會出現的三種不一致，並連回故事裡成員的使用情境。</p>
+    <p><b>對應講義</b>：第一章一節的前半。</p>
+    <p><b>接下一張</b>：所以第一章先把規則定好，做完手上會有哪幾樣東西。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b57 CH01-R0#b58">
+  <div class="frame">
+    <div class="kicker">第一章</div>
+    <h2 class="h-xl">先把<em>規則</em>定好，再用登入畫面檢查</h2>
+    <div class="body split">
+      <div>
+        <p class="body-zh">什麼用途用什麼顏色、什麼文字用多大的字。再用成員每天第一個看到的<b>登入畫面</b>檢查這套規則：字看不看得清楚、會不會先看到標題、最後找到登入按鈕。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">第一章做完，你手上會有：</div>
+        <ol class="pts">
+          <li>一組有名字的顏色（顏色變數），例如「Primary 主要動作」</li>
+          <li>五種有名字的文字樣式，例如「畫面標題」「內文」「提示文字」</li>
+          <li>一張全部套用上面規則的登入畫面</li>
+          <li>一張規則表，寫清楚每個顏色用在哪裡、為什麼</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：第一章的目標與四樣成果。</p>
+    <p><b>對應講義</b>：第一章一節的後半與成果清單。</p>
+    <p><b>接下一張</b>：第一樣成果的核心概念：顏色變數。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b59 CH01-R0#b60 CH01-R0#b61">
+  <div class="frame">
+    <div class="kicker">第一章</div>
+    <h2 class="h-xl">什麼是顏色變數</h2>
+    <div class="body">
+      <p class="lead">顏色變數就是<b>一張有名字的色票</b>。名字寫的是「用途」，不是顏色本身。</p>
+      <ul class="pts big">
+        <li>「Primary（主要動作）」這個名字，背後存的是深綠色</li>
+        <li>「Text（主要文字）」背後存的是深藍灰色</li>
+      </ul>
+      <div class="callout">裝潢時你跟師傅說：「客廳的牆用 A 號色。」哪天想換顏色，只要把色卡上的 A 號色換掉，所有塗 A 號色的牆就一起換。顏色變數就是 Figma 裡的這張色卡。</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：顏色變數的定義，名字寫用途；用裝潢色卡的比喻說明改一次全部一起變。</p>
+    <p><b>對應講義</b>：什麼是顏色變數，定義段與裝潢比喻。</p>
+    <p><b>接下一張</b>：直接看登入畫面上每個顏色背後的色票。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b62 CH01-R0#b63">
+  <div class="frame">
+    <div class="kicker">第一章</div>
+    <h2 class="h-md">第一章要做的登入畫面：每個顏色背後都是一個有名字的色票</h2>
+    <div class="body demo demo-r0">
+<div class="vargrid">
+  <div class="phone">
+    <div class="card">
+      <div class="t">登入工作室</div>
+      <div class="m">登入後檢視待處理的任務。</div>
+      <div class="h">請輸入工作室帳號</div>
+      <div class="b">登入</div>
+    </div>
+    <div class="pin" style="left:214px;top:300px">1</div>
+    <div class="pin" style="left:222px;top:84px">2</div>
+    <div class="pin" style="left:116px;top:81px">3</div>
+    <div class="pin" style="left:114px;top:139px">4</div>
+    <div class="pin" style="left:200px;top:174px">5</div>
+  </div>
+  <ul class="swatches">
+    <li><div class="n">1</div><div class="c" style="background:#F5F7FA"></div><div><b>Surface｜畫面底色</b><span>整個手機畫面的淺灰背景，把白色卡片襯托出來</span></div></li>
+    <li><div class="n">2</div><div class="c" style="background:#FFFFFF"></div><div><b>Card｜卡片底色</b><span>白色卡片，讓相關內容聚成一組</span></div></li>
+    <li><div class="n">3</div><div class="c" style="background:#1E293B"></div><div><b>Text｜主要文字</b><span>標題和內文，最深、最清楚</span></div></li>
+    <li><div class="n">4</div><div class="c" style="background:#5F6C80"></div><div><b>Muted｜次要文字</b><span>提示和日期，比主要文字淡，但仍看得清楚</span></div></li>
+    <li><div class="n">5</div><div class="c" style="background:#245B45"></div><div><b>Primary｜主要動作</b><span>使用者最該按的按鈕，整個畫面只有它這麼醒目</span></div></li>
+  </ul>
+</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：對照圖上的紅色編號，逐一說出五個色票的名字與用途，尤其 Primary 是整個畫面唯一這麼醒目的顏色。</p>
+    <p><b>對應講義</b>：什麼是顏色變數，登入畫面示意圖。</p>
+    <p><b>接下一張</b>：為什麼要多做一步建變數，三個好處。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b64 CH01-R0#b65 CH01-R0#b66 CH01-R0#b67">
+  <div class="frame">
+    <div class="kicker">第一章</div>
+    <h2 class="h-xl">用顏色變數的三個好處</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>好處</th><th>沒有變數時會怎樣</th><th>有變數時</th></tr>
+        <tr><td><b>一致</b></td><td>每次憑感覺挑，深綠、淺綠混著用</td><td>同一個用途，一定是同一個顏色</td></tr>
+        <tr><td><b>好改</b></td><td>主色要換，得一張一張找</td><td>改一次色票，所有用到的地方一起變</td></tr>
+        <tr><td><b>好溝通</b></td><td>跟工程師說「那個深綠色」，對方不知道是哪個</td><td>大家都說「Primary」，不會搞錯</td></tr>
+      </table>
+      <ul class="pts">
+        <li><code>#245B45</code> 這樣的字是<b>色碼</b>，電腦用來表示顏色的編號。不用背，只要記得名字。</li>
+        <li><b>文字樣式</b>也是同一個概念：把字型、字多大、多粗、行距多少存成有名字的設定，例如「Type/Page title 畫面標題」。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：一致、好改、好溝通三個好處；順帶介紹色碼與文字樣式這兩個之後常出現的詞。</p>
+    <p><b>對應講義</b>：用顏色變數的三個好處，以及其後關於色碼和文字樣式的兩段。</p>
+    <p><b>接下一張</b>：第一章的範例是什麼、怎麼用。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b68 CH01-R0#b69 CH01-R0#b70 CH01-R0#b71 CH01-R0#b72">
+  <div class="frame">
+    <div class="kicker">第一章</div>
+    <h2 class="h-xl">什麼是範例，要怎麼用</h2>
+    <div class="body">
+      <p class="lead">範例是<b>第一章做完的樣子</b>，就像食譜旁邊的成品照。</p>
+      <ul class="pts big">
+        <li><b>開始前</b>：先看一眼，知道這一章的終點長什麼樣子。</li>
+        <li><b>做的時候</b>：不確定自己做得對不對，就打開範例，點同一個東西，比對它用了什麼顏色、什麼文字樣式。</li>
+      </ul>
+      <p><a class="btn" href="https://www.figma.com/design/dtoZeCT179DFgwHjOinKBP/" target="_blank" rel="noopener">先看一眼第一章範例</a></p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：範例的兩種用法：開始前看終點、做的時候對照。</p>
+    <p><b>對應講義</b>：什麼是範例，要怎麼用。</p>
+    <p><b>接下一張</b>：讀完之後的自我檢查。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-R0#b73 CH01-R0#b74 CH01-R0#b75 CH01-R0#b76 CH01-R0#b77">
+  <div class="frame">
+    <div class="kicker">讀完之後</div>
+    <h2 class="h-xl">檢查自己懂了沒</h2>
+    <div class="body">
+      <ol class="pts big">
+        <li>工作室的問題是什麼？用「誰、在什麼情況、要完成什麼、怎樣算成功」說一次。</li>
+        <li>在這個案子裡，UX 負責決定什麼？UI 負責決定什麼？各舉一個例子。</li>
+        <li>這門課為什麼先學畫畫面，到第三階段才正式整理需求？</li>
+        <li>顏色變數是什麼？為什麼第一章要先建它，而不是直接開始畫畫面？</li>
+      </ol>
+      <p class="next">下一份：打開範例，認識 Figma 的畫面：左邊、中間、右邊和下方工具列四個區域。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：請學員用自己的話回答四題，答不出來的就是還沒講清楚的地方。</p>
+    <p><b>對應講義</b>：讀完之後／檢查自己懂了沒，以及下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第一份，打開範例認識 Figma。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L1 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L1#b02 CH01-L1#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 1 份</div>
+    <h1 class="h-hero">認識 Figma 的畫面</h1>
+    <p class="lead">這一份先不做新東西，只在做好的「範例」裡點點看，熟悉 Figma 的畫面；下一份才開你自己的檔案。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：第一份開始動手，但只在範例裡看和點。</p>
+    <p><b>對應講義</b>：第 1 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼要先練這個動作。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b05 CH01-L1#b07 CH01-L1#b10">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始前</div>
+    <h2 class="h-xl">先在範例裡把同一個動作練熟</h2>
+    <div class="body split">
+      <div>
+        <p class="lead">之後每一份，幾乎都在重複：先在<b>左邊</b>找到一個東西，點它，再到<b>右邊</b>看它、改它的設定。</p>
+        <p class="cap">範例只是用來看和點的。不小心拖動或改到什麼，不用擔心，回報一聲就會修回來。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">做完這一份，你會：</div>
+        <ol class="pts">
+          <li>認得 Figma 畫面的四個區域，知道各自做什麼</li>
+          <li>會在左邊的清單裡找到一個東西並選取它</li>
+          <li>會在右邊看出它用了哪個顏色變數、哪個文字樣式</li>
+          <li>會打開整張「色卡」，看到所有顏色變數</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這一份的目的：與其一邊做作品一邊摸索，不如先在做好的範例裡練熟找、點、看；以及四項成果。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要先做。</p>
+    <p><b>接下一張</b>：第 1 步，打開範例。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b11 CH01-L1#b12">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">1</span>打開範例</h2>
+    <div class="body split img-r">
+      <div>
+        <p><a class="btn" href="https://www.figma.com/design/dtoZeCT179DFgwHjOinKBP/" target="_blank" rel="noopener">打開第一章範例</a></p>
+        <ul class="pts">
+          <li>左邊可能出現「What's next?」對話面板，那是 Figma 內建的 AI 助手，這門課用不到。</li>
+          <li>點最左邊那排圖示裡的 <b>File</b>，換成我們要用的畫面。</li>
+        </ul>
+        <p class="see">做完會看到：左邊上方是 <b>Pages</b>，下方是 <b>Layers</b>。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R2-2-切到File.png" alt="點 File 切回頁面與圖層"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用按鈕打開範例，第一次打開時要先點 File 切換畫面。</p>
+    <p><b>對應講義</b>：開始動手第 1 步。</p>
+    <p><b>接下一張</b>：認識畫面的四個區域。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b13">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">2</span>認識四個區域</h2>
+    <div class="body split img-r">
+      <table class="tb small">
+        <tr><th>區域</th><th>做什麼</th><th>像什麼</th></tr>
+        <tr><td>① 左</td><td><b>Pages</b>：一份檔案可以有好幾頁。<b>Layers</b>：這一頁上每一個東西的清單。</td><td>電腦的資料夾清單</td></tr>
+        <tr><td>② 中：畫布</td><td>作品實際放的地方。</td><td>桌上的白紙</td></tr>
+        <tr><td>③ 右：設定</td><td>選了什麼，就顯示那個東西的設定：位置、大小、顏色、文字。</td><td>Word 上方的格式工具列</td></tr>
+        <tr><td>④ 下：工具列</td><td>畫框、畫方形、打字的工具。這一份用不到。</td><td>畫筆盒</td></tr>
+      </table>
+      <figure class="shot"><img src="assets/ch01/L1-1-三個區域.png" alt="Figma 畫面的四個區域"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：請學員在自己的螢幕上找出四個區域，這一步只看不點。</p>
+    <p><b>對應講義</b>：開始動手第 2 步的對照表。</p>
+    <p><b>接下一張</b>：展開左邊的圖層，看檔案裡有什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b14 CH01-L1#b15">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">3</span><span class="num">4</span>展開圖層，一路找到標題</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>點「主線」左邊的小箭頭打開。箭頭只是打開、收起，不會改到任何東西。</li>
+          <li><b>往右縮排</b>＝裝在上一層裡面，就像資料夾裡的檔案。</li>
+          <li>「主線」裡有 <b>Rules</b>（規則表）和 <b>Screen / Login</b>（登入畫面）。</li>
+          <li>依序展開 Screen / Login、Login / Card，點 <b>Title</b>。</li>
+          <li>清單是照「誰疊在最上層」排的，跟畫面上的上下位置無關。</li>
+        </ul>
+        <p class="see">做完會看到：Title 變成淺藍色，畫布上的「登入工作室」被藍框框起來。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R1-1-展開圖層.png" alt="展開到 Title 並點選"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：縮排代表層級；以及為什麼畫面最上面的標題在清單裡排在最下面。</p>
+    <p><b>對應講義</b>：開始動手第 3、4 步。</p>
+    <p><b>接下一張</b>：選到 Title 之後，到右邊看它用了什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b16">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">5</span>在右邊看 Title 用了什麼</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li><b>Typography</b> 顯示 <code>Type/Page title · 24/32</code>：套用了「畫面標題」這個<b>文字樣式</b>。24 是字的大小，32 是行高。</li>
+          <li><b>Fill</b> 顯示 <code>Text</code>：顏色是「Text 主要文字」這個<b>顏色變數</b>，不是直接填一個色碼。</li>
+        </ul>
+        <p class="see">做完會看到：兩個地方顯示的都是<b>名字</b>，不是一串數字或色碼。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R1-2-看Title.png" alt="Title 的文字樣式與顏色變數"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：右邊設定很長，只看 Typography 和 Fill 兩區；看到的是名字，這就是開場講的有名字的色票和樣式。</p>
+    <p><b>對應講義</b>：開始動手第 5 步。</p>
+    <p><b>接下一張</b>：改點 Hint，跟 Title 比一比。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b17">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">6</span>改點 Hint，跟 Title 比一比</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb small">
+          <tr><th></th><th>文字樣式</th><th>顏色變數</th><th>給使用者的感覺</th></tr>
+          <tr><td>Title 標題</td><td>Type/Page title（24）</td><td>Text（最深）</td><td>第一眼就看到</td></tr>
+          <tr><td>Hint 提示</td><td>Type/Supporting（14）</td><td>Muted（較淡）</td><td>需要時才看</td></tr>
+        </table>
+        <p class="body-zh">越重要的字越大、越深，眼睛就會照「標題 → 說明 → 提示 → 按鈕」的順序看下去。這就是<b>閱讀順序</b>。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R1-3-看Hint.png" alt="Hint 的文字樣式與顏色變數"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：提示比標題小、比標題淡是故意的；閱讀順序是靠文字樣式和顏色變數做出來的。畫布上若有橘色框，是別人同時開檔的游標，可忽略。</p>
+    <p><b>對應講義</b>：開始動手第 6 步。</p>
+    <p><b>接下一張</b>：打開整張色卡。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b18">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">7</span>打開整張色卡</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>點最左邊那排圖示的 <b>Variables</b>。</li>
+          <li><b>Studio</b> 是這張色卡的名字。</li>
+          <li><b>Name</b> 欄是名字（用途），<b>Value</b> 欄是實際的顏色和色碼。</li>
+          <li>想換顏色就改 Value，所有用到這個名字的地方會一起變。</li>
+          <li>看完點最左邊的 <b>File</b>，回到原本的畫面。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L1-3-變數表.png" alt="變數表"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：剛才看到的 Text、Muted 都存在這張色卡；改 Value 會全部一起變，第 3 份會實際試一次。</p>
+    <p><b>對應講義</b>：開始動手第 7 步。</p>
+    <p><b>接下一張</b>：迷路時怎麼回到畫面。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b19 CH01-L1#b20 CH01-L1#b21">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl">迷路了怎麼辦</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="lead">畫布上找不到東西，或縮放到看不懂了：點右上角的百分比數字，選 <b>Zoom to fit</b>。</p>
+        <p class="body-zh">整個作品就會縮回畫面中央。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R3-1-縮放到看得見.png" alt="Zoom to fit"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Zoom to fit 是之後每一份都會用到的救援動作。</p>
+    <p><b>對應講義</b>：迷路了怎麼辦。</p>
+    <p><b>接下一張</b>：整理這一份學到的事，並讓學員自己試一次。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L1#b23 CH01-L1#b24 CH01-L1#b25 CH01-L1#b26 CH01-L1#b27 CH01-L1#b28 CH01-L1#b29 CH01-L1#b30">
+  <div class="frame">
+    <div class="kicker">第 1 份｜做完之後</div>
+    <h2 class="h-xl">現在你會的事・自己試一次</h2>
+    <div class="body split">
+      <ul class="pts">
+        <li>Figma 畫面分成左（清單）、中（畫布）、右（設定）、下（工具）四區</li>
+        <li>在 Layers 點小箭頭展開，縮排表示「裝在裡面」；點一行就能選取</li>
+        <li>選取後，Typography 顯示文字樣式名稱，Fill 顯示顏色變數名稱</li>
+        <li>Variables 打開整張色卡，名字在左、顏色在右</li>
+      </ul>
+      <div class="card-box">
+        <div class="h-md">自己試一次（不看圖）</div>
+        <ol class="pts">
+          <li>點 Message，它用了哪個文字樣式、哪個顏色變數？</li>
+          <li>點 Button / Draft，它的 Fill 是什麼？為什麼 Typography 區不見了？</li>
+        </ol>
+        <p class="cap">答案：<code>Type/Body</code>、<code>Text</code>；<code>Primary</code>，因為它是一個框，不是文字，「登入」是裡面另一個圖層 Label。</p>
+      </div>
+    </div>
+    <p class="next">下一份：開你自己的設計檔，做出「主線」區塊和裡面的 Screen / Login。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回顧四項能力，再請學員不看圖自己點兩題。</p>
+    <p><b>對應講義</b>：做完之後／現在你會的事、自己試一次、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 2 份，建立自己的設計檔。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L2 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L2#b02 CH01-L2#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 2 份</div>
+    <h1 class="h-hero">建立你自己的設計檔</h1>
+    <p class="lead">開一份你自己的 Figma 設計檔，在畫布上做一個叫「主線」的區塊，再在裡面放一個手機大小的畫面 Screen / Login。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：上一份在範例裡看懂了畫面，這一份開始做自己的作品。</p>
+    <p><b>對應講義</b>：第 2 份的標題與導言。</p>
+    <p><b>接下一張</b>：要做出的結構，以及這一份做完的樣子。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b06 CH01-L2#b07 CH01-L2#b08 CH01-L2#b09 CH01-L2#b10 CH01-L2#b11 CH01-L2#b12 CH01-L2#b13">
+  <div class="frame">
+    <div class="kicker">第 2 份｜開始前</div>
+    <h2 class="h-xl">先把「放作品的地方」準備好</h2>
+    <div class="body split">
+      <div>
+        <p class="body-zh">整門課的作品，都會在<b>同一份 Figma 檔案</b>裡一章一章長大。照範例的結構，在自己的檔案裡做出一模一樣的兩層：</p>
+        <div class="callout"><b>主線</b>（放整門課主要作品的區塊）<br>　└ <b>Screen / Login</b>（登入畫面，一個手機大小的畫面）</div>
+        <p class="cap">這一份做完，Screen / Login 還是一張空白的紙，這是正常的。先有紙，才能在上面畫。</p>
+      </div>
+      <div class="demo demo-l2">
+<div class="ba">
+  <figure><div class="ph"></div><figcaption>這一份做完<br>空白的 Screen / Login</figcaption></figure>
+  <div class="arrow">→</div>
+  <figure><div class="ph done"><div class="card"><div class="t">登入工作室</div><div class="m">登入後檢視待處理的任務。</div><div class="h">請輸入工作室帳號</div><div class="b">登入</div></div></div><figcaption>這一章結束時<br>同一張紙上的登入畫面</figcaption></figure>
+</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這份檔案就是替工作室做的設計稿，之後主管、成員和工程師都會打開同一份；先做出主線與 Screen / Login 兩層。提醒學員做完看起來是空白的，屬正常。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做，含前後對照圖。</p>
+    <p><b>接下一張</b>：先認識 Section 和 Frame 兩個新名詞。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b14 CH01-L2#b15 CH01-L2#b16 CH01-L2#b17">
+  <div class="frame">
+    <div class="kicker">第 2 份｜開始前</div>
+    <h2 class="h-xl">先認識兩個新名詞</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>名詞</th><th>是什麼</th><th>像什麼</th></tr>
+        <tr><td><b>Section（區塊）</b></td><td>一個大範圍，把相關的東西圈在一起。這門課用一個叫「主線」的 Section 放主要作品。</td><td>桌上的一個收納盒</td></tr>
+        <tr><td><b>Frame（畫框）</b></td><td>一個畫面。App 的每一個畫面都是一個 Frame，標題、按鈕都畫在 Frame 裡面。</td><td>盒子裡的一張紙</td></tr>
+      </table>
+      <p class="lead">順序：先拿一個收納盒（Section「主線」），再在盒子裡放一張手機大小的紙（Frame「Screen / Login」）。</p>
+      <div class="card-box">
+        <div class="h-md">做完這一份，你會有：</div>
+        <ol class="pts">
+          <li>一份叫「工作室任務清單－你的名字」的 Figma 檔案</li>
+          <li>Layers 裡一行「主線」，下面縮排一行「Screen / Login」</li>
+          <li>畫布上一個手機大小的白色直立畫面</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用收納盒與紙的比喻區分 Section 和 Frame，並列出三項成果。之後自選的練習題目會放在旁邊另一個 Section。</p>
+    <p><b>對應講義</b>：做完這一份你會有、先認識兩個新名詞。</p>
+    <p><b>接下一張</b>：第一段，開新檔案。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b14 CH01-L2#b18 CH01-L2#b19 CH01-L2#b20 CH01-L2#b21">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第一段：開新檔案</div>
+    <h2 class="h-xl"><span class="num">1</span><span class="num">2</span><span class="num">3</span>新增設計檔、切到 File、取名</h2>
+    <div class="body split img-r">
+      <div>
+        <p><a class="btn" href="https://www.figma.com/files" target="_blank" rel="noopener">打開 Figma 首頁</a></p>
+        <ul class="pts">
+          <li>右上角 <b>Create</b> → <b>Design</b>。FigJam 是白板、Slides 是簡報，畫 App 畫面用 Design。</li>
+          <li>左邊出現 AI 對話面板時，點最左邊的 <b>File</b>。</li>
+          <li>點左上角 <b>Untitled</b>，改成「工作室任務清單－你的名字」，按 Enter。</li>
+        </ul>
+        <p class="see">做完會看到：左上角顯示你取的檔名。Figma 會自動儲存。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R2-1-新增設計檔.png" alt="Create → Design"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：開新檔的三個動作；為什麼選 Design、為什麼要改掉 Untitled。截圖檔名顯示講師示範，學員的檔名是自己取的。</p>
+    <p><b>對應講義</b>：第一段：開新檔案，第 1 到 3 步。</p>
+    <p><b>接下一張</b>：第二段，放一個收納盒。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b22 CH01-L2#b23 CH01-L2#b24">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第二段：放一個收納盒（Section「主線」）</div>
+    <h2 class="h-xl"><span class="num">4</span><span class="num">5</span>選 Section 工具，畫出「主線」</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>下方工具列井字形的畫框工具，點它<b>右邊的小箭頭</b>，選 <b>Section</b>。</li>
+          <li>在畫布上按住滑鼠左鍵拖出一個框。大小隨便畫，下一步用數字設定。</li>
+          <li>Layers 裡對著「Section 1」<b>連點兩下</b>，改成「主線」，按 Enter。</li>
+        </ul>
+        <p class="see">做完會看到：Layers 裡有一行「主線」，畫布上框的左上角也顯示「主線」。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R2-4-選Section.png" alt="選 Section"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Section 工具藏在畫框工具的選單裡；為什麼要取名：Layers 裡全是 Section 1、Frame 2 的話，東西一多就認不出誰是誰。</p>
+    <p><b>對應講義</b>：第二段，第 4、5 步。</p>
+    <p><b>接下一張</b>：設定主線的位置和大小。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b25">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第二段：放一個收納盒（Section「主線」）</div>
+    <h2 class="h-xl"><span class="num">6</span>設定「主線」的位置和大小</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>確定「主線」是選取狀態（Layers 裡那行是淺藍色）。</li>
+          <li><b>Position</b>：X 0、Y 0；<b>Dimensions</b>：W 3000、H 2000。</li>
+          <li>填法：在欄位上點一下，把舊數字全選，打新數字，按 Enter。</li>
+        </ul>
+        <p class="warn">沒點進欄位就直接打數字，會改到不透明度，東西變淡；到 Appearance 把 Opacity 改回 100%。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R2-6-設定Section位置尺寸.png" alt="設定 Section 位置與尺寸"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：3000 × 2000 夠大，這一章所有東西都放得下；X 0、Y 0 讓檔案跟範例位置一樣，對照方便。這些數字不用記。</p>
+    <p><b>對應講義</b>：第二段，第 6 步。</p>
+    <p><b>接下一張</b>：第三段，在盒子裡放一張紙。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b26 CH01-L2#b27 CH01-L2#b28 CH01-L2#b29">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第三段：在盒子裡放一張紙（Frame「Screen / Login」）</div>
+    <h2 class="h-xl"><span class="num">7</span><span class="num">8</span><span class="num">9</span>縮放、換 Frame 工具、拉在「主線」裡面</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>「主線」超出畫面了：右上角百分比 → <b>Zoom to fit</b>。</li>
+          <li>再點畫框工具右邊的小箭頭，這次選 <b>Frame</b>。按鈕會記住上一次用的工具，所以要從選單換。</li>
+          <li>在「主線」的白色範圍<b>裡面</b>拖出一個小框。</li>
+        </ul>
+        <p class="see">做完會看到：Layers 裡「主線」下面縮排一行「Frame 1」。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R3-3-在主線裡拉Frame.png" alt="在主線裡拉 Frame"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：拉在主線範圍裡，Frame 才會被裝進收納盒；從 Layers 縮排確認。跳出新功能介紹視窗時按 Got it 關掉。</p>
+    <p><b>對應講義</b>：第三段，第 7 到 9 步。</p>
+    <p><b>接下一張</b>：幫這張紙取名並定尺寸。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b30">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第三段：在盒子裡放一張紙（Frame「Screen / Login」）</div>
+    <h2 class="h-xl"><span class="num">10</span>取名「Screen / Login」，W 402、H 874</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>連點兩下「Frame 1」，改名 <b>Screen / Login</b>（斜線前後各有一個空格）。</li>
+          <li>Position：X 0、Y 0；Dimensions：W 402、H 874。</li>
+          <li>「Screen / 」開頭代表這是一張完整的畫面，斜線後面寫它是哪一張。</li>
+          <li>402 × 874 是一支常見手機螢幕的大小。先把畫面大小固定，之後決定字多大、按鈕多寬才有依據。</li>
+        </ul>
+        <p class="see">做完會看到：「主線」左上角有一個直立的白色長方形。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/R3-4-命名與尺寸.png" alt="命名與尺寸"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：命名規則與手機尺寸的理由；之後的畫面也照這個方式命名，例如 Screen / List。</p>
+    <p><b>對應講義</b>：第三段，第 10 步。</p>
+    <p><b>接下一張</b>：檢查自己做對了沒。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b31 CH01-L2#b32 CH01-L2#b33 CH01-L2#b34 CH01-L2#b35 CH01-L2#b36 CH01-L2#b37">
+  <div class="frame">
+    <div class="kicker">第 2 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒</h2>
+    <div class="body split">
+      <ol class="pts big">
+        <li><b>結構</b>：Layers 是「主線」一行，下面縮排一行「Screen / Login」。</li>
+        <li><b>大小</b>：點 Screen / Login，右邊顯示 W 402、H 874。</li>
+        <li><b>名字</b>：左上角是你取的檔名，不是 Untitled。</li>
+      </ol>
+      <div class="card-box">
+        <div class="h-md">常見問題</div>
+        <ul class="pts">
+          <li><b>Screen / Login 沒有縮排</b>：Frame 拉在「主線」外面了。刪掉，回到第 9 步重拉。</li>
+          <li><b>東西突然變得很淡</b>：改到不透明度，Opacity 改回 100%。</li>
+          <li><b>畫布上找不到東西</b>：右上角百分比 → Zoom to fit。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項自我檢查與三個常見問題。可對照範例前兩層；範例的主線裡多一個 Rules，那是之後才做的規則表。</p>
+    <p><b>對應講義</b>：做完之後／檢查自己做對了沒、常見問題。</p>
+    <p><b>接下一張</b>：回顧與下一份預告。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L2#b38 CH01-L2#b39 CH01-L2#b40 CH01-L2#b41">
+  <div class="frame">
+    <div class="kicker">第 2 份｜做完之後</div>
+    <h2 class="h-xl">現在你會的事</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>開一份新的設計檔並取名</li>
+        <li>用 Section 圈出放作品的區塊，用 Frame 做出一個畫面</li>
+        <li>在 Layers 改名字，在右邊用數字設定位置和大小</li>
+      </ul>
+      <p class="next">下一份：紙準備好了，先別急著畫。畫之前先定好規則：建立<b>色卡</b>，第一個顏色就是「Primary 主要動作」。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回顧三項能力，預告下一份建立色卡。</p>
+    <p><b>對應講義</b>：現在你會的事、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 3 份，建立色卡。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L3 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L3#b02 CH01-L3#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 3 份</div>
+    <h1 class="h-hero">建立色卡（顏色變數）</h1>
+    <p class="lead">開始在紙上畫東西之前，先把要用的顏色定好，存成一張有名字的色卡。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：紙準備好了，畫之前先定顏色規則。</p>
+    <p><b>對應講義</b>：第 3 份的標題與導言。</p>
+    <p><b>接下一張</b>：這一份要做什麼、為什麼要在畫之前做。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b05 CH01-L3#b06 CH01-L3#b07 CH01-L3#b08 CH01-L3#b09 CH01-L3#b10">
+  <div class="frame">
+    <div class="kicker">第 3 份｜開始前</div>
+    <h2 class="h-xl">為什麼要在畫東西之前先建色卡</h2>
+    <div class="body split">
+      <div>
+        <p class="lead">接下來畫的標題、卡片、按鈕，每一樣都要從色卡拿顏色。</p>
+        <p class="body-zh">色卡沒先建好，就只能直接填色碼，之後想統一或修改都得一個一個找。</p>
+        <p class="body-zh">成員每天打開這個 App，要一眼認出「這是標題」「這是可以按的按鈕」，這要靠一套固定的顏色規則。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">做完這一份，你會有：</div>
+        <ol class="pts">
+          <li>一張叫 <b>Studio</b> 的色卡，裡面有 5 個顏色</li>
+          <li>Screen / Login 背景變成淺灰色，右邊顯示的是名字 <b>Surface</b>，不是色碼</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：連回開場講的一致、好改、好溝通；這一份真的在檔案裡建出色卡，並套到手機背景。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼現在做。</p>
+    <p><b>接下一張</b>：這一份要建的五個顏色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b11 CH01-L3#b12 CH01-L3#b13 CH01-L3#b14 CH01-L3#b15">
+  <div class="frame">
+    <div class="kicker">第 3 份｜開始前</div>
+    <h2 class="h-xl">這一份要建的 5 個顏色</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>名字</th><th>色碼</th><th>用在哪裡</th></tr>
+        <tr><td><b>Primary</b></td><td><span class="sw" style="background:#245B45"></span><code>245B45</code></td><td>主要動作：使用者最該按的按鈕（深綠）</td></tr>
+        <tr><td><b>Surface</b></td><td><span class="sw" style="background:#F5F7FA"></span><code>F5F7FA</code></td><td>畫面底色：整個手機畫面的淺灰背景</td></tr>
+        <tr><td><b>Card</b></td><td><span class="sw" style="background:#FFFFFF"></span><code>FFFFFF</code></td><td>卡片底色：白色卡片</td></tr>
+        <tr><td><b>Text</b></td><td><span class="sw" style="background:#1E293B"></span><code>1E293B</code></td><td>主要文字：標題和內文（深藍灰）</td></tr>
+        <tr><td><b>Muted</b></td><td><span class="sw" style="background:#5F6C80"></span><code>5F6C80</code></td><td>次要文字：提示、日期（較淡的灰）</td></tr>
+      </table>
+      <p class="cap">名字照表打，英文大小寫一樣。範例的色卡有 17 個顏色，但登入畫面現在只用得到這 5 個，其他等用到時再加。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：五個顏色的名字、色碼與用途；之後的講義都用這些名字指稱顏色。</p>
+    <p><b>對應講義</b>：這一份要建的 5 個顏色，表格與其後說明。</p>
+    <p><b>接下一張</b>：第一段，建第一個顏色 Primary。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b16 CH01-L3#b17 CH01-L3#b18">
+  <div class="frame">
+    <div class="kicker">第 3 份｜第一段：建第一個顏色 Primary</div>
+    <h2 class="h-xl"><span class="num">1</span><span class="num">2</span>打開 Variables，Create → Color</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>打開你在第 2 份做的檔案，點最左邊那排圖示的 <b>Variables</b>。</li>
+          <li>中間是空的，這是正常的。點中間的 <b>Create</b>。</li>
+          <li>跳出的選單裡點 <b>Color</b>：變數可以存顏色、數字、文字，這次要存的是顏色。</li>
+        </ul>
+        <p class="see">做完會看到：表格出現第一列，名字暫時叫 Color，顏色是白色 FFFFFF。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L3-1-打開Variables.png" alt="打開 Variables 並點 Create"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：色卡頁面的位置與第一個動作。</p>
+    <p><b>對應講義</b>：第一段，第 1、2 步。</p>
+    <p><b>接下一張</b>：取名並填色碼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b19 CH01-L3#b20">
+  <div class="frame">
+    <div class="kicker">第 3 份｜第一段：建第一個顏色 Primary</div>
+    <h2 class="h-xl"><span class="num">3</span><span class="num">4</span>取名 Primary，填入 245B45</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>第一列的名字已經反白，直接打 <b>Primary</b>，按 Enter。</li>
+          <li>點同一列 <b>Value</b> 欄的「FFFFFF」，打 <b>245B45</b>（前面的 # 不用打），按 Enter。</li>
+        </ul>
+        <p class="see">做完會看到：Primary 這一列，左邊是名字，右邊是深綠色色塊和 245B45。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L3-5-Primary完成.png" alt="Primary 完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Figma 會自動開一張叫 Collection 1 的色卡，先不用管，下一步改名。</p>
+    <p><b>對應講義</b>：第一段，第 3、4 步。</p>
+    <p><b>接下一張</b>：幫色卡取名，並建其餘四色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b21 CH01-L3#b22 CH01-L3#b23 CH01-L3#b24 CH01-L3#b25">
+  <div class="frame">
+    <div class="kicker">第 3 份｜第二段・第三段</div>
+    <h2 class="h-xl"><span class="num">5</span><span class="num">6</span><span class="num">7</span>色卡取名 Studio，建其餘四個顏色</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>左邊「Collection 1」<b>連點兩下</b>，改成 <b>Studio</b>：指的是這個「工作室任務清單」App。</li>
+          <li>表格最下面 <b>Create variable</b> → <b>Color</b>，打名字、按 Enter；點 Value 打色碼、按 Enter。</li>
+          <li>依序建 Surface、Card、Text、Muted。Card 預設就是 FFFFFF，取好名字就完成。</li>
+          <li>對照檢查後，點最左邊的 <b>File</b> 回到畫布。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L3-8-五色完成.png" alt="五個顏色完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：色卡改名的理由，以及其餘四色每一個都從 Create variable 開始。</p>
+    <p><b>對應講義</b>：第二段第 5 步、第三段第 6、7 步。</p>
+    <p><b>接下一張</b>：色卡建好還不會改變畫面，要把顏色套用上去。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b26 CH01-L3#b27 CH01-L3#b28">
+  <div class="frame">
+    <div class="kicker">第 3 份｜第四段：把顏色用到畫面上</div>
+    <h2 class="h-xl"><span class="num">8</span>選取手機畫面，打開顏色選單</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="body-zh">色卡建好還不會自動改變畫面，要把顏色「套用」到東西上。</p>
+        <ul class="pts">
+          <li>Layers 點 <b>Screen / Login</b>。</li>
+          <li>先看一眼：Fill 顯示色碼 FFFFFF，代表這個白色是直接填上去的，跟色卡沒有關係。</li>
+          <li>點 <b>Fill</b> 那一列右邊的<b>四點圖示</b>，打開「從色卡選顏色」的選單。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L3-9-選取手機畫面.png" alt="選取手機畫面並點四點圖示"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四點圖示是之後每一份都會用到的位置，這是第一次出現。</p>
+    <p><b>對應講義</b>：第四段開頭說明與第 8 步。</p>
+    <p><b>接下一張</b>：選 Surface。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b29 CH01-L3#b30">
+  <div class="frame">
+    <div class="kicker">第 3 份｜第四段：把顏色用到畫面上</div>
+    <h2 class="h-xl"><span class="num">9</span>選 Surface</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>選單上方列出你剛建的 5 個顏色，點 <b>Surface</b>。</li>
+          <li>選單往下一大串 Figma 內建的顏色不是你的色卡，不要選。</li>
+        </ul>
+        <p class="see">做完會看到：手機畫面變淺灰，Fill 顯示名字 <b>Surface</b>，不再是色碼。</p>
+        <p class="body-zh">手機背景記住的不是「F5F7FA 這個顏色」，而是「Surface 這個名字」。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L3-11-套用完成.png" alt="套用完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：套用顏色變數的意思：畫面記住的是名字；色卡把 Surface 換掉，背景會自動跟著變。</p>
+    <p><b>對應講義</b>：第四段，第 9 步與其後說明。</p>
+    <p><b>接下一張</b>：說了不如試一次，馬上改色卡看看。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b31 CH01-L3#b32 CH01-L3#b33">
+  <div class="frame">
+    <div class="kicker">第 3 份｜第五段：馬上試試看，改一次全部跟著變</div>
+    <h2 class="h-xl"><span class="num">10</span>把色卡縮成小視窗</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="body-zh">在色卡裡把 Surface 暫時改成黃色 FDE68A，看手機畫面自己變黃，再改回 F5F7FA。過程中不碰手機畫面。</p>
+        <ul class="pts">
+          <li>點 <b>Variables</b> 打開色卡，再點右上角的<b>縮小圖示</b>。</li>
+          <li>色卡變成浮在畫布上的小視窗，可以一邊改顏色、一邊看畫面。</li>
+          <li>手機畫面被擋住時，在畫布上往下捲動。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L3-12-縮小色卡.png" alt="縮小色卡"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這一段用來親眼確認開場說的好改；先把色卡縮小，才能同時看到畫面。</p>
+    <p><b>對應講義</b>：第五段開頭說明與第 10 步。</p>
+    <p><b>接下一張</b>：把 Surface 換成黃色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b34 CH01-L3#b35">
+  <div class="frame">
+    <div class="kicker">第 3 份｜第五段：馬上試試看，改一次全部跟著變</div>
+    <h2 class="h-xl"><span class="num">11</span><span class="num">12</span>Surface 改成黃色，再改回來</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>小視窗裡 Surface 的 Value 打 <b>FDE68A</b>，按 Enter。</li>
+          <li>同一格打回 <b>F5F7FA</b>，按 Enter，點 <b>×</b> 關掉小視窗。</li>
+        </ul>
+        <p class="see">做完會看到：沒有碰手機畫面，它卻立刻變黃；Fill 仍然寫著 Surface。</p>
+        <p class="body-zh">等十幾個畫面都用 Surface 當背景，改這一格，十幾個畫面會同時變。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L3-14-改成黃色.png" alt="Surface 改成黃色"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：只改色卡、不碰畫面；試完一定改回 F5F7FA。</p>
+    <p><b>對應講義</b>：第五段，第 11、12 步。</p>
+    <p><b>接下一張</b>：檢查自己做對了沒。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b36 CH01-L3#b37 CH01-L3#b38 CH01-L3#b39 CH01-L3#b40 CH01-L3#b41 CH01-L3#b42 CH01-L3#b43">
+  <div class="frame">
+    <div class="kicker">第 3 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒</h2>
+    <div class="body split">
+      <ol class="pts big">
+        <li><b>色卡</b>：左邊是 Studio、數字 5；五個名字和色碼都跟表一樣。</li>
+        <li><b>套用</b>：Screen / Login 的 Fill 顯示 <b>Surface</b>，不是 F5F7FA。</li>
+        <li><b>改回來了</b>：Surface 是 F5F7FA，手機畫面是淺灰。</li>
+      </ol>
+      <div class="card-box">
+        <div class="h-md">常見問題</div>
+        <ul class="pts">
+          <li><b>Fill 顯示 F5F7FA</b>：直接填的，沒接上色卡。重做第 8、9 步，從四點圖示選。</li>
+          <li><b>Fill 名字不是 Surface</b>：選到 Figma 內建的顏色，重做第 9 步。</li>
+          <li><b>找不到 Create variable</b>：在色卡表格的最下方。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項自我檢查與常見問題；名字或色碼打錯，回 Variables 重打即可。</p>
+    <p><b>對應講義</b>：做完之後／檢查自己做對了沒、常見問題。</p>
+    <p><b>接下一張</b>：回顧與下一份預告。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L3#b44 CH01-L3#b45 CH01-L3#b46 CH01-L3#b47">
+  <div class="frame">
+    <div class="kicker">第 3 份｜做完之後</div>
+    <h2 class="h-xl">現在你會的事</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>在 Variables 建立一張色卡，並幫它取名</li>
+        <li>新增顏色變數：取名字、填色碼</li>
+        <li>從 Fill 的四點圖示，把色卡裡的顏色套用到畫面上</li>
+        <li>改色卡裡的一個顏色，所有用到它的地方會自動一起變</li>
+      </ul>
+      <p class="next">下一份：顏色有了規則，接著是文字。建立 4 種<b>文字樣式</b>，就像 Word 裡的「標題 1」「內文」。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回顧四項能力；預告文字樣式，第 5 種之後做規則表時再加。</p>
+    <p><b>對應講義</b>：現在你會的事、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 4 份，建立文字樣式。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L4 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L4#b02 CH01-L4#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 4 份</div>
+    <h1 class="h-hero">建立文字樣式</h1>
+    <p class="lead">在「主線」裡打四段樣本文字，各自設好字型、粗細、大小、行距，存成四種有名字的文字樣式：Type/Page title、Type/Body、Type/Supporting、Type/Label。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：顏色有了規則，接著是文字。</p>
+    <p><b>對應講義</b>：第 4 份的標題與導言。</p>
+    <p><b>接下一張</b>：文字樣式是什麼、為什麼要先定。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b05 CH01-L4#b06 CH01-L4#b07 CH01-L4#b08 CH01-L4#b09 CH01-L4#b10">
+  <div class="frame">
+    <div class="kicker">第 4 份｜開始前</div>
+    <h2 class="h-xl">文字樣式就像 Word 裡的「標題 1」</h2>
+    <div class="body split">
+      <div>
+        <p class="body-zh">所有標題都套「標題 1」，想把標題改大一點，只要改「標題 1」這個樣式，全部標題一起變。</p>
+        <p class="body-zh">登入畫面上有四種角色不同的字：標題、說明、提示、按鈕上的字。先定好它們多大、多粗，就能做出<b>閱讀順序</b>：</p>
+        <p class="lead">「標題 → 說明 → 提示 → 按鈕」</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">做完這一份，你會有：</div>
+        <ol class="pts">
+          <li>四種文字樣式：Type/Page title、Type/Body、Type/Supporting、Type/Label</li>
+          <li>四段樣本文字放在「主線」裡，各自套好對應的樣式</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用 Word 的標題樣式類比；越重要的字越大越粗，眼睛就照這個順序看。成員在客戶現場只想很快看一眼，字的大小和粗細決定他先看到什麼。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做。</p>
+    <p><b>接下一張</b>：四種樣式的設定表。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b11 CH01-L4#b12 CH01-L4#b13 CH01-L4#b14">
+  <div class="frame">
+    <div class="kicker">第 4 份｜開始前</div>
+    <h2 class="h-xl">這一份要建的 4 種文字樣式</h2>
+    <div class="body">
+      <p class="body-zh">四種都用同一個字型 <b>Noto Sans TC</b>（Google 提供的免費中文字型）。</p>
+      <table class="tb">
+        <tr><th>名字</th><th>用在哪裡</th><th>樣本文字</th><th>粗細</th><th>字級／行高</th></tr>
+        <tr><td><b>Type/Page title</b></td><td>畫面標題</td><td>登入工作室</td><td>Bold（粗）</td><td>24／32</td></tr>
+        <tr><td><b>Type/Body</b></td><td>內文、說明</td><td>登入後檢視待處理的任務。</td><td>Regular（一般）</td><td>16／24</td></tr>
+        <tr><td><b>Type/Supporting</b></td><td>提示、輔助說明</td><td>請輸入工作室帳號</td><td>Regular（一般）</td><td>14／22</td></tr>
+        <tr><td><b>Type/Label</b></td><td>按鈕上的字</td><td>登入</td><td>Medium（中等）</td><td>16／24</td></tr>
+      </table>
+      <ul class="pts">
+        <li><b>字級</b>：字有多大。<b>行高</b>：一行字占多高，比字級大一些，換行時上下兩行才不會擠在一起。</li>
+        <li>第五種「區段標題」登入畫面用不到，等第 8 份做規則表時再加。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四種樣式的用途與設定；字級和行高的意思。</p>
+    <p><b>對應講義</b>：這一份要建的 4 種文字樣式。</p>
+    <p><b>接下一張</b>：第一段，建第一個樣式。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b15 CH01-L4#b16 CH01-L4#b17 CH01-L4#b18 CH01-L4#b19">
+  <div class="frame">
+    <div class="kicker">第 4 份｜第一段：建第一個樣式 Type/Page title</div>
+    <h2 class="h-xl"><span class="num">1</span><span class="num">2</span><span class="num">3</span><span class="num">4</span>打字，設成 Noto Sans TC、Bold、24／32</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li><b>文字工具 T</b>，在手機畫面右邊的空白處點一下，打「登入工作室」，按 Esc。</li>
+          <li>字型欄 Inter → 搜尋 <b>Noto Sans TC</b>。Inter 是英文字型，沒有中文字，每台電腦看起來可能不一樣。</li>
+          <li>粗細欄 Regular → <b>Bold</b>。</li>
+          <li>字級打 <b>24</b>；<b>Line height</b> 打 <b>32</b>。</li>
+        </ul>
+        <p class="see">做完會看到：Typography 顯示 Noto Sans TC、Bold、24，Line height 32。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L4-4-字級行高.png" alt="字級與行高"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：打字與四項文字設定；畫面縮得很小，字可能只是一個小點，所有設定都在右邊完成。</p>
+    <p><b>對應講義</b>：第一段，第 1 到 4 步。</p>
+    <p><b>接下一張</b>：把這組設定存成樣式。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b20">
+  <div class="frame">
+    <div class="kicker">第 4 份｜第一段：建第一個樣式 Type/Page title</div>
+    <h2 class="h-xl"><span class="num">5</span>打開文字樣式清單，按 +</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>點 Typography 標題列右邊的<b>四點圖示</b>，跳出 Text styles 清單。</li>
+          <li>點清單上方的 <b>+</b>，建立新樣式。</li>
+          <li>清單裡 Figma 內建的範本樣式（例如 Material 3 Design Kit）不是你的，不要選。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L4-5-打開文字樣式.png" alt="打開文字樣式"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：文字樣式清單的位置；和色卡一樣從四點圖示打開。</p>
+    <p><b>對應講義</b>：第一段，第 5 步。</p>
+    <p><b>接下一張</b>：取名並建立。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b21">
+  <div class="frame">
+    <div class="kicker">第 4 份｜第一段：建第一個樣式 Type/Page title</div>
+    <h2 class="h-xl"><span class="num">6</span>取名 Type/Page title 並建立</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Name 欄打 <b>Type/Page title</b>，按 <b>Create style</b>。</li>
+          <li>「Type/」的斜線會讓 Figma 把它收進一個叫 Type 的資料夾，好找。</li>
+        </ul>
+        <p class="see">做完會看到：Typography 不再列出一堆數字，而是顯示名字 <b>Type/Page title · 24/32</b>。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L4-7-樣式完成.png" alt="樣式完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：命名方式，以及建好後顯示的是名字。</p>
+    <p><b>對應講義</b>：第一段，第 6 步。</p>
+    <p><b>接下一張</b>：打第二段字時會遇到的狀況。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b22 CH01-L4#b23">
+  <div class="frame">
+    <div class="kicker">第 4 份｜第二段：建其餘三個樣式</div>
+    <h2 class="h-xl"><span class="num">7</span>新打的字會自動套上一個樣式：先斷開</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>在「登入工作室」下方打「登入後檢視待處理的任務。」，按 Esc。</li>
+          <li>Typography 已經寫著上一個樣式的名字。這不是你做錯了。</li>
+          <li>滑鼠移到樣式名稱上，點右邊的<b>斷開圖示</b>。</li>
+        </ul>
+        <p class="see">斷開之後，Typography 重新顯示字型、粗細、字級等欄位，可以改了。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L4-9-斷開樣式.png" alt="斷開樣式"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：新字會自動套用上一次用的樣式，要先斷開才能設定。截圖裡套到的是 Type/Body，學員做到這裡看到的會是 Type/Page title，處理方法一樣。</p>
+    <p><b>對應講義</b>：第二段，第 7 步。</p>
+    <p><b>接下一張</b>：用同樣方法建其餘三個樣式。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b24 CH01-L4#b25 CH01-L4#b26 CH01-L4#b27">
+  <div class="frame">
+    <div class="kicker">第 4 份｜第二段：建其餘三個樣式</div>
+    <h2 class="h-xl"><span class="num">8</span><span class="num">9</span><span class="num">10</span><span class="num">11</span>先斷開，再設定，再建立</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb small">
+          <tr><th>打的字</th><th>設定</th><th>存成</th></tr>
+          <tr><td>登入後檢視待處理的任務。</td><td>Regular、16／24</td><td>Type/Body</td></tr>
+          <tr><td>請輸入工作室帳號</td><td>Regular、14／22</td><td>Type/Supporting</td></tr>
+          <tr><td>登入</td><td>Medium、16／24</td><td>Type/Label</td></tr>
+        </table>
+        <p class="body-zh">最後按 Esc 取消選取，在 Styles 區展開 Type。</p>
+        <p class="see">做完會看到：Page title 24/32、Body 16/24、Supporting 14/22、Label 16/24。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L4-10-四種樣式完成.png" alt="四種樣式完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：其餘三段字都是同一個節奏：打字、斷開、改粗細字級行高、四點圖示加號、取名建立。字型已經是 Noto Sans TC，不用再換。</p>
+    <p><b>對應講義</b>：第二段，第 8 到 11 步。</p>
+    <p><b>接下一張</b>：檢查自己做對了沒。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b28 CH01-L4#b29 CH01-L4#b30 CH01-L4#b31 CH01-L4#b32 CH01-L4#b33 CH01-L4#b34 CH01-L4#b35">
+  <div class="frame">
+    <div class="kicker">第 4 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒</h2>
+    <div class="body split">
+      <ol class="pts big">
+        <li><b>樣式清單</b>：Styles 的 Type 資料夾裡有四個樣式，數字跟表一樣。</li>
+        <li><b>樣本文字</b>：點每一段字，Typography 顯示的是對應的樣式名字，不是一串數字。</li>
+      </ol>
+      <div class="card-box">
+        <div class="h-md">常見問題</div>
+        <ul class="pts">
+          <li><b>搜尋不到 Noto Sans TC</b>：Noto、Sans、TC 之間各有一個空格，TC 是大寫。</li>
+          <li><b>找不到粗細和字級欄</b>：這段字正套著樣式，先斷開。</li>
+          <li><b>樣式名字打錯</b>：斷開後用正確名字重建一個，打錯的先留著。</li>
+          <li><b>畫布上看不到字</b>：用 Layers 選取，設定都在右邊完成。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩項自我檢查與四個常見問題。</p>
+    <p><b>對應講義</b>：做完之後／檢查自己做對了沒、常見問題。</p>
+    <p><b>接下一張</b>：回顧與下一份預告。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L4#b36 CH01-L4#b37 CH01-L4#b38 CH01-L4#b39">
+  <div class="frame">
+    <div class="kicker">第 4 份｜做完之後</div>
+    <h2 class="h-xl">現在你會的事</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>用文字工具打字，在 Typography 設定字型、粗細、字級、行高</li>
+        <li>把一組文字設定存成有名字的文字樣式</li>
+        <li>新打的字自動套用上一個樣式時，先斷開再設定</li>
+      </ul>
+      <p class="next">下一份：色卡和文字樣式都準備好了。終於要在手機畫面上畫出登入卡片，每一樣都從色卡拿顏色、從文字樣式拿字的設定。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回顧三項能力；規則已經定完，下一份開始照規則畫。</p>
+    <p><b>對應講義</b>：現在你會的事、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 5 份，做登入卡片。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L5 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L5#b02 CH01-L5#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 5 份</div>
+    <h1 class="h-hero">做登入卡片</h1>
+    <p class="lead">色卡和文字樣式都準備好了。這一份第一次用它們，在手機畫面上做出真正的東西：一張登入卡片。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：前面定的是規則，這一份第一次照規則做畫面。</p>
+    <p><b>對應講義</b>：第 5 份的標題與導言。</p>
+    <p><b>接下一張</b>：這一份要做出的樣子。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b05 CH01-L5#b06 CH01-L5#b07 CH01-L5#b08 CH01-L5#b09 CH01-L5#b10 CH01-L5#b11 CH01-L5#b12">
+  <div class="frame">
+    <div class="kicker">第 5 份｜開始前</div>
+    <h2 class="h-xl">每一樣都從色卡選、套文字樣式</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>卡片裡由上而下：標題、說明、提示三段字，最下面是深綠色的「登入」按鈕。</li>
+          <li>顏色都從色卡選、字都套文字樣式，<b>不自己打色碼或字級</b>。</li>
+          <li>照閱讀順序排：標題最大最粗在最上面，最後是最醒目的深綠色按鈕。</li>
+        </ul>
+        <p class="cap">第 4 份打好的四段樣本文字會直接搬進卡片，不用重打。</p>
+      </div>
+      <div class="demo demo-l2">
+<div class="ba">
+  <figure><div class="ph done"></div><figcaption>現在<br>只有淺灰底色的 Screen / Login</figcaption></figure>
+  <div class="arrow">→</div>
+  <figure><div class="ph done"><div class="card"><div class="t">登入工作室</div><div class="m">登入後檢視待處理的任務。</div><div class="h">請輸入工作室帳號</div><div class="b">登入</div></div></div><figcaption>這一份做完<br>紙上有一張登入卡片</figcaption></figure>
+</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：登入畫面是成員每天打開 App 第一個看到的畫面，這張卡片就是他每天的入口；強調不自己打色碼或字級。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做，含前後對照圖。</p>
+    <p><b>接下一張</b>：先認識框裡的框。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b13 CH01-L5#b14 CH01-L5#b15 CH01-L5#b16 CH01-L5#b17">
+  <div class="frame">
+    <div class="kicker">第 5 份｜開始前</div>
+    <h2 class="h-xl">先認識一件新的事：框裡的框</h2>
+    <div class="body split">
+      <div class="callout tree">
+<b>Screen / Login</b>（手機畫面這張紙）<br>
+　└ <b>Login / Card</b>（放在手機上的卡片，一張小紙）<br>
+　　　├ <b>Title</b>　登入工作室<br>
+　　　├ <b>Message</b>　登入後檢視待處理的任務。<br>
+　　　├ <b>Hint</b>　請輸入工作室帳號<br>
+　　　└ <b>Button / Draft</b>（卡片上的按鈕，更小的一張紙）<br>
+　　　　　└ <b>Label</b>　登入
+      </div>
+      <ul class="pts">
+        <li><b>Layers 的縮排就是「放在誰裡面」</b>。搬動卡片時，裡面的字和按鈕會跟著一起走。</li>
+        <li><b>X、Y 是從外面那張紙的左上角量起</b>。卡片 X 24、Y 120 是離手機畫面左邊 24、上面 120；卡片裡的字 X 16 是離卡片左邊 16。</li>
+        <li>名字跟範例一樣用英文，之後做互動、交給工程師時，大家都用同一個名字溝通。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Frame 像一張紙，紙上可以再放一張小紙；縮排代表層級，X、Y 從外層左上角量。</p>
+    <p><b>對應講義</b>：先認識一件新的事：框裡的框。</p>
+    <p><b>接下一張</b>：第一段，先把手機畫面放大。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b18 CH01-L5#b19 CH01-L5#b20">
+  <div class="frame">
+    <div class="kicker">第 5 份｜第一段：把手機畫面放大</div>
+    <h2 class="h-xl"><span class="num">1</span>放大到手機畫面</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Layers 點 <b>Screen / Login</b> 選取它。</li>
+          <li>左上角的 <b>Figma 圖示</b> → <b>View</b> → <b>Zoom to selection</b>。</li>
+          <li>先前的畫面縮得很小，不放大會看不清楚卡片。</li>
+        </ul>
+        <p class="see">做完會看到：手機畫面放大到填滿中間的畫布。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L5-1-Zoom到選取.png" alt="View → Zoom to selection"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Zoom to selection 第一次出現，之後找規則表也會用到。截圖是示範檔，畫面大小每台電腦不同，看相對位置就好。</p>
+    <p><b>對應講義</b>：第一段，第 1 步。</p>
+    <p><b>接下一張</b>：第二段，畫卡片。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b21 CH01-L5#b22 CH01-L5#b23 CH01-L5#b24">
+  <div class="frame">
+    <div class="kicker">第 5 份｜第二段：畫卡片 Login / Card</div>
+    <h2 class="h-xl"><span class="num">2</span><span class="num">3</span><span class="num">4</span>拉出卡片：X 24、Y 120、W 354、H 208</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li><b>Frame 工具</b>（#）在手機畫面上半部拉一個長方形。</li>
+          <li>改名 <b>Login / Card</b>；X <b>24</b>、Y <b>120</b>。</li>
+          <li>W <b>354</b>、H <b>208</b>：402 − 24 − 24 = 354。</li>
+        </ul>
+        <p class="see">做完會看到：卡片大小對了，但 <b>Fill 是空的</b>，透出後面手機畫面的淺灰。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L5-5-尺寸與空的Fill.png" alt="尺寸與空的 Fill"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：卡片的位置與尺寸怎麼來的：手機寬 402，左右各留 24；Frame 1 縮排在 Screen / Login 下面，代表在手機畫面裡面。</p>
+    <p><b>對應講義</b>：第二段，第 2 到 4 步。</p>
+    <p><b>接下一張</b>：卡片底色選 Card。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b25">
+  <div class="frame">
+    <div class="kicker">第 5 份｜第二段：畫卡片 Login / Card</div>
+    <h2 class="h-xl"><span class="num">5</span>底色選色卡的 Card</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>點 Fill 右邊的<b>四點圖示</b>，選 <b>Card</b>，點 × 關掉清單。</li>
+          <li>手機背景淺灰（Surface）、卡片白（Card），兩者有一點差別，使用者一眼就看出「這一塊是一組的」。</li>
+        </ul>
+        <p class="see">做完會看到：卡片變白，從淺灰背景浮出來；Fill 顯示名字 <b>Card</b>。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L5-7-卡片變白.png" alt="卡片變白"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：為什麼要分畫面底色和卡片底色兩種。</p>
+    <p><b>對應講義</b>：第二段，第 5 步。</p>
+    <p><b>接下一張</b>：第三段，把字搬進卡片。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b26 CH01-L5#b27 CH01-L5#b28">
+  <div class="frame">
+    <div class="kicker">第 5 份｜第三段：把字搬進卡片</div>
+    <h2 class="h-xl"><span class="num">6</span><span class="num">7</span>把「登入工作室」拖進卡片，X 16、Y 16</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Layers 按住「登入工作室」那一行，拖到 <b>Login / Card</b> 上放開。看到縮排才算成功。</li>
+          <li>畫面上<b>看不到字</b>是正常的：字還在原本很遠的位置，卡片會把超出範圍的東西切掉。</li>
+          <li>Position 填 X <b>16</b>、Y <b>16</b>。</li>
+        </ul>
+        <p class="see">做完會看到：「登入工作室」出現在卡片左上角，離卡片邊緣 16。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L5-9-字出現在卡片.png" alt="字出現在卡片"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：在 Layers 拖曳改層級；字搬進去暫時看不到的原因。</p>
+    <p><b>對應講義</b>：第三段，第 6、7 步。</p>
+    <p><b>接下一張</b>：改名並把字色接上色卡。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b29 CH01-L5#b30">
+  <div class="frame">
+    <div class="kicker">第 5 份｜第三段：把字搬進卡片</div>
+    <h2 class="h-xl"><span class="num">8</span><span class="num">9</span>改名 Title，字的顏色選 Text</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>改名 <b>Title</b>。Typography 已經是 Type/Page title，不用再設。</li>
+          <li>Fill 是 <b>000000</b>：Figma 預設的純黑，不是色卡裡的顏色。</li>
+          <li>四點圖示 → 選 <b>Text</b>。</li>
+        </ul>
+        <p class="body-zh">肉眼幾乎看不出差別，但留著 000000，之後改色卡的 Text，這段字不會跟著變，就有一個漏網的顏色。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L5-12-Title完成.png" alt="Title 完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：看不出差別也要換成 Text；每一樣都選色卡，才能保證改一次全部跟著變。</p>
+    <p><b>對應講義</b>：第三段，第 8、9 步。</p>
+    <p><b>接下一張</b>：另外兩段字照表做。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b31">
+  <div class="frame">
+    <div class="kicker">第 5 份｜第三段：把字搬進卡片</div>
+    <h2 class="h-xl"><span class="num">10</span>把另外兩段字搬進卡片</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="body-zh">每段做四件事：拖進 Login / Card、填 X Y、改名、Fill 選色。</p>
+        <table class="tb small">
+          <tr><th>原本的字</th><th>改名</th><th>X</th><th>Y</th><th>Fill 選</th></tr>
+          <tr><td>登入後檢視待處理的任務。</td><td>Message</td><td>16</td><td>64</td><td>Text</td></tr>
+          <tr><td>請輸入工作室帳號</td><td>Hint</td><td>16</td><td>104</td><td>Muted</td></tr>
+        </table>
+        <p class="see">做完會看到：卡片裡由上而下是標題、說明、提示。提示用 Muted，因為它是輔助資訊，不該跟說明搶注意力。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L5-13-三段字完成.png" alt="三段字完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩段字照表處理。Layers 的順序是 Hint、Message、Title，跟畫面上下相反，看縮排對就好；截圖裡的 Frame 1 是下一步才拉的按鈕框。</p>
+    <p><b>對應講義</b>：第三段，第 10 步。</p>
+    <p><b>接下一張</b>：第四段，做按鈕。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b32 CH01-L5#b33 CH01-L5#b34 CH01-L5#b35">
+  <div class="frame">
+    <div class="kicker">第 5 份｜第四段：做按鈕 Button / Draft</div>
+    <h2 class="h-xl"><span class="num">11</span><span class="num">12</span><span class="num">13</span>拉框、定尺寸圓角、底色 Primary</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Frame 工具在提示下方拉一個框，改名 <b>Button / Draft</b>。</li>
+          <li>X <b>16</b>、Y <b>142</b>；W <b>322</b>、H <b>48</b>；Corner radius <b>8</b>。</li>
+          <li>W 322：卡片寬 354，左右各留 16。H 48：手指好按的高度。圓角 8：看起來像一顆可以按的按鈕。</li>
+          <li>Draft（草稿）：之後會做成可以重複使用的元件。</li>
+          <li>Fill 四點圖示 → <b>Primary</b>。</li>
+        </ul>
+        <p class="see">做完會看到：整張卡片裡只有這一塊是主色，眼睛最後會停在這裡。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L5-16-按鈕Primary.png" alt="按鈕 Primary"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：按鈕的每個數字都有理由；主色只用在使用者該按的地方。框沒縮排在 Login / Card 下面就刪掉重拉。</p>
+    <p><b>對應講義</b>：第四段，第 11 到 13 步。</p>
+    <p><b>接下一張</b>：把登入兩個字放進按鈕。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b36 CH01-L5#b37 CH01-L5#b38">
+  <div class="frame">
+    <div class="kicker">第 5 份｜第四段：做按鈕 Button / Draft</div>
+    <h2 class="h-xl"><span class="num">14</span><span class="num">15</span><span class="num">16</span>「登入」拖進按鈕、置中、字色 Card</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>「登入」拖到 <b>Button / Draft</b> 上放開，看到縮排。</li>
+          <li><b>Alignment</b>：點第二個（水平置中），再點第五個（垂直置中）。</li>
+          <li>改名 <b>Label</b>；Fill 選 <b>Card</b>：色卡裡的白色目前只有這一個。</li>
+        </ul>
+        <p class="see">做完會看到：深綠按鈕上有白字「登入」。登入卡片完成。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L5-19-完成.png" alt="完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：對齊按鈕會以外面那一層為準置中，比自己算準；Card 名字是卡片底色，用在字上有點怪，但它就是同一個白，先用它。</p>
+    <p><b>對應講義</b>：第四段，第 14 到 16 步。</p>
+    <p><b>接下一張</b>：檢查自己做對了沒。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b39 CH01-L5#b40 CH01-L5#b41 CH01-L5#b42 CH01-L5#b43 CH01-L5#b44 CH01-L5#b45 CH01-L5#b46 CH01-L5#b47 CH01-L5#b48">
+  <div class="frame">
+    <div class="kicker">第 5 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒</h2>
+    <div class="body split">
+      <div>
+        <ol class="pts">
+          <li><b>對照範例</b>：外觀應該一樣。範例有兩處不同，不是你做錯：「登入」字色是 On Primary（第 10 份會改），Message 是 Auto height（第 6 份會改）。</li>
+          <li><b>結構</b>：Title、Message、Hint、Button / Draft 都在 Login / Card 下面，Label 在 Button / Draft 下面。</li>
+          <li><b>名字不是數字</b>：Fill 都顯示 Card、Text、Muted、Primary，沒有 000000。</li>
+        </ol>
+        <p><a class="btn" href="https://www.figma.com/design/dtoZeCT179DFgwHjOinKBP/" target="_blank" rel="noopener">打開範例對照</a></p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">常見問題</div>
+        <ul class="pts">
+          <li><b>沒有縮排進去</b>：再拖一次，對準目標那一行。</li>
+          <li><b>字一直看不到</b>：填這段字的 X、Y。</li>
+          <li><b>卡片跟背景一樣灰</b>：Login / Card 的 Fill 選 Card。</li>
+          <li><b>置中沒到正中間</b>：「登入」要縮排在 Button / Draft 下面。</li>
+          <li><b>Zoom to selection 沒放大到手機</b>：先選 Screen / Login。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項自我檢查，特別說明範例有兩處和學員現在不同的原因；五個常見問題。</p>
+    <p><b>對應講義</b>：做完之後／檢查自己做對了沒、常見問題。</p>
+    <p><b>接下一張</b>：回顧與下一份預告。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L5#b49 CH01-L5#b50 CH01-L5#b51 CH01-L5#b52">
+  <div class="frame">
+    <div class="kicker">第 5 份｜做完之後</div>
+    <h2 class="h-xl">現在你會的事</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>把一個 Frame 放進另一個 Frame 裡，用 Layers 的縮排確認層級</li>
+        <li>用 X、Y、W、H 把東西放到準確的位置與大小</li>
+        <li>在 Layers 拖曳，把東西搬進另一層</li>
+        <li>畫面上每一樣東西的顏色都從色卡選，字都套文字樣式</li>
+        <li>用對齊按鈕把東西放到正中間</li>
+      </ul>
+      <p class="next">下一份：卡片的高度固定是 208。如果說明文字變成兩三行的長句，會發生什麼事？</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回顧五項能力，用一個問題引出下一份的長句測試。</p>
+    <p><b>對應講義</b>：現在你會的事、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 6 份，長句測試。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L6 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L6#b02 CH01-L6#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 6 份</div>
+    <h1 class="h-hero">長句測試</h1>
+    <p class="lead">登入卡片做好了，但真實世界的字不會都那麼短。這一份故意塞一段長句進去，看看卡片撐不撐得住。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：設計完要自己先測極端內容。</p>
+    <p><b>對應講義</b>：第 6 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼要測。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b05 CH01-L6#b06 CH01-L6#b07 CH01-L6#b08 CH01-L6#b09">
+  <div class="frame">
+    <div class="kicker">第 6 份｜開始前</div>
+    <h2 class="h-xl">交出去之前，設計師要<em>自己先測</em></h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>成員看到的字長短不一：有的任務叫「整理交付包」，有的叫「確認活動報名資料並補上聯絡電話」。</li>
+          <li>短短一句看起來很整齊，不代表換成長句也沒問題。</li>
+          <li>字被切掉，成員就「做不到」；字疊在一起，成員就「做不快」。</li>
+        </ul>
+      </div>
+      <div class="demo demo-l6">
+<div class="ba">
+  <figure><div class="ph"><div class="card"><div class="t">登入工作室</div><div class="m">登入後檢視待處理的任務。</div><div class="h">請輸入工作室帳號</div><div class="b">登入</div></div></div><figcaption>現在<br>說明只有一行，一切正常</figcaption></figure>
+  <div class="arrow">→</div>
+  <figure><div class="ph"><div class="card"><div class="t">登入工作室</div><div class="m">登入後可以查看今天的待處理清單，選取一筆任務就能看到說明和期限，做完後回到清單把它標記完成。</div><div class="h">請輸入工作室帳號</div><div class="b">登入</div></div></div><figcaption>測試時<br>長句換成三行，蓋到了提示</figcaption></figure>
+</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：不要等成員在手機上看到字被切掉、疊在一起才發現；連回開場的三把尺。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做，含示意圖。</p>
+    <p><b>接下一張</b>：先說清楚這一份會修什麼、不修什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b10 CH01-L6#b11 CH01-L6#b12 CH01-L6#b13 CH01-L6#b14">
+  <div class="frame">
+    <div class="kicker">第 6 份｜開始前</div>
+    <h2 class="h-xl">文字框的寬度設定（Resizing）</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>設定</th><th>字變長時</th><th>生活比喻</th></tr>
+        <tr><td><b>Auto width</b><br><span class="cap">第一個圖示</span></td><td>不換行，框一直往右變寬。寬度由字決定，不能自己填。</td><td>寫在一條紙條上，字多就把紙條接長。</td></tr>
+        <tr><td><b>Auto height</b><br><span class="cap">第二個圖示</span></td><td>寬度由你決定，寫到邊就換行，框往下變高。</td><td>寫在固定寬度的筆記本上，寫到邊就換下一行。</td></tr>
+        <tr><td><b>Fixed size</b><br><span class="cap">第三個圖示</span></td><td>寬高都固定，寫不下的字會超出框外。</td><td>寫在一張固定大小的便利貼上。這一份不用它。</td></tr>
+      </table>
+      <p class="callout">這一份不會把問題全部修好：修好第一個（字被切掉），第二個（卡片不會跟著變高）先看清楚原因，第三章學 Auto layout 時再解決。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：每段字都裝在看不見的文字框裡，三種寬度設定的差別；第 4 份打字時預設用的是 Auto width，短字適合，可能變長的字用它就會出事。</p>
+    <p><b>對應講義</b>：先說清楚的提醒框，與先認識一件新的事：文字框的寬度設定。</p>
+    <p><b>接下一張</b>：第一段，看 Message 現在是哪一種。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b15 CH01-L6#b16 CH01-L6#b17">
+  <div class="frame">
+    <div class="kicker">第 6 份｜第一段：看 Message 現在是哪一種</div>
+    <h2 class="h-xl"><span class="num">1</span>選 Message，看 Resizing</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Layers 點 <b>Message</b>（在 Login / Card 下面）。</li>
+          <li>右邊 <b>Layout</b> 區的 <b>Resizing</b> 有三個圖示。</li>
+        </ul>
+        <p class="see">做完會看到：<b>第一個圖示（Auto width）</b>是選中的；W 192、H 24 是灰色的，不能填。</p>
+        <p class="body-zh">Auto width 的寬度是字決定的，字有多長框就多寬。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L6-1-選Message看Resizing.png" alt="選 Message 看 Resizing"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：確認 Message 目前是 Auto width，以及 W、H 為什麼是灰色。</p>
+    <p><b>對應講義</b>：第一段，第 1 步。</p>
+    <p><b>接下一張</b>：第二段，塞一段長句。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b18 CH01-L6#b19 CH01-L6#b20">
+  <div class="frame">
+    <div class="kicker">第 6 份｜第二段：塞一段長句</div>
+    <h2 class="h-xl"><span class="num">2</span><span class="num">3</span>雙擊整段反白，打長句，按 Esc</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>在畫布上「登入後檢視待處理的任務。」<b>連點兩下</b>，整段藍底反白。</li>
+          <li>打長句，<b>不要按 Enter</b>，按 <b>Esc</b>。</li>
+        </ul>
+        <p class="copy">登入後可以查看今天的待處理清單，選取一筆任務就能看到說明和期限，做完後回到清單把它標記完成。</p>
+        <p class="see">做完會看到：字一路往右，到卡片右邊就被切斷；W 變成 <b>736</b>，比整張卡片（354）寬了一倍多。</p>
+        <p class="warn">第一個問題：成員看不到完整的說明。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L6-3b-長句近看.png" alt="長句近看"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Auto width 不換行，字多長框就多長；卡片外面的東西會被切掉，所以後半句消失了。</p>
+    <p><b>對應講義</b>：第二段，第 2、3 步。</p>
+    <p><b>接下一張</b>：第三段，讓字在卡片裡換行。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b21 CH01-L6#b22 CH01-L6#b23">
+  <div class="frame">
+    <div class="kicker">第 6 份｜第三段：讓字在卡片裡換行</div>
+    <h2 class="h-xl"><span class="num">4</span><span class="num">5</span>改成 Auto height，W 填 322</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Resizing 點<b>第二個圖示（Auto height）</b>。W 欄可以填了，但畫面還沒變，W 仍是 736。</li>
+          <li>Auto height 的意思是「寬度你決定，高度跟著字長」。還沒決定寬度，就沿用 736。</li>
+          <li>點 <b>W</b> 欄，打 <b>322</b>，按 Enter。</li>
+          <li>354 − 16 − 16 = 322：說明文字和按鈕左右會切齊。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L6-5-W填322.png" alt="W 填 322"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：切到 Auto height 後要自己決定寬度；322 的由來和按鈕寬一致。</p>
+    <p><b>對應講義</b>：第三段，第 4、5 步。</p>
+    <p><b>接下一張</b>：看結果。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b24">
+  <div class="frame">
+    <div class="kicker">第 6 份｜第三段：讓字在卡片裡換行</div>
+    <h2 class="h-xl"><span class="num">6</span>看結果：字換行了</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="see">做完會看到：長句在卡片裡換成 <b>3 行</b>，句尾「標記完成。」完整出現；W 322、H <b>72</b>（一行 24，三行 72），H 是 Figma 自己算的。</p>
+        <p class="lead">第一個問題解決了：字不會再被切掉。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L6-6-換成三行.png" alt="換成三行"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這一步不用點，只看畫布和右邊的 W、H。</p>
+    <p><b>對應講義</b>：第三段，第 6 步。</p>
+    <p><b>接下一張</b>：取消選取，看清楚第二個問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b25 CH01-L6#b26">
+  <div class="frame">
+    <div class="kicker">第 6 份｜第四段：看清楚第二個問題</div>
+    <h2 class="h-xl"><span class="num">7</span>卡片不會跟著內容長高</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="see">做完會看到：說明的第三行和下面的「請輸入工作室帳號」<b>疊在一起</b>。</p>
+        <ul class="pts">
+          <li>卡片高度是第 5 份填的 208，一張固定大小的紙，不會自己變高。</li>
+          <li>提示的位置（Y 104）也是固定的，不會被往下推。</li>
+          <li>自己算數字把東西往下移，下次字又變就要再算一次，畫面一多一定會漏。</li>
+          <li>第三章的 <b>Auto layout</b> 才是真正的解法。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L6-7-蓋到提示.png" alt="蓋到提示"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：第二個問題的原因，以及為什麼現在不修，只要看懂問題出在哪。</p>
+    <p><b>對應講義</b>：第四段，第 7 步。</p>
+    <p><b>接下一張</b>：第五段，恢復原樣。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b27 CH01-L6#b28 CH01-L6#b29">
+  <div class="frame">
+    <div class="kicker">第 6 份｜第五段：恢復原樣</div>
+    <h2 class="h-xl"><span class="num">8</span><span class="num">9</span>打回原來那一句，保留 Auto height</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Layers 點 Message，畫布上連點兩下，三行字全部反白。</li>
+          <li>打「登入後檢視待處理的任務。」，按 Esc。</li>
+        </ul>
+        <p class="see">做完會看到：說明回到一行；W 322、H 24，Resizing 仍是 <b>Auto height</b>。</p>
+        <p class="body-zh">保留 Auto height：以後這段字變長，至少會在卡片裡換行，不會被切掉。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L6-9-恢復原句.png" alt="恢復原句"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：恢復原句但保留設定的理由；卡片不會長高留給第三章。</p>
+    <p><b>對應講義</b>：第五段，第 8、9 步。</p>
+    <p><b>接下一張</b>：檢查與常見問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b30 CH01-L6#b31 CH01-L6#b32 CH01-L6#b33 CH01-L6#b34 CH01-L6#b35 CH01-L6#b36 CH01-L6#b37 CH01-L6#b38">
+  <div class="frame">
+    <div class="kicker">第 6 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒</h2>
+    <div class="body split">
+      <div>
+        <ol class="pts">
+          <li><b>字回來了</b>：說明是一行，沒有疊到提示。</li>
+          <li><b>設定留著</b>：Message 的 Resizing 是 Auto height，W 322、H 24。</li>
+          <li><b>對照範例</b>：範例的 Message 也已經改成同樣的設定。</li>
+        </ol>
+        <p><a class="btn" href="https://www.figma.com/design/dtoZeCT179DFgwHjOinKBP/" target="_blank" rel="noopener">打開範例對照</a></p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">常見問題</div>
+        <ul class="pts">
+          <li><b>只有一部分字反白</b>：Esc 離開，回 Layers 點 Message 再雙擊。</li>
+          <li><b>多出一段新的字</b>：用到了文字工具，刪掉從第 2 步重來。</li>
+          <li><b>W 還是灰的</b>：確認選到的是 Message。</li>
+          <li><b>打了 322 沒變</b>：先點進 W 欄看到數字反白再打。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項自我檢查與四個常見問題；若 Opacity 等其他欄位被改到，改回原值（Opacity 是 100%）。</p>
+    <p><b>對應講義</b>：做完之後／檢查自己做對了沒、常見問題。</p>
+    <p><b>接下一張</b>：這一份學到的事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L6#b39 CH01-L6#b40 CH01-L6#b41 CH01-L6#b42 CH01-L6#b43 CH01-L6#b44">
+  <div class="frame">
+    <div class="kicker">第 6 份｜做完之後</div>
+    <h2 class="h-xl">這一份學到的事</h2>
+    <div class="body split">
+      <ul class="pts">
+        <li><b>Auto width</b> 不換行、往右長；<b>Auto height</b> 寬度自己定、往下長。可能變長的字用 Auto height。</li>
+        <li>畫面要用「最長、最極端的內容」測過，不能只用剛好好看的短句。</li>
+        <li>固定高度的卡片不會跟著內容長高，要等第三章的 Auto layout 解決。</li>
+      </ul>
+      <div class="card-box">
+        <div class="h-md">自己想一想</div>
+        <ol class="pts">
+          <li>Title「登入工作室」用 Auto width 會不會有問題？什麼樣的字適合 Auto height？</li>
+          <li>為什麼長句換行之後，還是會蓋到「請輸入工作室帳號」？</li>
+          <li>沒做這個測試就交出去，成員會在手機上遇到什麼？</li>
+        </ol>
+      </div>
+    </div>
+    <p class="next">下一份：先檢查這些顏色在手機上看不看得清楚；再下一份把規則寫成一張規則表。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三個重點與三個思考題；第一章四樣成果目前文字樣式有 4 種，第 5 種在做規則表那一份補上。</p>
+    <p><b>對應講義</b>：這一份學到的事、自己想一想、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 7 份，對比檢查。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L7 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L7#b02 CH01-L7#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 7 份</div>
+    <h1 class="h-hero">對比檢查</h1>
+    <p class="lead">「看得清楚」不能只靠感覺。這一份用一個數字，檢查每一組字和底色。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：顏色是照規則選的，但要用數字確認看得清楚。</p>
+    <p><b>對應講義</b>：第 7 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼不能憑感覺。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L7#b05 CH01-L7#b06 CH01-L7#b07 CH01-L7#b08 CH01-L7#b09">
+  <div class="frame">
+    <div class="kicker">第 7 份｜開始前</div>
+    <h2 class="h-xl">你看得清楚，不代表成員看得清楚</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>成員可能站在客戶現場很快看一眼；有人眼睛容易累，有人把螢幕亮度調得很低。</li>
+          <li>設計師不憑感覺說「我覺得夠清楚」，而是用一個大家都認的數字來檢查：<b>對比</b>。</li>
+          <li>這一份<b>不改 Figma 裡的任何東西</b>，只從色卡抄色碼來檢查。</li>
+        </ul>
+      </div>
+      <div class="card-box">
+        <div class="h-md">做完這一份，你會：</div>
+        <ul class="pts">
+          <li>知道對比是什麼、要過幾分</li>
+          <li>會從色卡抄出色碼，用檢查器算出對比</li>
+          <li>確認登入卡片上三組顏色都合格</li>
+        </ul>
+        <p class="cap">三組結果要在對話裡回報，下一份做規則表時會寫進 Figma。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：把每一組字加底色都檢查一次，開場講的做得到、做得快才有可能。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做。</p>
+    <p><b>接下一張</b>：對比是什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L7#b10 CH01-L7#b11 CH01-L7#b12 CH01-L7#b13 CH01-L7#b14">
+  <div class="frame">
+    <div class="kicker">第 7 份｜先認識一件新的事</div>
+    <h2 class="h-xl">對比：字的顏色和底的顏色亮暗差多少</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>比值</th><th>意思</th></tr>
+        <tr><td><b>1:1</b></td><td>字和底一模一樣的顏色，完全看不到。</td></tr>
+        <tr><td><b>21:1</b></td><td>白底黑字，差到最大。</td></tr>
+        <tr><td><b>4.5:1</b> 以上</td><td>一般大小的字要過的門檻。國際網頁規範（W3C 的 WCAG）定的最低標準，這門課的字一律用它檢查。</td></tr>
+      </table>
+      <p class="callout">4.5 是<b>最低門檻</b>，不是「過了就好用」。它只保證「看得到」，字的大小、順序、按鈕是不是醒目，還是要靠前面學的規則。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：對比用比值表示，例如 4.5:1 念作 4.5 比 1；對比要用工具算，眼睛估不準。</p>
+    <p><b>對應講義</b>：先認識一件新的事：對比。</p>
+    <p><b>接下一張</b>：第一段，找出要檢查的色碼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L7#b15 CH01-L7#b16 CH01-L7#b17">
+  <div class="frame">
+    <div class="kicker">第 7 份｜第一段：找出要檢查的色碼</div>
+    <h2 class="h-xl"><span class="num">1</span>打開色卡，抄下色碼</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="body-zh">點 <b>Variables</b>，把 <b>Text、Muted、Card、Primary</b> 的色碼抄下來。</p>
+        <table class="tb small">
+          <tr><th>卡片上的字</th><th>字的顏色</th><th>底的顏色</th></tr>
+          <tr><td>Title、Message</td><td><span class="sw" style="background:#1E293B"></span>Text</td><td><span class="sw" style="background:#FFFFFF"></span>Card</td></tr>
+          <tr><td>Hint</td><td><span class="sw" style="background:#5F6C80"></span>Muted</td><td><span class="sw" style="background:#FFFFFF"></span>Card</td></tr>
+          <tr><td>按鈕上的 Label「登入」</td><td><span class="sw" style="background:#FFFFFF"></span>Card（白）</td><td><span class="sw" style="background:#245B45"></span>Primary</td></tr>
+        </table>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L7-1-色卡色碼.png" alt="色卡色碼"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：卡片上有三組字加底色要檢查。不確定的話，在 Layers 點那段字看 Fill，再點外面那一層看 Fill。</p>
+    <p><b>對應講義</b>：第一段，第 1 步與顏色組合表。</p>
+    <p><b>接下一張</b>：先看一組不合格的長什麼樣。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L7#b18 CH01-L7#b19">
+  <div class="frame">
+    <div class="kicker">第 7 份｜第二段：先看一組不合格的長什麼樣</div>
+    <h2 class="h-xl"><span class="num">2</span>更淡的灰：文字 94A3B8、背景 FFFFFF</h2>
+    <div class="body">
+      <div class="ratio-row fail">
+        <span class="sw lg" style="background:#94A3B8"></span><code>94A3B8</code>
+        <span class="on">在</span>
+        <span class="sw lg" style="background:#FFFFFF"></span><code>FFFFFF</code>
+        <span class="val">2.56:1</span><span class="tag-r">不通過</span>
+      </div>
+      <ul class="pts big">
+        <li>這一組不是你卡片上的顏色：假設提示文字改用一個更淡的灰色。</li>
+        <li>盯著看還讀得出來，但在手機上很快瞄一眼就容易漏掉。</li>
+        <li>在你的大螢幕上也許「還好」，但數字告訴你它離門檻還差很多。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先讓學員看過不合格的樣子，再回來檢查自己的卡片。講義這一步有互動檢查器，投影片只列結果。</p>
+    <p><b>對應講義</b>：第二段，第 2 步。</p>
+    <p><b>接下一張</b>：第三段，檢查自己的卡片。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L7#b20 CH01-L7#b21 CH01-L7#b22 CH01-L7#b23">
+  <div class="frame">
+    <div class="kicker">第 7 份｜第三段：檢查自己的卡片</div>
+    <h2 class="h-xl"><span class="num">3</span><span class="num">4</span><span class="num">5</span>三組都通過</h2>
+    <div class="body">
+      <div class="ratio-row pass">
+        <span class="lbl">標題和說明</span>
+        <span class="sw lg" style="background:#1E293B"></span>Text <span class="on">在</span> <span class="sw lg" style="background:#FFFFFF"></span>Card
+        <span class="val">14.62:1</span><span class="tag-g">通過</span>
+      </div>
+      <div class="ratio-row pass">
+        <span class="lbl">提示</span>
+        <span class="sw lg" style="background:#5F6C80"></span>Muted <span class="on">在</span> <span class="sw lg" style="background:#FFFFFF"></span>Card
+        <span class="val">5.32:1</span><span class="tag-g">通過</span>
+      </div>
+      <div class="ratio-row pass">
+        <span class="lbl">按鈕</span>
+        <span class="sw lg" style="background:#FFFFFF"></span>Card（白）<span class="on">在</span> <span class="sw lg" style="background:#245B45"></span>Primary
+        <span class="val">7.90:1</span><span class="tag-g">通過</span>
+      </div>
+      <p class="callout">Muted 是「夠淡、又剛好過門檻」的灰：提示要比說明淡，眼睛才會先讀說明、再讀提示；但不能淡到不通過。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：標題和說明最重要，用最深的 Text，遠遠超過 4.5；提示比剛剛的 14.62 低很多但通過；按鈕上的字一定要清楚。</p>
+    <p><b>對應講義</b>：第三段，第 3 到 5 步。</p>
+    <p><b>接下一張</b>：記下結果與常見問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L7#b24 CH01-L7#b25 CH01-L7#b26 CH01-L7#b27 CH01-L7#b28 CH01-L7#b29 CH01-L7#b30">
+  <div class="frame">
+    <div class="kicker">第 7 份｜做完之後</div>
+    <h2 class="h-xl">記下你的結果</h2>
+    <div class="body split">
+      <div>
+        <p class="body-zh">在對話裡把三組結果打給講師：每組寫文字色碼、背景色碼、比值、通過或不通過。</p>
+        <p class="lead">對照答案：14.62、5.32、7.90，三組都通過。</p>
+        <p class="cap">數字一樣，就表示你的色卡色碼和範例一致。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">常見問題</div>
+        <ul class="pts">
+          <li><b>請輸入六位色碼</b>：只能是 0～9 和 A～F；常見把數字 0 打成英文 O。</li>
+          <li><b>比值差一點點</b>：確認抄的色碼和色卡一模一樣。</li>
+          <li><b>工作上檢查別的顏色</b>：WebAIM 的對比檢查器，Foreground 填文字、Background 填背景。</li>
+        </ul>
+        <p><a class="btn" href="https://webaim.org/resources/contrastchecker/" target="_blank" rel="noopener">打開 WebAIM 對比檢查器</a></p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回報格式與標準答案；填反文字和背景比值不會變，但預覽會很奇怪。WebAIM 和講義的檢查器用的是同一套 W3C 公式。</p>
+    <p><b>對應講義</b>：做完之後／記下你的結果、常見問題。</p>
+    <p><b>接下一張</b>：這一份學到的事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L7#b31 CH01-L7#b32 CH01-L7#b33 CH01-L7#b34 CH01-L7#b35 CH01-L7#b36">
+  <div class="frame">
+    <div class="kicker">第 7 份｜做完之後</div>
+    <h2 class="h-xl">這一份學到的事</h2>
+    <div class="body split">
+      <ul class="pts">
+        <li><b>對比</b>是字和底的亮暗差，一般大小的字至少要 <b>4.5:1</b>。</li>
+        <li>「看得清楚」用數字檢查，不憑自己螢幕上的感覺。</li>
+        <li>次要的字可以淡，但不能淡到不通過；Muted 就是照這個原則選的。</li>
+        <li>通過門檻只代表「看得到」，不代表整張畫面好用。</li>
+      </ul>
+      <div class="card-box">
+        <div class="h-md">自己想一想</div>
+        <ol class="pts">
+          <li>如果主管說「提示字再淡一點比較好看」，你會怎麼回應？</li>
+          <li>三組都通過了，是不是代表這張登入畫面已經很好用？還要看什麼？</li>
+        </ol>
+      </div>
+    </div>
+    <p class="next">下一份：第四樣成果<b>規則表</b>，把顏色、色碼、用途、對比和長句問題全部寫下來。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四個重點與兩個思考題，預告規則表。</p>
+    <p><b>對應講義</b>：這一份學到的事、自己想一想、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 8 份，規則表。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L8 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L8#b02 CH01-L8#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 8 份</div>
+    <h1 class="h-hero">規則表</h1>
+    <p class="lead">做第一章的最後一樣成果：一張寫清楚「顏色和文字怎麼用」的規則表。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：開場說的四樣成果，這一份做最後一樣。</p>
+    <p><b>對應講義</b>：第 8 份的標題與導言。</p>
+    <p><b>接下一張</b>：規則表要回答的問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b05 CH01-L8#b06 CH01-L8#b07 CH01-L8#b08 CH01-L8#b09">
+  <div class="frame">
+    <div class="kicker">第 8 份｜開始前</div>
+    <h2 class="h-xl">每個人都會問同樣的問題</h2>
+    <div class="body split">
+      <div>
+        <div class="callout q">「提示文字用哪個顏色？」</div>
+        <div class="callout q">「按鈕上的字多大？」</div>
+        <div class="callout q">「這個灰色過對比了嗎？」</div>
+        <p class="body-zh">規則表就是這些問題的答案，寫在 Figma 裡、就放在手機畫面旁邊。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">做完這一份，你會有：</div>
+        <ul class="pts">
+          <li>手機畫面右邊一張白色的「Rules｜視覺規則」，分成色彩角色、文字樣式、檢查紀錄三區</li>
+          <li>第五種文字樣式「區段標題」</li>
+        </ul>
+        <p class="cap">需要先有：第 7 份記下的三組對比（14.62、5.32、7.90）。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：之後畫清單、詳情、確認視窗，可能是自己或同事，還要交給工程師；前面七份定下的色卡、文字樣式、對比檢查和長句測試，整理成一張表。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做。</p>
+    <p><b>接下一張</b>：這一份會新增的第五種文字樣式。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b10 CH01-L8#b11 CH01-L8#b12 CH01-L8#b13 CH01-L8#b14 CH01-L8#b15 CH01-L8#b16">
+  <div class="frame">
+    <div class="kicker">第 8 份｜開始前</div>
+    <h2 class="h-xl">第五種樣式，以及新打的字不會自己長對</h2>
+    <div class="body">
+      <p class="lead"><b>Type/Section title</b>（區段標題）：18/28 Bold，用在規則表每一區的小標題。比畫面標題小、比內文大而且粗。</p>
+      <table class="tb">
+        <tr><th>設定</th><th>新打的字會怎樣</th><th>要做的事</th></tr>
+        <tr><td><b>文字樣式</b></td><td>有時是 Figma 預設的 Inter 12，有時會沿用你上一次用過的樣式。都不一定是你要的。</td><td>從樣式清單選對的那一種</td></tr>
+        <tr><td><b>顏色</b></td><td>一律是黑色 <code>000000</code>，不會用色卡的顏色。</td><td>Fill 改選 Text</td></tr>
+      </table>
+      <p class="body-zh">黑色沒有接上色卡。哪天 Text 的顏色要改，這段字不會跟著變，就回到開場說的「漏一個就穿幫」。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：區段標題的用途；這一份要打很多段新字，每段都要自己處理樣式和顏色。</p>
+    <p><b>對應講義</b>：第五種文字樣式，以及這一份會遇到的新事情。</p>
+    <p><b>接下一張</b>：第一段，準備規則表的紙。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b17 CH01-L8#b18 CH01-L8#b19 CH01-L8#b20">
+  <div class="frame">
+    <div class="kicker">第 8 份｜第一段：準備規則表的紙</div>
+    <h2 class="h-xl"><span class="num">1</span><span class="num">2</span>拉出 Rules：X 480、Y 0、W 600、H 720</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>先取消選取，<b>Frame 工具</b>在手機畫面右邊拉一個框，和 Screen / Login 同一層。</li>
+          <li>改名 <b>Rules</b>；填 <b>X 480、Y 0、W 600、H 720</b>；Fill 選 <b>Card</b>。</li>
+          <li>手機寬 402，從 X 480 開始，中間留一點空，並排看得清楚。</li>
+          <li>600 × 720 是先留夠的大小，之後幾份還會往表裡加東西。</li>
+        </ul>
+        <p class="see">做完會看到：手機畫面右邊一張白色的紙，Fill 顯示 <b>Card</b>。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L8-2-Rules位置大小.png" alt="Rules 位置大小"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：規則表這張紙的位置與尺寸的理由。畫面跑掉時，點 Rules 再用 View 裡的 Zoom to selection。</p>
+    <p><b>對應講義</b>：第一段，第 1、2 步。</p>
+    <p><b>接下一張</b>：第二段，打標題並套用已經建好的樣式。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b21 CH01-L8#b22 CH01-L8#b23 CH01-L8#b24">
+  <div class="frame">
+    <div class="kicker">第 8 份｜第二段：標題，學會套用已經建好的樣式</div>
+    <h2 class="h-xl"><span class="num">3</span><span class="num">4</span><span class="num">5</span>打標題，套 Page title，顏色 Text</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>文字工具在白紙左上角打「Rules｜視覺規則」，按 Esc。</li>
+          <li>打開 Text styles 清單：還沒套樣式點<b>四點圖示</b>；已經套著樣式就直接點<b>樣式名那一行</b>。</li>
+          <li>在 Type 底下點 <b>Page title</b>。</li>
+          <li>Fill 從 <code>000000</code> 改選 <b>Text</b>；Position <b>X 32、Y 32</b>。</li>
+        </ul>
+        <p class="body-zh">套用已經建好的樣式：從清單點一下就好，不用再一項一項設定。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L8-5-套用Page-title.png" alt="套用 Page title"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩種打開樣式清單的方法，看 Typography 現在顯示什麼來決定；之後每段新字都這樣做。</p>
+    <p><b>對應講義</b>：第二段，第 3 到 5 步。</p>
+    <p><b>接下一張</b>：第三段，建第五種文字樣式。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b25 CH01-L8#b26 CH01-L8#b27 CH01-L8#b28">
+  <div class="frame">
+    <div class="kicker">第 8 份｜第三段：建第五種文字樣式「區段標題」</div>
+    <h2 class="h-xl"><span class="num">6</span><span class="num">7</span><span class="num">8</span>打小標題，斷開，改成 18 / 28</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>打「色彩角色」，按 Esc。它自動套上了 Page title，但顏色還是 <code>000000</code>。</li>
+          <li>滑鼠移到「Type/Page title」那一行，點<b>斷開圖示</b>。</li>
+          <li>粗細維持 <b>Bold</b>；字級 24 → <b>18</b>，Line height 32 → <b>28</b>。</li>
+        </ul>
+        <p class="body-zh">比畫面標題（24）小、比內文（16）大，一眼看得出「這是一區的開頭」。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L8-10-改成18-28.png" alt="改成 18/28"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：樣式可能沿用上一次，顏色不會；斷開只影響這段字，Page title 樣式本身和標題都不會變。</p>
+    <p><b>對應講義</b>：第三段，第 6 到 8 步。</p>
+    <p><b>接下一張</b>：存成新樣式。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b29 CH01-L8#b30">
+  <div class="frame">
+    <div class="kicker">第 8 份｜第三段：建第五種文字樣式「區段標題」</div>
+    <h2 class="h-xl"><span class="num">9</span><span class="num">10</span>存成 Type/Section title，顏色 Text</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>四點圖示 → Text styles 清單右上 <b>+</b>。</li>
+          <li>Name 打 <b>Type/Section title</b>，點 <b>Create style</b>。</li>
+          <li>Fill 選 <b>Text</b>；Position <b>X 32、Y 96</b>。</li>
+        </ul>
+        <p class="see">做完會看到：Typography 顯示 <b>Type/Section title · 18/28</b>。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L8-12-套上Section-title.png" alt="套上 Section title"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：名字前面的 Type/ 會讓它跟另外四種放在同一個 Type 資料夾。</p>
+    <p><b>對應講義</b>：第三段，第 9、10 步。</p>
+    <p><b>接下一張</b>：第四段，一段多行的清單。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b31 CH01-L8#b32 CH01-L8#b33">
+  <div class="frame">
+    <div class="kicker">第 8 份｜第四段：一段多行的清單</div>
+    <h2 class="h-xl"><span class="num">11</span><span class="num">12</span>打色彩清單，套 Body，X 32、Y 132</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="copy">Primary　245B45　主要動作：登入按鈕
+Surface　F5F7FA　畫面底色：手機背景
+Card　FFFFFF　卡片底色；目前也當按鈕上的白字
+Text　1E293B　主要文字：標題、說明
+Muted　5F6C80　次要文字：提示</p>
+        <ul class="pts">
+          <li>每打完一行按 <b>Enter</b>；同一段字裡按 Enter 是換行，不是新增一段字。</li>
+          <li>點<b>樣式名那一行</b>換成 <b>Body</b>；Fill 選 <b>Text</b>。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L8-15-點樣式名換樣式.png" alt="點樣式名換樣式"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：多行清單在同一段字裡；Card 那一行照實寫，規則表要寫真實的用法。這段字套著 Section title 時標題列沒有四點圖示，要直接點樣式名。</p>
+    <p><b>對應講義</b>：第四段，第 11、12 步。</p>
+    <p><b>接下一張</b>：第五段，剩下兩區照表做。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b34 CH01-L8#b35">
+  <div class="frame">
+    <div class="kicker">第 8 份｜第五段：剩下兩區照表做</div>
+    <h2 class="h-xl"><span class="num">13</span>照表打完剩下四段字</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb small">
+          <tr><th>要打的字</th><th>樣式</th><th>Y</th></tr>
+          <tr><td>文字樣式</td><td>Section title</td><td>284</td></tr>
+          <tr><td>五種樣式設定（五行）</td><td>Body</td><td>320</td></tr>
+          <tr><td>檢查紀錄</td><td>Section title</td><td>472</td></tr>
+          <tr><td>三組對比與長句結論（四行）</td><td>Body</td><td>508</td></tr>
+        </table>
+        <p class="body-zh">每一列：打字 → 選樣式 → Fill 選 Text → X <b>32</b>、Y 照表。</p>
+        <p class="see">做完會看到：標題與色彩角色、文字樣式、檢查紀錄三區；Rules 底下有 7 段字。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L8-14-規則表完成.png" alt="規則表完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：新字會沿用上一段的樣式，每段都要看一下 Typography 是不是表裡那一種。實際要打的文字以講義的複製框為準。</p>
+    <p><b>對應講義</b>：第五段，第 13 步。</p>
+    <p><b>接下一張</b>：檢查自己做對了沒。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b36 CH01-L8#b37 CH01-L8#b38 CH01-L8#b39 CH01-L8#b40 CH01-L8#b41 CH01-L8#b42 CH01-L8#b43 CH01-L8#b44">
+  <div class="frame">
+    <div class="kicker">第 8 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒</h2>
+    <div class="body split">
+      <div>
+        <ol class="pts">
+          <li><b>五種樣式</b>：Page title、Body、Supporting、Label、Section title。</li>
+          <li><b>每段字都接上色卡</b>：Rules 底下的 7 段字，Fill 都是 <b>Text</b>。</li>
+          <li><b>樣式對</b>：標題 Page title，三個小標題 Section title，三段清單 Body。</li>
+        </ol>
+        <p class="cap">範例的規則表內容比你的多（17 個顏色、主色的四種用法等），那些是後面幾份才會加的。</p>
+        <p><a class="btn" href="https://www.figma.com/design/dtoZeCT179DFgwHjOinKBP/" target="_blank" rel="noopener">打開範例對照</a></p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">常見問題</div>
+        <ul class="pts">
+          <li><b>字沒有縮排在 Rules 底下</b>：拖到 Rules 那一行上，再重填 X、Y。</li>
+          <li><b>清單變成很長的一行</b>：打字時沒按 Enter 換行。</li>
+          <li><b>清單裡沒有 Type</b>：確認選到的是一段字，不是 Rules 這張紙。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項自我檢查；對照範例時先比五色色碼、五種文字樣式設定、三組對比數字和長句結論。</p>
+    <p><b>對應講義</b>：做完之後／檢查自己做對了沒、常見問題。</p>
+    <p><b>接下一張</b>：這一份學到的事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L8#b45 CH01-L8#b46 CH01-L8#b47 CH01-L8#b48 CH01-L8#b49 CH01-L8#b50">
+  <div class="frame">
+    <div class="kicker">第 8 份｜做完之後</div>
+    <h2 class="h-xl">這一份學到的事</h2>
+    <div class="body split">
+      <ul class="pts">
+        <li><b>規則表</b>是把顏色和文字的用法寫下來，給之後的畫面、同事和工程師照著用。</li>
+        <li>新打的字每段都要自己<b>套樣式、選色卡顏色</b>。</li>
+        <li>從現有的字做新樣式：先<b>斷開</b>，再<b>改設定</b>，最後<b>存成新樣式</b>。</li>
+        <li>在同一段字裡按 Enter 是換行，不會多一段字。</li>
+      </ul>
+      <div class="card-box">
+        <div class="h-md">自己想一想</div>
+        <ol class="pts">
+          <li>同事要畫任務清單，「期限」想用淺一點的灰。他應該先看規則表的哪一區、哪一行？</li>
+          <li>新打的字一直用黑色 000000，畫面看起來差不多，之後會出什麼問題？</li>
+        </ol>
+      </div>
+    </div>
+    <p class="next">下一份：把登入畫面縮小看，確認閱讀順序；再試試把主按鈕換成灰色。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四個重點與兩個思考題；預告用測試檢查規則有沒有發揮作用。</p>
+    <p><b>對應講義</b>：這一份學到的事、自己想一想、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 9 份，閱讀順序與主色。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L9 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L9#b02 CH01-L9#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 9 份</div>
+    <h1 class="h-hero">閱讀順序與主色</h1>
+    <p class="lead">規則都定好、也套上去了。這一份用兩個小測試，看看這些規則在畫面上有沒有真的發揮作用。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用測試確認規則有沒有發揮作用。</p>
+    <p><b>對應講義</b>：第 9 份的標題與導言。</p>
+    <p><b>接下一張</b>：兩個測試是什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L9#b05 CH01-L9#b06 CH01-L9#b07 CH01-L9#b08 CH01-L9#b15">
+  <div class="frame">
+    <div class="kicker">第 9 份｜開始前</div>
+    <h2 class="h-xl">那一眼看到什麼，比每個字多漂亮都重要</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li><b>測試一</b>：把整個主線縮小，看登入畫面第一眼先看到什麼。</li>
+          <li><b>測試二</b>：把主按鈕暫時換成灰色，跟原本比較。</li>
+          <li>最後把兩個測試的結論寫進規則表，按鈕改回綠色。</li>
+        </ul>
+        <p class="body-zh">第 4 份、第 5 份講的閱讀順序和主色，都是「設計時的打算」；這兩個測試確認它有沒有成真。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">做完這一份，你會：</div>
+        <ul class="pts">
+          <li>會用縮小的方法檢查閱讀順序</li>
+          <li>說得出為什麼主色只給最重要的那一個動作</li>
+          <li>規則表多兩行你自己寫的結論</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：成員拿起手機只想很快看一眼就知道這是什麼畫面、要按哪裡。登入畫面最後會和現在一樣，唯一留下的是寫進規則表的兩句結論。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做，與成果框。</p>
+    <p><b>接下一張</b>：什麼是閱讀順序。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L9#b09 CH01-L9#b10 CH01-L9#b11 CH01-L9#b12 CH01-L9#b13 CH01-L9#b14">
+  <div class="frame">
+    <div class="kicker">第 9 份｜先認識一件新的事</div>
+    <h2 class="h-xl">閱讀順序：眼睛在畫面上移動的先後</h2>
+    <div class="body">
+      <p class="body-zh">不是用箭頭規定的，而是由線索決定：越大、越粗、顏色越深或越鮮明、越上面的東西，越先被看到。</p>
+      <div class="demo demo-l9">
+<div class="three">
+  <figure><div class="ph"><div class="card"><div class="t">登入工作室</div><div class="m">登入後檢視待處理的任務。</div><div class="h">請輸入工作室帳號</div><div class="b">登入</div></div></div><figcaption>原本的樣子</figcaption></figure>
+  <figure><div class="ph blur"><div class="card"><div class="t">登入工作室</div><div class="m">登入後檢視待處理的任務。</div><div class="h">請輸入工作室帳號</div><div class="b">登入</div></div></div><figcaption>縮小、遠看<br>還認得出標題和綠色按鈕</figcaption></figure>
+  <figure><div class="ph gray"><div class="card"><div class="t">登入工作室</div><div class="m">登入後檢視待處理的任務。</div><div class="h">請輸入工作室帳號</div><div class="b">登入</div></div></div><figcaption>只看字（去掉顏色）<br>靠大小粗細仍分得出層次</figcaption></figure>
+</div>
+      </div>
+      <p class="body-zh">好的畫面同時用兩種線索：字的大小粗細（文字樣式）和顏色（色卡）。一種變弱時，另一種還撐得住。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三張是同一張卡片：原樣、縮小遠看、去掉顏色；例如陽光下顏色看不清楚，還有大小粗細撐著。這三張是講義用網頁畫的示意圖，不是 Figma 截圖。</p>
+    <p><b>對應講義</b>：先認識一件新的事：閱讀順序。</p>
+    <p><b>接下一張</b>：第一段，在 Figma 裡縮小看。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L9#b16 CH01-L9#b17 CH01-L9#b18 CH01-L9#b19">
+  <div class="frame">
+    <div class="kicker">第 9 份｜第一段：縮小看</div>
+    <h2 class="h-xl"><span class="num">1</span><span class="num">2</span>Zoom to fit，問自己：第一眼看到什麼？</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>右上角百分比 → <b>Zoom to fit</b>，手機畫面變得很小：模擬成員很快瞄一眼。</li>
+          <li>依序說出第一眼、第二眼看到的東西，不要湊近讀字。</li>
+        </ul>
+        <p class="see">應該會是：最先跳出來的是<b>綠色按鈕</b>和<b>最大最粗的標題</b>；說明和提示糊成灰灰的兩條線。</p>
+        <p class="body-zh">真的開始讀時，從標題開始，依序讀說明、提示，最後停在綠色按鈕上按下去。</p>
+      </div>
+      <figure class="shot small-img"><img src="assets/ch01/L9-1b-縮小近看.png" alt="縮小近看"><figcaption>縮小時的手機畫面（放大給你看）</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這就是設計的閱讀順序：按鈕最醒目，但它是讀完之後才去按的地方。</p>
+    <p><b>對應講義</b>：第一段，第 1、2 步。</p>
+    <p><b>接下一張</b>：第二段，把主按鈕換成灰色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L9#b20 CH01-L9#b21 CH01-L9#b22 CH01-L9#b23">
+  <div class="frame">
+    <div class="kicker">第 9 份｜第二段：把主按鈕換成灰色</div>
+    <h2 class="h-xl"><span class="num">3</span><span class="num">4</span><span class="num">5</span>不放大，Button / Draft 的 Fill 換成 Muted</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>保持縮小，在 Layers 展開到 <b>Button / Draft</b> 點它。</li>
+          <li>Fill 四點圖示 → 點 <b>Muted</b>。</li>
+          <li>白字在 Muted 上對比 <b>5.32:1</b>，<b>一樣通過</b>，但成員已經看不出「這是要按的地方」。</li>
+        </ul>
+        <p class="callout"><b>Primary 只給畫面上最重要的那一個動作。</b>每個按鈕都用主色，就跟全部用灰色一樣，誰都不突出。</p>
+      </div>
+      <div class="pair">
+        <figure><img src="assets/ch01/L9-1b-縮小近看.png" alt="原本"><figcaption>按鈕是 Primary</figcaption></figure>
+        <figure><img src="assets/ch01/L9-5b-變灰近看.png" alt="變灰"><figcaption>按鈕改成 Muted</figcaption></figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：不放大是為了在縮小的樣子裡直接看到變化；按鈕變灰後眼睛不知道該停在哪。這組對比就是第 7 份提示文字那一組，只是前後顛倒：通過對比只代表看得到，不代表好用。</p>
+    <p><b>對應講義</b>：第二段，第 3 到 5 步。</p>
+    <p><b>接下一張</b>：改回 Primary，並把結論寫進規則表。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L9#b24 CH01-L9#b25 CH01-L9#b26 CH01-L9#b27 CH01-L9#b28">
+  <div class="frame">
+    <div class="kicker">第 9 份｜第二段・第三段</div>
+    <h2 class="h-xl"><span class="num">6</span>改回 Primary，把結論寫進規則表</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>Button / Draft 的 Fill 選回 <b>Primary</b>，登入畫面又和開始前一模一樣。</li>
+        <li>在規則表「檢查紀錄」最下面，追加兩行文字：</li>
+      </ul>
+      <div class="card-box">
+        <p class="body-zh">閱讀順序：［用自己的話記錄縮小看時，先看到什麼、後看到什麼，以及看起來的印象］</p>
+        <p class="body-zh">主按鈕改 Muted：［用自己的話記錄按鈕變灰後看起來怎樣，以及得到的規則］</p>
+      </div>
+      <p class="cap">方括號裡換成你自己的話，方括號不用打。之後畫清單、詳情時，打開規則表就記得這兩條規則。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：按鈕改回原樣；兩行結論的格式，用自己的話寫。</p>
+    <p><b>對應講義</b>：第二段第 6 步、第三段開頭的格式說明。</p>
+    <p><b>接下一張</b>：一步一步把結論打進規則表。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L9#b29 CH01-L9#b30 CH01-L9#b31 CH01-L9#b32">
+  <div class="frame">
+    <div class="kicker">第 9 份｜第三段：寫進規則表</div>
+    <h2 class="h-xl"><span class="num">7</span><span class="num">8</span><span class="num">9</span><span class="num">10</span>打兩行結論，Body、Text、X 32、Y 636</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Layers 點 <b>Rules</b> → View → <b>Zoom to selection</b>。</li>
+          <li>在「長句……」那一行下面、靠左點一下，打兩行，中間按 Enter，打完按 Esc。</li>
+          <li>樣式換成 <b>Body</b>；Fill 選 <b>Text</b>。</li>
+          <li>X 32 和其他字對齊左邊；Y 636 在長句那一行下面、再空一點。</li>
+        </ul>
+        <p class="see">做完會看到：Rules 底下共有 8 段字。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L9-9-結論完成.png" alt="結論完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：和第 8 份同樣的節奏：打字、換樣式、換顏色、填位置。</p>
+    <p><b>對應講義</b>：第三段，第 7 到 10 步。</p>
+    <p><b>接下一張</b>：檢查與這一份學到的事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L9#b33 CH01-L9#b34 CH01-L9#b35 CH01-L9#b36 CH01-L9#b37 CH01-L9#b38 CH01-L9#b39 CH01-L9#b40 CH01-L9#b41 CH01-L9#b42 CH01-L9#b43">
+  <div class="frame">
+    <div class="kicker">第 9 份｜做完之後</div>
+    <h2 class="h-xl">檢查・這一份學到的事</h2>
+    <div class="body split">
+      <div>
+        <ol class="pts">
+          <li><b>按鈕改回來了</b>：Button / Draft 的 Fill 是 <b>Primary</b>。</li>
+          <li><b>結論寫進去了</b>：Rules 底下 8 段字，最後一段樣式 Body、Fill Text。</li>
+        </ol>
+        <p class="body-zh">把你寫的兩行結論直接告訴講師，再打開範例對照說法。</p>
+        <p class="cap">常見問題：變灰的是「登入」兩個字，代表選到了 Label；Label 選回 Card，再選 Button / Draft。</p>
+      </div>
+      <ul class="pts">
+        <li><b>閱讀順序</b>由大小、粗細、顏色、位置決定；縮小看是最快的檢查方法。</li>
+        <li>好的畫面同時用文字樣式和顏色兩種線索。</li>
+        <li><b>主色只給最重要的那一個動作</b>；通過對比不等於使用者知道要按哪裡。</li>
+      </ul>
+    </div>
+    <p class="next">下一份：按鈕上的「登入」借用了卡片底色 Card 當字色，先處理這個問題。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩項檢查、一個常見問題、三個重點；已經選了色卡顏色的 Fill，一樣從四點圖示換。</p>
+    <p><b>對應講義</b>：做完之後、常見問題、這一份學到的事、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入第 10 份，按鈕上的字要有自己的顏色。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L10 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L10#b02 CH01-L10#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 10 份</div>
+    <h1 class="h-hero">按鈕上的字要有自己的顏色</h1>
+    <p class="lead">在色卡新增一個顏色 On Primary，把按鈕上「登入」的字色改成它，再把規則表的色彩清單改成六行。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：處理前面為了省事留下的借用問題。</p>
+    <p><b>對應講義</b>：第 10 份的標題與導言。</p>
+    <p><b>接下一張</b>：問題是什麼、為什麼現在就修。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L10#b05 CH01-L10#b06 CH01-L10#b07 CH01-L10#b08 CH01-L10#b09 CH01-L10#b10">
+  <div class="frame">
+    <div class="kicker">第 10 份｜開始前</div>
+    <h2 class="h-xl">「登入」借用了 Card 當字色</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>第 5 份做按鈕時，色卡裡的白色只有 Card 一個。但 Card 的用途是「卡片底色」。</li>
+          <li>假設主管說「卡片換成淡黃色比較溫暖」，你改了 Card，按鈕上的字也會跟著變黃。</li>
+          <li>現在只有一個「登入」借用 Card，改一次就好；下一份按鈕會複製成好幾顆，到那時才修就要一個一個找。</li>
+        </ul>
+      </div>
+      <div class="card-box">
+        <div class="h-md">這一份做三件事</div>
+        <ol class="pts">
+          <li>在色卡新增一個白色 <b>On Primary</b>（色碼 FFFFFF），意思是「放在主色上的字」。</li>
+          <li>把「登入」的字色，從 <b>Card</b> 改成 <b>On Primary</b>。</li>
+          <li>把規則表「色彩角色」的清單從五行改成六行。</li>
+        </ol>
+        <p class="cap">畫面看起來和現在一樣。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：一開始偷懶省下的一步，之後要花好幾倍的力氣補回來；先親眼看問題，再修好。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做。</p>
+    <p><b>接下一張</b>：第一段，親眼看到問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L10#b11 CH01-L10#b12 CH01-L10#b13 CH01-L10#b14 CH01-L10#b15">
+  <div class="frame">
+    <div class="kicker">第 10 份｜第一段：親眼看到問題</div>
+    <h2 class="h-xl"><span class="num">1</span><span class="num">2</span><span class="num">3</span>Card 暫時改黃，看哪些東西跟著變</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Variables → Card 的 Value 打 <b>FDE68A</b>，按 Enter。</li>
+          <li>關掉色卡看畫布（看不到就 Zoom to fit）。</li>
+          <li>看完把 Card 改回 <b>FFFFFF</b>。</li>
+        </ul>
+        <p class="see">做完會看到：三個地方變黃。卡片和規則表的白紙本來就用 Card，變黃是對的；但按鈕上的「登入」也變黃了。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L10-3-登入也變黃.png" alt="登入也變黃"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這就是借用 Card 造成的問題；改黃只是暫時的。</p>
+    <p><b>對應講義</b>：第一段，第 1 到 3 步。</p>
+    <p><b>接下一張</b>：第二段，新增按鈕字專用的顏色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L10#b16 CH01-L10#b17">
+  <div class="frame">
+    <div class="kicker">第 10 份｜第二段：新增按鈕字專用的顏色</div>
+    <h2 class="h-xl"><span class="num">4</span>在色卡新增 On Primary</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li><b>Create variable</b> → <b>Color</b>，名字打 <b>On Primary</b>，按 Enter。</li>
+          <li>Value 預設就是 <b>FFFFFF</b>，不用改。</li>
+          <li>名字寫的是用途：「放在 Primary（主色）上面的字」。以後主色上的字都用它。</li>
+        </ul>
+        <p class="see">做完會看到：色卡第六列是 <b>On Primary</b>。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L10-1-色卡六色.png" alt="色卡"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：和其他五個顏色一樣，名字寫用途，不寫顏色。</p>
+    <p><b>對應講義</b>：第二段，第 4 步。</p>
+    <p><b>接下一張</b>：第三段，「登入」改用 On Primary。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L10#b18 CH01-L10#b19 CH01-L10#b20">
+  <div class="frame">
+    <div class="kicker">第 10 份｜第三段：「登入」改用 On Primary</div>
+    <h2 class="h-xl"><span class="num">5</span><span class="num">6</span>選 Label，Fill 換成 On Primary</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>展開 主線、Screen / Login、Login / Card、Button / Draft，點 <b>Label</b>。Fill 顯示 <b>Card</b>。</li>
+          <li>Fill 四點圖示 → 點最下面的 <b>On Primary</b>。</li>
+        </ul>
+        <p class="see">做完會看到：Fill 顯示 <b>On Primary</b>。「登入」還是白色，因為兩個顏色都是 FFFFFF；不同的是它現在接到自己的顏色了。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L10-6-改成On-Primary.png" alt="改成 On Primary"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：畫面看起來沒變是正常的，改的是接到哪個名字。</p>
+    <p><b>對應講義</b>：第三段，第 5、6 步。</p>
+    <p><b>接下一張</b>：第四段，驗證問題修好了。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L10#b21 CH01-L10#b22">
+  <div class="frame">
+    <div class="kicker">第 10 份｜第四段：驗證問題修好了</div>
+    <h2 class="h-xl"><span class="num">7</span>再把 Card 改黃一次，看「登入」</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Card 的 Value 改成 <b>FDE68A</b>，關掉色卡看畫布。</li>
+        </ul>
+        <p class="see">做完會看到：卡片變黃，「登入」維持白色，代表問題修好了。</p>
+        <p class="warn">看完<b>一定要改回來</b>：Card 的 Value 改回 FFFFFF。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L10-7-登入維持白色.png" alt="登入維持白色"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用同一個測試驗證修好了；提醒一定要改回白色。</p>
+    <p><b>對應講義</b>：第四段，第 7 步。</p>
+    <p><b>接下一張</b>：第五段，規則表的色彩清單改成六行。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L10#b23 CH01-L10#b24 CH01-L10#b25">
+  <div class="frame">
+    <div class="kicker">第 10 份｜第五段：規則表的色彩清單改成六行</div>
+    <h2 class="h-xl"><span class="num">8</span><span class="num">9</span>整段反白，打新的六行</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Rules → Zoom to selection，在色彩清單上<b>連點兩下</b>，五行全部反白。</li>
+          <li>打新的六行，每行按 Enter，打完按 Esc。</li>
+        </ul>
+        <p class="copy">Primary　245B45　主要動作：登入按鈕
+Surface　F5F7FA　畫面底色：手機背景
+Card　FFFFFF　卡片底色：登入卡片、規則表
+Text　1E293B　主要文字：標題、說明
+Muted　5F6C80　次要文字：提示
+On Primary　FFFFFF　主色上的字：登入按鈕上的字</p>
+        <p class="cap">和原本比：Card 那一行改了用途，最後多了 On Primary 一行。樣式和顏色維持 Body、Text。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L10-9-清單六行.png" alt="清單六行"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：只有 Card 一行改寫、多一行 On Primary，其餘四行照舊。清單變長後和文字樣式那一區靠得很近，下一份會先往下移。</p>
+    <p><b>對應講義</b>：第五段，第 8、9 步。</p>
+    <p><b>接下一張</b>：檢查與這一份學到的事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L10#b26 CH01-L10#b27 CH01-L10#b28 CH01-L10#b29 CH01-L10#b30 CH01-L10#b31 CH01-L10#b32 CH01-L10#b33 CH01-L10#b34 CH01-L10#b35 CH01-L10#b36 CH01-L10#b37">
+  <div class="frame">
+    <div class="kicker">第 10 份｜做完之後</div>
+    <h2 class="h-xl">檢查・這一份學到的事</h2>
+    <div class="body split">
+      <div>
+        <ol class="pts">
+          <li><b>色卡</b>：六個顏色，<b>Card 是 FFFFFF</b>，On Primary 是 FFFFFF。</li>
+          <li><b>「登入」</b>：Label 的 Fill 顯示 <b>On Primary</b>。</li>
+          <li><b>規則表</b>：色彩清單六行，最後一行是 On Primary。</li>
+        </ol>
+        <p class="cap">卡片一直是黃色：第 7 步沒有改回來。</p>
+      </div>
+      <ul class="pts">
+        <li>一個顏色只負責一種用途。用途不同，就算顏色一樣，也要分成兩個顏色。</li>
+        <li>借用別的用途的顏色，當下省一步；之後要改時，就得一個一個找出借用的地方。</li>
+      </ul>
+    </div>
+    <p class="next">下一份：替主色加上三種變化：滑鼠移到按鈕上、按下按鈕、淡淡的主色底。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項檢查、兩個重點。範例的色卡也加了 On Primary，按鈕上的字都改用它；找不到 On Primary 時先確認第 4 步有建好。</p>
+    <p><b>對應講義</b>：做完之後、常見問題、這一份學到的事、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入下一份，主色的四種用法。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L11 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L11#b02 CH01-L11#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 11 份</div>
+    <h1 class="h-hero">主色的四種用法</h1>
+    <p class="lead">在色卡新增三個主色的變化，並在規則表加一區「主色的四種用法」，放三個參考樣本：滑鼠移上去的按鈕、按下去的按鈕、淺色的提示區。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：主色除了一般狀態，還有滑過、按下和淺底三種變化。</p>
+    <p><b>對應講義</b>：第 11 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼按鈕需要狀態。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b05 CH01-L11#b06 CH01-L11#b07 CH01-L11#b08 CH01-L11#b09 CH01-L11#b10">
+  <div class="frame">
+    <div class="kicker">第 11 份｜開始前</div>
+    <h2 class="h-xl">讓成員知道「這裡可以按」「我按到了」</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>按鈕被滑鼠移上去、被按下去時，如果顏色完全沒變，使用者會不確定「系統到底有沒有收到」。</li>
+          <li>有的成員整天坐在電腦前用滑鼠，有的在客戶現場用手機按。</li>
+          <li>這四種顏色都是主色的變化，都只用在最重要的那個動作上。</li>
+        </ul>
+      </div>
+      <div class="card-box">
+        <div class="h-md">這一份做四件事</div>
+        <ol class="pts">
+          <li>色卡新增 Primary Hover、Primary Pressed、Primary Soft。</li>
+          <li>把規則表下面兩區往下移一點，並把規則表加長。</li>
+          <li>規則表最下面加一區「主色的四種用法」。</li>
+          <li>複製登入按鈕，做成三個參考樣本。</li>
+        </ol>
+        <p class="cap">手機上的登入畫面不變。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：狀態色的理由；主色的規則延續第 9 份。參考樣本放在規則表，之後做原型時照著設定按鈕。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做。</p>
+    <p><b>接下一張</b>：狀態是什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b11 CH01-L11#b12 CH01-L11#b13 CH01-L11#b14">
+  <div class="frame">
+    <div class="kicker">第 11 份｜先認識一件新的事</div>
+    <h2 class="h-xl">狀態：同一個按鈕在不同時刻的樣子</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>狀態</th><th>什麼時候</th><th>用的顏色</th></tr>
+        <tr><td>一般</td><td>按鈕平常的樣子</td><td><span class="sw" style="background:#245B45"></span>Primary</td></tr>
+        <tr><td>滑過</td><td>滑鼠停在按鈕上面</td><td><span class="sw" style="background:#2F6E55"></span>Primary Hover（稍亮）</td></tr>
+        <tr><td>按下</td><td>手指或滑鼠按下去的那一刻</td><td><span class="sw" style="background:#1B4535"></span>Primary Pressed（較深）</td></tr>
+      </table>
+      <p class="body-zh"><span class="sw" style="background:#E8F0EC"></span><b>Primary Soft</b> 不是按鈕的狀態，是淡淡的主色，用在提示區的底色：看起來和主色同一家，但不會比按鈕醒目。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三種按鈕狀態，以及 Soft 的不同用途。</p>
+    <p><b>對應講義</b>：先認識一件新的事：狀態。</p>
+    <p><b>接下一張</b>：第一段，在色卡新增三個顏色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b15 CH01-L11#b16 CH01-L11#b17">
+  <div class="frame">
+    <div class="kicker">第 11 份｜第一段：在色卡新增三個顏色</div>
+    <h2 class="h-xl"><span class="num">1</span>新增 Primary Hover、Primary Pressed、Primary Soft</h2>
+    <div class="body split">
+      <div>
+        <table class="tb">
+          <tr><th>名字</th><th>色碼</th></tr>
+          <tr><td>Primary Hover</td><td><span class="sw" style="background:#2F6E55"></span>2F6E55</td></tr>
+          <tr><td>Primary Pressed</td><td><span class="sw" style="background:#1B4535"></span>1B4535</td></tr>
+          <tr><td>Primary Soft</td><td><span class="sw" style="background:#E8F0EC"></span>E8F0EC</td></tr>
+        </table>
+      </div>
+      <div>
+        <ul class="pts">
+          <li>每一個：<b>Create variable</b> → <b>Color</b> → 打名字、Enter → 點 Value 打色碼、Enter。</li>
+        </ul>
+        <p class="see">做完會看到：色卡共九列，最下面三列是這三個新顏色。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：和前面建色卡同樣的動作，連續建三個。</p>
+    <p><b>對應講義</b>：第一段，第 1 步。</p>
+    <p><b>接下一張</b>：第二段，規則表騰出位置。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b18 CH01-L11#b19 CH01-L11#b20">
+  <div class="frame">
+    <div class="kicker">第 11 份｜第二段：規則表騰出位置</div>
+    <h2 class="h-xl"><span class="num">2</span><span class="num">3</span>規則表加長到 1112，下面兩區往下移</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Rules 的 <b>H</b> 改成 <b>1112</b>。</li>
+          <li>Layers 一行一行點，只改 <b>Y</b>：</li>
+        </ul>
+        <table class="tb small">
+          <tr><th>這一行（看開頭）</th><th>Y 改成</th></tr>
+          <tr><td>文字樣式</td><td>308</td></tr>
+          <tr><td>Page title　24/32 Bold…</td><td>344</td></tr>
+          <tr><td>檢查紀錄</td><td>496</td></tr>
+          <tr><td>對比 Text × Card…</td><td>532</td></tr>
+          <tr><td>閱讀順序：…</td><td>660</td></tr>
+        </table>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L11-1-往下移.png" alt="往下移"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：下面每一區都往下移了 24。為什麼要手動移：第 6 份看過，這些字的位置都是固定的，第三章學 Auto layout 之後 Figma 會自己處理。</p>
+    <p><b>對應講義</b>：第二段，第 2、3 步。</p>
+    <p><b>接下一張</b>：第三段，寫主色的四種用法的說明。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b21 CH01-L11#b22 CH01-L11#b23">
+  <div class="frame">
+    <div class="kicker">第 11 份｜第三段：寫「主色的四種用法」的說明</div>
+    <h2 class="h-xl"><span class="num">4</span><span class="num">5</span>小標題 Y 740、四行說明 Y 776</h2>
+    <div class="body">
+      <ul class="pts">
+        <li>小標題「主色的四種用法」：<b>Section title</b>、Fill <b>Text</b>、<b>X 32、Y 740</b>。</li>
+        <li>四行說明：<b>Body</b>、Fill <b>Text</b>、<b>X 32、Y 776</b>。</li>
+      </ul>
+      <p class="copy">Primary　245B45　一般：可以按的主要按鈕
+Primary Hover　2F6E55　滑過：滑鼠停在按鈕上｜白字 6.03:1 通過
+Primary Pressed　1B4535　按下：手指或滑鼠按下去｜白字 10.77:1 通過
+Primary Soft　E8F0EC　淺底：提示區的底色｜Text 12.61:1 通過</p>
+      <p class="body-zh">行尾的數字是對比，用第 7 份同一套公式算的：白字放在 Hover、Pressed 上，深色字 Text 放在 Soft 上，都超過 4.5。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：小標題和說明的樣式、位置；三個新顏色的對比都已算好。</p>
+    <p><b>對應講義</b>：第三段，第 4、5 步。</p>
+    <p><b>接下一張</b>：第四段，複製按鈕做樣本。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b24 CH01-L11#b25">
+  <div class="frame">
+    <div class="kicker">第 11 份｜第四段：複製按鈕，做三個參考樣本</div>
+    <h2 class="h-xl"><span class="num">6</span>複製登入按鈕：右鍵 Copy</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Layers 展開 Screen / Login、Login / Card，點 <b>Button / Draft</b>。</li>
+          <li>在畫布上的綠色按鈕上<b>按滑鼠右鍵</b>，點 <b>Copy</b>。</li>
+        </ul>
+        <p class="see">做完會看到：選單關掉，畫面沒有變化。按鈕已經複製起來了，下一步才貼上。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L11-2-右鍵Copy.png" alt="右鍵 Copy"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：右鍵選單第一次出現；Copy 後畫面沒變是正常的。</p>
+    <p><b>對應講義</b>：第四段，第 6 步。</p>
+    <p><b>接下一張</b>：貼到規則表下面的空白處。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b26">
+  <div class="frame">
+    <div class="kicker">第 11 份｜第四段：複製按鈕，做三個參考樣本</div>
+    <h2 class="h-xl"><span class="num">7</span>貼到規則表下面：右鍵 Paste here</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>捲動或縮放畫布，看到規則表最下面那塊空白。</li>
+          <li>在空白處<b>按滑鼠右鍵</b>，點 <b>Paste here</b>（貼在這裡）。</li>
+        </ul>
+        <p class="see">做完會看到：一顆一模一樣的綠色「登入」按鈕，在 <b>Rules</b> 底下，名字也是 Button / Draft。</p>
+        <p class="warn">Copy 之後重新整理網頁，複製的內容會不見；回第 6 步重新 Copy。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L11-3-右鍵Paste-here.png" alt="右鍵 Paste here"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Paste here 會貼在按右鍵的位置。</p>
+    <p><b>對應講義</b>：第四段，第 7 步。</p>
+    <p><b>接下一張</b>：把貼上的按鈕做成三個樣本。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b27 CH01-L11#b28 CH01-L11#b29">
+  <div class="frame">
+    <div class="kicker">第 11 份｜第四段：複製按鈕，做三個參考樣本</div>
+    <h2 class="h-xl"><span class="num">8</span><span class="num">9</span><span class="num">10</span>滑過、按下、淺底提示</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb small">
+          <tr><th>改名</th><th>X、Y</th><th>Fill</th></tr>
+          <tr><td>Button / Hover</td><td>32、904</td><td>Primary Hover</td></tr>
+          <tr><td>Button / Pressed</td><td>32、968</td><td>Primary Pressed</td></tr>
+          <tr><td>Hint / Soft</td><td>32、1032</td><td>Primary Soft</td></tr>
+        </table>
+        <ul class="pts">
+          <li>兩顆按鈕的 Label 已經是 <b>On Primary</b>，不用再改：第 10 份先修好的好處。</li>
+          <li>Hint / Soft 的 Label：Fill 改 <b>Text</b>，字改成「可使用工作室帳號登入」，再水平、垂直置中。</li>
+          <li>淺綠底上放白字，對比只有 1.15，幾乎看不見。淺底上要用深色字。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L11-6-四種用法完成.png" alt="四種用法完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三個樣本的設定；複製幾顆都不用一個一個找字色，以及淺底為什麼不能放白字。</p>
+    <p><b>對應講義</b>：第四段，第 8 到 10 步。</p>
+    <p><b>接下一張</b>：檢查與這一份學到的事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L11#b30 CH01-L11#b31 CH01-L11#b32 CH01-L11#b33 CH01-L11#b34 CH01-L11#b35 CH01-L11#b36 CH01-L11#b37 CH01-L11#b38 CH01-L11#b39 CH01-L11#b40 CH01-L11#b41 CH01-L11#b42">
+  <div class="frame">
+    <div class="kicker">第 11 份｜做完之後</div>
+    <h2 class="h-xl">檢查・這一份學到的事</h2>
+    <div class="body split">
+      <ol class="pts">
+        <li><b>色卡</b>：九個顏色，最後三個是 Primary Hover（2F6E55）、Primary Pressed（1B4535）、Primary Soft（E8F0EC）。</li>
+        <li><b>規則表</b>：小標題、四行說明、三個樣本。</li>
+        <li><b>字色</b>：兩顆按鈕的 Label 是 On Primary，Hint / Soft 的 Label 是 Text。</li>
+        <li><b>登入畫面沒變</b>：手機上的按鈕還是 Primary。</li>
+      </ol>
+      <ul class="pts">
+        <li>同一個按鈕有不同<b>狀態</b>：一般、滑過、按下，各用主色的一個變化。</li>
+        <li>Soft 用在提示區底色，上面放深色字，不放白字。</li>
+        <li>字色一開始就用對的顏色，之後複製幾份都不用再改。</li>
+      </ul>
+    </div>
+    <p class="next">下一份：第一章最後一份，加上錯誤、警告、成功三種狀態色，以及輸入框和分隔線用的邊框顏色。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四項檢查、三個重點。範例多放了一顆一般狀態的按鈕，顏色和對比數字一樣。改按鈕顏色時連手機上的按鈕也變了，代表選到 Login / Card 底下的那一顆。</p>
+    <p><b>對應講義</b>：做完之後、常見問題、這一份學到的事、下一份要做什麼。</p>
+    <p><b>接下一張</b>：進入最後一份，狀態與邊框。</p>
+  </aside>
+</section>
+
+<!-- ===== CH01-L12 ===== -->
+<section class="slide dark hero divider" data-source="CH01-L12#b02 CH01-L12#b03">
+  <div class="frame center-v">
+    <div class="kicker">第一章｜第 12 份</div>
+    <h1 class="h-hero">狀態與邊框</h1>
+    <p class="lead">第一章的最後一份。在色卡新增五個顏色，並在規則表最下面加一區「狀態與邊框」：一段紅色的錯誤說明、一個有外框的輸入框、一條分隔線。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：第一章最後一份，補齊狀態色與邊框色。</p>
+    <p><b>對應講義</b>：第 12 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼需要這些顏色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b05 CH01-L12#b06 CH01-L12#b07 CH01-L12#b08 CH01-L12#b09 CH01-L12#b10">
+  <div class="frame">
+    <div class="kicker">第 12 份｜開始前</div>
+    <h2 class="h-xl">「登入打錯知道錯在哪」</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>打錯時要有一段說明，用一看就知道「出錯了」的顏色。</li>
+          <li>標記完成要有「成功」的訊息；需要留意的事，要有「警告」。</li>
+          <li>邊框分兩種：輸入框外框讓人知道「這裡可以打字」，一定要看得見；分隔線只是裝飾，淡一點反而不搶眼。</li>
+        </ul>
+      </div>
+      <div class="card-box">
+        <div class="h-md">這一份做三件事</div>
+        <ol class="pts">
+          <li>色卡新增 Error、Warning、Success、Control Border、Border。</li>
+          <li>規則表最下面加一區「狀態與邊框」：一個小標題和五行說明。</li>
+          <li>做三個樣本：一段錯誤說明、一個輸入框、一條分隔線。</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：開場的課程順序表寫過要讓成員登入打錯知道錯在哪；兩種邊框用途不同，所以用兩個顏色。做完後開場說的四樣東西全部完成。</p>
+    <p><b>對應講義</b>：開始前／這一份在做什麼、為什麼要做。</p>
+    <p><b>接下一張</b>：邊框的對比門檻。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b11 CH01-L12#b12 CH01-L12#b13">
+  <div class="frame">
+    <div class="kicker">第 12 份｜先認識一件新的事</div>
+    <h2 class="h-xl">邊框的對比門檻：<em>3:1</em></h2>
+    <div class="body">
+      <p class="lead">字要過 4.5:1。<b>不是字的東西</b>，例如輸入框的外框、勾選框的框線，W3C 的門檻是 <b>3:1</b>。</p>
+      <table class="tb">
+        <tr><th>顏色</th><th>用在哪裡</th><th>白底上的對比</th></tr>
+        <tr><td><span class="sw" style="background:#76859A"></span>Control Border</td><td>輸入框外框（讓人操作）</td><td>3.75:1，過 3:1</td></tr>
+        <tr><td><span class="sw" style="background:#CBD5E1"></span>Border</td><td>分隔線（裝飾）</td><td>1.48:1，只能當裝飾</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：讓人操作的框要至少 3:1，否則使用者找不到可以打字的地方；只是裝飾用的線沒有這個要求。</p>
+    <p><b>對應講義</b>：先認識一件新的事：邊框的對比門檻。</p>
+    <p><b>接下一張</b>：第一段，在色卡新增五個顏色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b14 CH01-L12#b15 CH01-L12#b16">
+  <div class="frame">
+    <div class="kicker">第 12 份｜第一段：在色卡新增五個顏色</div>
+    <h2 class="h-xl"><span class="num">1</span>新增五個顏色</h2>
+    <div class="body split">
+      <table class="tb">
+        <tr><th>名字</th><th>色碼</th></tr>
+        <tr><td>Error</td><td><span class="sw" style="background:#B91C1C"></span>B91C1C</td></tr>
+        <tr><td>Warning</td><td><span class="sw" style="background:#92400E"></span>92400E</td></tr>
+        <tr><td>Success</td><td><span class="sw" style="background:#15803D"></span>15803D</td></tr>
+        <tr><td>Control Border</td><td><span class="sw" style="background:#76859A"></span>76859A</td></tr>
+        <tr><td>Border</td><td><span class="sw" style="background:#CBD5E1"></span>CBD5E1</td></tr>
+      </table>
+      <div>
+        <ul class="pts">
+          <li>每一個：<b>Create variable</b> → <b>Color</b> → 打名字、Enter → 點 Value 打色碼、Enter。</li>
+        </ul>
+        <p class="see">做完會看到：色卡共十四列，最下面五列是這五個顏色。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：五個新顏色的名字與色碼，建法同前。</p>
+    <p><b>對應講義</b>：第一段，第 1 步。</p>
+    <p><b>接下一張</b>：第二段，寫狀態與邊框的說明。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b17 CH01-L12#b18 CH01-L12#b19 CH01-L12#b20">
+  <div class="frame">
+    <div class="kicker">第 12 份｜第二段：寫「狀態與邊框」的說明</div>
+    <h2 class="h-xl"><span class="num">2</span><span class="num">3</span><span class="num">4</span>規則表加長到 1480，小標題與五行說明</h2>
+    <div class="body">
+      <ul class="pts">
+        <li>Rules 的 <b>H</b> 改成 <b>1480</b>。</li>
+        <li>小標題「狀態與邊框」：<b>Section title</b>、Fill <b>Text</b>、<b>X 32、Y 1112</b>。</li>
+        <li>五行說明：<b>Body</b>、Fill <b>Text</b>、<b>X 32、Y 1148</b>。</li>
+      </ul>
+      <p class="copy">Error　B91C1C　錯誤：出錯時的說明文字｜白底 6.47:1 通過
+Warning　92400E　警告：需要留意的提醒｜白底 7.09:1 通過
+Success　15803D　成功：完成時的訊息｜白底 5.01:1 通過
+Control Border　76859A　操作邊框：輸入框外框｜白底 3.75:1 通過
+Border　CBD5E1　裝飾線：分隔線｜白底 1.48:1，只能當裝飾</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：和上一份同樣的節奏：加長規則表、打小標題、打說明。</p>
+    <p><b>對應講義</b>：第二段，第 2 到 4 步。</p>
+    <p><b>接下一張</b>：第三段，錯誤說明樣本。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b21 CH01-L12#b22">
+  <div class="frame">
+    <div class="kicker">第 12 份｜第三段：做三個樣本</div>
+    <h2 class="h-xl"><span class="num">5</span>錯誤說明樣本</h2>
+    <div class="body">
+      <p class="err-sample">帳號格式不正確，請輸入工作室帳號</p>
+      <ul class="pts big">
+        <li>樣式 <b>Supporting</b>、Fill <b>Error</b>、<b>X 32、Y 1292</b>。</li>
+        <li>只把字變紅，成員只知道「錯了」，不知道錯在哪、要怎麼改。</li>
+        <li>說明要寫出原因和怎麼改；看不清紅色的人，也能從文字讀懂。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：錯誤說明的寫法原則：不能只靠紅色。</p>
+    <p><b>對應講義</b>：第三段，第 5 步。</p>
+    <p><b>接下一張</b>：輸入框樣本。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b23 CH01-L12#b24">
+  <div class="frame">
+    <div class="kicker">第 12 份｜第三段：做三個樣本</div>
+    <h2 class="h-xl"><span class="num">6</span><span class="num">7</span>輸入框：拉框，Stroke 點 +</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Frame 工具拉框，改名 <b>Sample / Input</b>；X 32、Y 1330；W 322、H 48；Corner radius 8；Fill <b>Card</b>。</li>
+          <li>白底放在白紙上，現在看不出它在哪裡，這是正常的。</li>
+          <li>右邊找到 <b>Stroke</b>（外框），點它右邊的 <b>+</b>。</li>
+          <li>框加上一圈黑色外框，同時跳出調色盤：點調色盤右上角的 <b>×</b> 關掉它。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L12-1-Stroke加號.png" alt="Stroke 加號"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：Stroke 第一次出現；加號加上的外框是黑色，跳出的調色盤是直接挑色碼用的，先關掉。</p>
+    <p><b>對應講義</b>：第三段，第 6 步與第 7 步前半。</p>
+    <p><b>接下一張</b>：從色卡選外框顏色。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b24 CH01-L12#b25">
+  <div class="frame">
+    <div class="kicker">第 12 份｜第三段：做三個樣本</div>
+    <h2 class="h-xl"><span class="num">7</span><span class="num">8</span>外框選 Control Border，放提示字</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>點 <b>Stroke</b> 右邊的<b>四點圖示</b>，在搜尋欄打 <b>Control</b>，點 <b>Control Border</b>。</li>
+          <li>輸入框裡打「工作室帳號」：Body、Fill Muted、X 16、Y 12（從輸入框左上角量）。</li>
+        </ul>
+        <p class="see">做完會看到：輸入框有一圈灰色外框，裡面靠左一段灰字，像還沒打字時的提示。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L12-3-選Control-Border.png" alt="選 Control Border"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：色卡現在有十四個顏色，打幾個字搜尋比較快；提示字要縮排在 Sample / Input 底下。</p>
+    <p><b>對應講義</b>：第三段，第 7 步後半與第 8 步。</p>
+    <p><b>接下一張</b>：分隔線樣本。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b26">
+  <div class="frame">
+    <div class="kicker">第 12 份｜第三段：做三個樣本</div>
+    <h2 class="h-xl"><span class="num">9</span>分隔線：W 322、H 1、Fill Border</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Frame 工具拉框，改名 <b>Sample / Divider</b>。</li>
+          <li><b>X 32、Y 1410</b>；<b>W 322、H 1</b>；Fill <b>Border</b>。</li>
+        </ul>
+        <p class="see">做完會看到：輸入框下方一條很淡的細線。外框要讓人找得到，分隔線只是把東西隔開。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch01/L12-4-狀態與邊框完成.png" alt="狀態與邊框完成"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：對照外框和分隔線的深淺差別。</p>
+    <p><b>對應講義</b>：第三段，第 9 步。</p>
+    <p><b>接下一張</b>：檢查與這一份學到的事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH01-L12#b27 CH01-L12#b28 CH01-L12#b29 CH01-L12#b30 CH01-L12#b31 CH01-L12#b32 CH01-L12#b33 CH01-L12#b34 CH01-L12#b35 CH01-L12#b36">
+  <div class="frame">
+    <div class="kicker">第 12 份｜做完之後</div>
+    <h2 class="h-xl">檢查・這一份學到的事</h2>
+    <div class="body split">
+      <ol class="pts">
+        <li><b>色卡</b>：十四個顏色，最後五個是 Error、Warning、Success、Control Border、Border。</li>
+        <li><b>規則表最下面</b>：小標題、五行說明、紅色錯誤說明、輸入框、分隔線。</li>
+        <li><b>樣本的顏色</b>：錯誤說明 Error；輸入框 Card ＋ Stroke Control Border；提示字 Muted；分隔線 Border。</li>
+      </ol>
+      <ul class="pts">
+        <li>錯誤、警告、成功各有自己的顏色；錯誤說明要寫出原因和怎麼改，不能只靠紅色。</li>
+        <li>讓人操作的外框至少 3:1；只當裝飾的線可以淡。</li>
+        <li><b>Stroke</b> 是外框：點 + 加上，再從四點圖示選色卡的顏色。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項檢查、三個重點。範例色卡多了 Focus Ring、Disabled、Disabled Text，做表單時才會用到。外框一直是黑色，是用了調色盤，要改從四點圖示選。</p>
+    <p><b>對應講義</b>：做完之後、常見問題、這一份學到的事。</p>
+    <p><b>接下一張</b>：第一章完成。</p>
+  </aside>
+</section>
+
+<section class="slide dark hero" data-source="CH01-L12#b37 CH01-L12#b38 CH01-L12#b39 CH01-L12#b40">
+  <div class="frame center-v">
+    <div class="kicker">第一章完成</div>
+    <h2 class="h-xl">開場說的四樣東西，全部到齊了</h2>
+    <ol class="pts big done-list">
+      <li>一張有名字的色卡（十四個顏色）</li>
+      <li>五種文字樣式</li>
+      <li>一張全部照規則做的登入畫面</li>
+      <li>一張規則表，寫清楚每個顏色和文字用在哪裡、檢查過哪些對比</li>
+    </ol>
+    <p class="lead">第二章開始，用這些規則排版面、做出更多畫面。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回到開場承諾的四樣成果，逐一對照確認。</p>
+    <p><b>對應講義</b>：第一章完成。</p>
+    <p><b>接下一張</b>：本章結束，下一章用這些規則排版面。</p>
+  </aside>
+</section>
+</div>
+
+<script>
+(function(){
+if(matchMedia('(max-width: 768px), (max-width: 1100px) and (max-height: 520px)').matches)return;
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+})();
+
+// 導航：鍵盤 / 滾輪 / 觸控；頁碼與篇代號放在投影片外的固定框
+const deck=document.getElementById('deck');
+const slides=[...deck.querySelectorAll(':scope > section')];
+const total=slides.length;
+const pager=document.getElementById('pager');
+const part=document.getElementById('part');
+let idx=0,lock=false;
+deck.style.width=(total*100)+'vw';
+function partOf(s){const src=(s.dataset.source||'').split(/\s+/)[0]||'';return src.split('#')[0];}
+function go(n,instant){
+  idx=Math.max(0,Math.min(total-1,n));
+  if(instant){deck.style.transition='none';}
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  if(instant){void deck.offsetWidth;deck.style.transition='';}
+  const s=slides[idx];
+  document.body.classList.toggle('light-bg',s.classList.contains('light'));
+  pager.textContent=(idx+1)+' / '+total;
+  part.textContent=partOf(s);
+  history.replaceState(null,'','#'+(idx+1));
+}
+function step(d){if(lock)return;go(idx+d);lock=true;setTimeout(()=>lock=false,350);}
+addEventListener('keydown',e=>{
+  if(document.documentElement.classList.contains('mobile-reader'))return;
+  if(document.body.classList.contains('show-index')&&e.key!=='Escape')return;
+  if(['ArrowRight','PageDown',' ','ArrowDown'].includes(e.key)){e.preventDefault();step(1);}
+  else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();step(-1);}
+  else if(e.key==='Home'){go(0);}
+  else if(e.key==='End'){go(total-1);}
+  else if(e.key==='n'||e.key==='N'){document.body.classList.toggle('show-notes');}
+  else if(e.key==='Escape'){toggleIndex();}
+});
+let wheelAcc=0,wheelTO=null;
+addEventListener('wheel',e=>{
+  if(document.documentElement.classList.contains('mobile-reader'))return;
+  if(e.target.closest&&e.target.closest('aside.notes'))return;
+  if(document.body.classList.contains('show-index'))return;
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>60){step(wheelAcc>0?1:-1);wheelAcc=0;}
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,160);
+},{passive:true});
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  if(document.documentElement.classList.contains('mobile-reader'))return;
+  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))step(dx<0?1:-1);
+},{passive:true});
+// 篇目：每篇第一張投影片
+const idxList=document.querySelector('#index ol');
+const starts=[];
+slides.forEach((s,i)=>{const p=partOf(s);if(!starts.length||starts[starts.length-1].p!==p)starts.push({p,i});});
+starts.forEach(({p,i})=>{
+  const s=(slides[i].classList.contains('cover')&&slides[i+1]&&partOf(slides[i+1])===p)?slides[i+1]:slides[i];
+  const li=document.createElement('li');const b=document.createElement('button');
+  const k=document.createElement('span');k.className='k';k.textContent=p;
+  const t=document.createElement('span');t.textContent=(s.querySelector('h1')||s.querySelector('h2')).textContent;
+  b.append(k,t);b.onclick=()=>{toggleIndex(false);go(i);};
+  li.append(b);idxList.append(li);
+});
+function toggleIndex(force){
+  const on=document.body.classList.toggle('show-index',force);
+  if(on){const cur=partOf(slides[idx]);idxList.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('cur',starts[j].p===cur));}
+}
+document.getElementById('notes-toggle').addEventListener('click',()=>document.body.classList.toggle('show-notes'));
+
+// 手機閱讀模式（窄螢幕直向捲動；網址加 ?deck=1 可強制翻頁模式）
+(function(){
+  const force=new URL(location.href).searchParams.get('deck')==='1';
+  const mq=matchMedia('(max-width: 768px), (max-width: 1100px) and (max-height: 520px)');
+  function apply(){document.documentElement.classList.toggle('mobile-reader',!force&&mq.matches);}
+  apply();
+  mq.addEventListener?mq.addEventListener('change',apply):mq.addListener(apply);
+})();
+
+const start=parseInt((location.hash||'').slice(1),10);
+go(Number.isFinite(start)?start-1:0,true);
+</script>
+</body>
+</html>
