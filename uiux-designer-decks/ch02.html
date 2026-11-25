@@ -1,0 +1,3170 @@
+<!DOCTYPE html>
+<!-- 來源：CH02-R0 開場（_src/R0-開場.tpl，抽 <main> 正文）＋ CH02-L1～L8 定稿（L1 v3、L2 v5、L3 v3、L4 v4、L5 v1、L6 v2、L7 v2、L8 v2）。段落編號依 共學專案/工具/定稿檢查.py --編號。封面章名取自 _src/目錄.tpl。 -->
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第二章｜用格線安排手機與桌面版面｜UI/UX 設計師｜講師投影片</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* 主題色：靛藍瓷（guizang-ppt-skill themes.md） */
+    --ink:#0a1f3d;
+    --ink-rgb:10,31,61;
+    --paper:#f1f3f5;
+    --paper-rgb:241,243,245;
+    --paper-tint:#e4e8ec;
+    --ink-tint:#152a4a;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display",Georgia,serif;
+    --serif-zh:"Noto Serif SC","Noto Serif TC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC","Noto Sans TC",source-han-sans-sc,"PingFang TC","Microsoft JhengHei",sans-serif;
+    /* 版面單位：以 16:9 畫面為基準，寬或高較受限的那一邊決定大小 */
+    --u:min(1vw,1.7778vh);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased}
+
+  /* WebGL 雙背景 */
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}
+  canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}
+  body.light-bg canvas#bg-dark{opacity:0}
+
+  /* Deck 容器與翻頁 */
+  #deck{position:fixed;inset:0;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .8s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:9vh 5vw 8vh;display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+  .slide.light{color:var(--ink)}
+  .slide.dark{color:var(--paper)}
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.light::before{background:rgba(var(--paper-rgb),.86);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.18);backdrop-filter:none}
+
+  /* 投影片外的固定框（頁碼、篇代號、來源註記；不在任何 section 內） */
+  #chrome{position:fixed;left:5vw;right:5vw;top:3vh;z-index:30;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:max(11px,calc(var(--u)*.8));letter-spacing:.14em;color:var(--paper);opacity:.62;pointer-events:none;transition:color .6s}
+  #chrome .sep{display:inline-block;width:32px;height:1px;background:currentColor;opacity:.4;vertical-align:middle;margin:0 1em}
+  #srcnote{position:fixed;left:5vw;bottom:3vh;z-index:30;font-family:var(--mono);font-size:max(10px,calc(var(--u)*.7));letter-spacing:.08em;color:var(--paper);opacity:.45;pointer-events:none;transition:color .6s}
+  #hint{position:fixed;right:5vw;bottom:3vh;z-index:30;font-family:var(--mono);font-size:max(10px,calc(var(--u)*.7));letter-spacing:.14em;color:var(--paper);opacity:.45;pointer-events:none;transition:color .6s}
+  body.light-bg #chrome,body.light-bg #srcnote,body.light-bg #hint{color:var(--ink)}
+
+  /* 字體層級 */
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .center-v{justify-content:center}
+  .kicker{font-family:var(--mono);font-size:max(11px,calc(var(--u)*.95));letter-spacing:.16em;opacity:.66;margin-bottom:1.6vh}
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:calc(var(--u)*6.2);line-height:1.08;letter-spacing:-.01em;margin-bottom:3vh}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:calc(var(--u)*2.9);line-height:1.22;margin-bottom:2.6vh}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:calc(var(--u)*1.65);line-height:1.35;margin-bottom:1.2vh}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:calc(var(--u)*1.7);line-height:1.55;opacity:.9}
+  .hero .lead{max-width:62vw}
+  .meta-row{margin-top:2.4vh;font-family:var(--mono);font-size:max(12px,calc(var(--u)*1));letter-spacing:.12em;opacity:.7}
+  .body-zh{font-size:calc(var(--u)*1.3);line-height:1.7}
+  .cap{font-size:calc(var(--u)*1.05);line-height:1.6;opacity:.72}
+  em{font-family:var(--serif-en),var(--serif-zh);font-style:italic;font-weight:inherit;position:relative;z-index:1;font-synthesis-style:none}
+  em::after{content:"";position:absolute;left:-.08em;right:-.08em;bottom:.04em;height:.26em;z-index:-1;border-radius:1px}
+  .slide.light em::after{background:rgba(var(--ink-rgb),.14)}
+  .slide.dark em::after{background:rgba(var(--paper-rgb),.22)}
+  code{font-family:var(--mono);font-size:.92em;padding:.05em .35em;border-radius:3px;background:rgba(var(--ink-rgb),.08)}
+  b{font-weight:700}
+
+  /* 版面 */
+  .body{flex:1;min-height:0;display:flex;flex-direction:column;gap:2.2vh}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:3vw;align-items:start}
+  .body.split{display:grid}
+  .split.img-r{grid-template-columns:5fr 6fr;align-items:start}
+  .split > *{min-width:0}
+  .grid-3c{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw}
+  .card-box{border:1px solid rgba(var(--ink-rgb),.2);background:rgba(255,255,255,.6);border-radius:6px;padding:2.2vh 1.6vw}
+  .card-box .pts{margin-top:.6vh}
+
+  ul.pts,ol.pts{padding-left:1.4em;display:flex;flex-direction:column;gap:1.1vh}
+  .pts li{font-size:calc(var(--u)*1.3);line-height:1.6}
+  .pts.big li{font-size:calc(var(--u)*1.55)}
+  .pts ul{padding-left:1.2em;margin-top:.8vh;display:flex;flex-direction:column;gap:.6vh}
+  .pts ul li{font-size:calc(var(--u)*1.2)}
+  .card-box .pts li{font-size:calc(var(--u)*1.2)}
+  .see{font-size:calc(var(--u)*1.25);line-height:1.6;padding:1.2vh 1.1vw;border-left:3px solid var(--ink);background:rgba(var(--ink-rgb),.06);margin-top:1.6vh}
+  .warn{font-size:calc(var(--u)*1.15);line-height:1.6;padding:1vh 1.1vw;border-left:3px dashed rgba(var(--ink-rgb),.6);background:rgba(var(--ink-rgb),.04);margin-top:1.4vh}
+  .callout{padding:1.4vh 1.6vw;border-left:3px solid currentColor;font-family:var(--serif-zh);font-size:calc(var(--u)*1.3);line-height:1.6;background:rgba(var(--ink-rgb),.05)}
+  .callout.q{font-size:calc(var(--u)*1.4)}
+  .callout.tree{font-family:var(--sans-zh);line-height:1.95}
+  .next{margin-top:auto;padding-top:1.6vh;border-top:1px solid rgba(var(--ink-rgb),.2);font-size:calc(var(--u)*1.2);line-height:1.6;opacity:.85}
+  .next::before{content:"→ ";font-family:var(--mono)}
+  .copy{white-space:pre-wrap;font-family:var(--mono),var(--sans-zh);font-size:calc(var(--u)*1.1);line-height:1.75;padding:1.2vh 1.1vw;background:rgba(255,255,255,.7);border:1px dashed rgba(var(--ink-rgb),.3);border-radius:4px}
+  .btn{display:inline-flex;align-items:center;gap:.5em;padding:1vh 1.4vw;border-radius:999px;background:var(--ink);color:var(--paper)!important;text-decoration:none;font-size:calc(var(--u)*1.15);font-weight:500}
+  .btn::after{content:"↗"}
+  .num{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;padding:0 .3em;margin-right:.35em;border-radius:999px;background:var(--ink);color:var(--paper);font-family:var(--serif-en);font-size:.62em;vertical-align:.25em}
+  .num + .num{margin-left:-.1em}
+
+  table.tb{width:100%;border-collapse:collapse;font-size:calc(var(--u)*1.2);line-height:1.5;background:rgba(255,255,255,.55)}
+  table.tb.small{font-size:calc(var(--u)*1.05)}
+  .tb th,.tb td{border:1px solid rgba(var(--ink-rgb),.2);padding:.9vh .8vw;text-align:left;vertical-align:top}
+  .tb th{background:rgba(var(--ink-rgb),.08);font-weight:600}
+  .tb .cap{font-size:.85em}
+  .sw{display:inline-block;width:1em;height:1em;border:1px solid rgba(var(--ink-rgb),.3);border-radius:3px;vertical-align:-.12em;margin-right:.35em}
+  .sw.lg{width:1.5em;height:1.5em;vertical-align:-.35em}
+
+  figure{margin:0}
+  figure.shot{display:flex;flex-direction:column;align-items:center;min-width:0}
+  figure.shot img{display:block;max-width:100%;max-height:68vh;width:auto;height:auto;object-fit:contain;border:1px solid rgba(var(--ink-rgb),.2);border-radius:6px;background:#fff;box-shadow:0 6px 24px rgba(var(--ink-rgb),.12)}
+  figure.shot.small-img img{max-height:52vh}
+  figure figcaption{font-size:calc(var(--u)*1);opacity:.72;text-align:center;margin-top:.8vh;line-height:1.4}
+  .phones{display:grid;grid-template-columns:repeat(4,auto);justify-content:center;gap:2vw}
+  .phones img{display:block;max-height:58vh;width:auto;max-width:100%;border:1px solid rgba(var(--ink-rgb),.2);border-radius:10px}
+  .pair{display:flex;gap:2vw;justify-content:center;align-items:flex-start}
+  .pair img{display:block;max-height:56vh;width:auto;max-width:100%;border:1px solid rgba(var(--ink-rgb),.2);border-radius:6px;background:#fff}
+  ol.flow{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw;counter-reset:f}
+  ol.flow li{counter-increment:f;position:relative;padding:1.6vh 1vw;border-top:2px solid var(--ink);font-size:calc(var(--u)*1.2);line-height:1.5}
+  ol.flow li::before{content:counter(f);display:block;font-family:var(--serif-en);font-style:italic;font-size:1.4em;opacity:.5;margin-bottom:.6vh}
+  ol.flow li:not(:last-child)::after{content:"→";position:absolute;right:-1vw;top:1.6vh;opacity:.5}
+  .ratio-row{display:flex;align-items:center;flex-wrap:wrap;gap:.6em;font-size:calc(var(--u)*1.45);padding:1.6vh 1.4vw;border:1px solid rgba(var(--ink-rgb),.2);border-radius:6px;background:rgba(255,255,255,.6)}
+  .ratio-row .lbl{min-width:7em;font-weight:600}
+  .ratio-row .on{opacity:.6;font-size:.85em}
+  .ratio-row .val{margin-left:auto;font-family:var(--serif-en);font-weight:700;font-size:1.5em}
+  .ratio-row .tag-g,.ratio-row .tag-r{font-size:.8em;padding:.2em .7em;border-radius:999px;color:#fff}
+  .ratio-row .tag-g{background:#15803D}
+  .ratio-row .tag-r{background:#B91C1C}
+  .err-sample{align-self:flex-start;color:#B91C1C;background:#fff;font-size:calc(var(--u)*1.8);padding:1.6vh 1.6vw;border:1px solid rgba(var(--ink-rgb),.15);border-radius:6px}
+  .slide.dark .pts li{color:var(--paper)}
+  .done-list{margin:2vh 0 3vh}
+
+  /* 講義示意圖（照 _src/*.tpl 原樣，依篇各自限定範圍） */
+  .demo{--text:#1E293B;--muted:#5F6C80;--line:#CBD5E1;color:var(--text);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.75;font-size:17px}
+  /* 第二章示意圖：定稿 figure[data-kind=示意] 原樣搬入，樣式寫在行內；這裡只加外框與縮放 */
+  .demo{background:#fff;border:1px solid rgba(var(--ink-rgb),.15);border-radius:8px;padding:2vh 1.4vw;align-self:start;min-width:0}
+  .demo figure{margin:0}
+  .demo figcaption{font-size:14px;color:var(--muted);opacity:1;text-align:left;margin-top:12px;line-height:1.5}
+  @media (min-height:900px) and (min-width:1600px){ .demo{zoom:1.2} }
+  @media (min-height:1150px) and (min-width:2000px){ .demo{zoom:1.5} }
+  @media (max-height:860px){ .demo{zoom:.85} }
+  @media (max-height:700px){ .demo{zoom:.7} }
+
+  /* 第二章：算式、三圖並排、深色頁的按鈕 */
+  .formula{font-family:var(--mono),var(--sans-zh);font-size:calc(var(--u)*1.45);line-height:1.8;padding:1.4vh 1.4vw;background:rgba(255,255,255,.65);border:1px solid rgba(var(--ink-rgb),.2);border-radius:6px;margin:1.2vh 0}
+  .grid-3c figure.shot img{max-height:46vh}
+  .pair img{max-height:44vh}
+  .slide.dark .btn{background:var(--paper);color:var(--ink)!important}
+  html.mobile-reader .formula{font-size:14px}
+  html.mobile-reader .pair{flex-direction:column;align-items:center}
+
+  /* 講者備註：預設隱藏，按 N 顯示 */
+  aside.notes{display:none}
+  body.show-notes .slide aside.notes{display:block;position:absolute;left:5vw;right:5vw;bottom:7vh;max-height:42vh;overflow:auto;z-index:20;padding:1.6vh 1.4vw;border-radius:8px;background:rgba(var(--ink-rgb),.95);color:var(--paper);border:1px solid rgba(var(--paper-rgb),.25);box-shadow:0 10px 40px rgba(0,0,0,.35);font-size:max(14px,calc(var(--u)*1.1));line-height:1.7}
+  body.show-notes .slide.dark aside.notes{background:rgba(var(--paper-rgb),.97);color:var(--ink)}
+  aside.notes p + p{margin-top:.6vh}
+  #notes-toggle{display:none}
+
+  /* Esc 篇目跳轉（投影片外） */
+  #index{position:fixed;inset:0;z-index:60;display:none;overflow:auto;padding:8vh 8vw;background:rgba(var(--ink-rgb),.95);backdrop-filter:blur(10px);color:var(--paper)}
+  body.show-index #index{display:block}
+  #index h2{font-family:var(--mono);font-weight:500;font-size:max(12px,calc(var(--u)*.9));letter-spacing:.2em;opacity:.6;margin-bottom:3vh}
+  #index ol{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:1.2vh 3vw}
+  #index button{all:unset;cursor:pointer;display:flex;gap:1.2em;align-items:baseline;width:100%;padding:1.2vh 0;border-bottom:1px solid rgba(var(--paper-rgb),.18);font-family:var(--serif-zh);font-size:max(15px,calc(var(--u)*1.35))}
+  #index button:hover,#index button.cur{color:#fff;border-bottom-color:rgba(var(--paper-rgb),.7)}
+  #index .k{font-family:var(--mono);font-size:.7em;opacity:.6;min-width:7em}
+
+  /* 手機閱讀模式：窄螢幕改成直向捲動 */
+  html.mobile-reader,html.mobile-reader body{overflow:auto!important;height:auto!important}
+  html.mobile-reader #deck{position:static!important;transform:none!important;display:block!important;width:100%!important;height:auto!important}
+  html.mobile-reader .slide{width:100%!important;height:auto!important;padding:16px 18px 22px!important;overflow:visible!important;border-bottom:3px solid rgba(127,127,127,.3)}
+  html.mobile-reader .slide.light{background:var(--paper)}
+  html.mobile-reader .slide.dark{background:var(--ink)}
+  html.mobile-reader .slide::before{display:none}
+  html.mobile-reader canvas.bg,html.mobile-reader #chrome,html.mobile-reader #srcnote,html.mobile-reader #hint{display:none!important}
+  html.mobile-reader .frame{overflow:visible}
+  html.mobile-reader .h-hero{font-size:clamp(28px,9vw,44px)}
+  html.mobile-reader .h-xl{font-size:clamp(20px,6vw,30px)}
+  html.mobile-reader .h-md{font-size:clamp(16px,4.6vw,22px)}
+  html.mobile-reader .lead{font-size:clamp(15px,4.4vw,20px)}
+  html.mobile-reader .kicker{font-size:11px}
+  html.mobile-reader .body-zh,html.mobile-reader .pts li,html.mobile-reader .pts.big li,html.mobile-reader .card-box .pts li,html.mobile-reader .pts ul li,html.mobile-reader .callout,html.mobile-reader .callout.q,html.mobile-reader .see,html.mobile-reader .warn,html.mobile-reader .next,html.mobile-reader ol.flow li{font-size:15px}
+  html.mobile-reader .cap,html.mobile-reader .copy,html.mobile-reader table.tb,html.mobile-reader table.tb.small,html.mobile-reader .btn,html.mobile-reader figure figcaption{font-size:13px}
+  html.mobile-reader .ratio-row{font-size:15px}
+  html.mobile-reader .err-sample{font-size:17px}
+  html.mobile-reader .split,html.mobile-reader .split.img-r,html.mobile-reader .body.split,html.mobile-reader .grid-3c,html.mobile-reader ol.flow{grid-template-columns:1fr!important}
+  html.mobile-reader ol.flow li::after{display:none}
+  html.mobile-reader .phones{grid-template-columns:repeat(2,1fr)}
+  html.mobile-reader .phones img,html.mobile-reader .pair img,html.mobile-reader figure.shot img{max-height:none;width:100%}
+  html.mobile-reader .pair img{width:auto;max-width:100%}
+  html.mobile-reader .hero .lead{max-width:none}
+  html.mobile-reader .demo{zoom:1;overflow-x:auto}
+  html.mobile-reader table.tb{display:block;overflow-x:auto}
+  html.mobile-reader #notes-toggle{display:block;position:fixed;right:12px;bottom:12px;z-index:50;font:12px var(--mono);padding:8px 14px;border-radius:999px;border:1px solid rgba(var(--ink-rgb),.4);background:var(--paper);color:var(--ink)}
+  html.mobile-reader body.show-notes .slide aside.notes{position:static;max-height:none;margin-top:12px;box-shadow:none;font-size:13px}
+</style>
+</head>
+<body>
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="chrome"><div>UI/UX 設計師<span class="sep"></span>第二章｜用格線安排手機與桌面版面<span class="sep"></span><span id="part"></span></div><div id="pager"></div></div>
+<div id="srcnote">來源：CH02-R0 開場＋L1～L8 定稿</div>
+<div id="hint">← → 翻頁 · N 講者備註 · Esc 篇目</div>
+<div id="index" role="dialog" aria-label="篇目"><h2>篇目 · 點選跳到該篇</h2><ol></ol></div>
+<button id="notes-toggle" type="button">講者備註</button>
+
+<div id="deck">
+<!-- ===== CH02-R0 ===== -->
+<section class="slide dark hero cover" data-source="CH02-R0#b01 CH02-R0#b02">
+  <div class="frame center-v">
+    <div class="kicker">UI/UX 設計師</div>
+    <h1 class="h-hero">第二章｜用格線安排手機與桌面版面</h1>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：整章封面。第一章定了每個東西長什麼樣，第二章要決定每個東西放在哪裡。</p>
+    <p><b>對應講義</b>：開場的標題與導言；章名取自第二章目錄頁。</p>
+    <p><b>接下一張</b>：從開場讀起。</p>
+  </aside>
+</section>
+
+<section class="slide dark hero divider" data-source="CH02-R0#b01 CH02-R0#b02">
+  <div class="frame center-v">
+    <div class="kicker">第二章</div>
+    <h1 class="h-hero">開場：決定每個東西放在哪裡</h1>
+    <p class="lead">第一章的規則管的是畫面上每個東西「長什麼樣」：用什麼顏色、字多大。這一章要處理下一件事：每個東西「放在哪裡」。</p>
+    <p class="meta-row">開場只要讀，最後打開範例看一看，不用改你的檔案。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先回顧第一章的成果（色卡、五種文字樣式、登入畫面、規則表），再點出這一章的主題：位置。整門課四個階段，我們還在第一個階段「畫面基礎」。強調開場只讀不動手。</p>
+    <p><b>對應講義</b>：開場的標題與導言。</p>
+    <p><b>接下一張</b>：回到工作室的故事，看看為什麼現在要處理位置。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b03 CH02-R0#b04 CH02-R0#b05 CH02-R0#b06 CH02-R0#b07">
+  <div class="frame">
+    <div class="kicker">開場｜故事</div>
+    <h2 class="h-xl">回到工作室：手機要用，電腦也要用</h2>
+    <div class="body">
+      <p class="body-zh">第一章的開場，工作室的主管說過這段話：</p>
+      <div class="callout q">「工作室每個人都要看。有人整天坐在電腦前，也有人剛到客戶現場，手上只有手機。我最在意的是：用手機能很快找到待處理的工作。」</div>
+      <ul class="pts">
+        <li>第一章照主管最在意的那一句，先做了手機的登入畫面。</li>
+        <li>可是也有人整天坐在電腦前。在電腦螢幕上看的畫面，叫做<b>桌面畫面</b>。</li>
+        <li>手機畫面寬 402，這一章要做的桌面畫面寬 1440，是手機的三倍多。</li>
+        <li>畫面一寬、東西一多，第一章沒遇過的兩個問題就冒出來了。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：同一段主管的話，第一章只用了後半句（手機），這一章要回應前半句（有人坐在電腦前）；介紹桌面畫面這個詞，以及兩種畫面的寬度差。</p>
+    <p><b>對應講義</b>：故事／回到工作室，含主管原話。</p>
+    <p><b>接下一張</b>：第一個問題：靠眼睛對齊。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b08 CH02-R0#b09 CH02-R0#b10">
+  <div class="frame">
+    <div class="kicker">開場｜故事</div>
+    <h2 class="h-xl">第一個問題：靠眼睛對齊，總是差一點</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>做簡報時，把照片和文字方塊拖到看起來對齊了；投影在大螢幕上，才發現照片往外突出一點，兩張照片一高一低。</li>
+        <li>第一章的登入卡片放在 X 24，是照講義給的數字填的，當時沒說為什麼是 24。</li>
+        <li>東西會越來越多：標題、卡片、清單、提醒。每一個都靠眼睛拖，這個離左邊 24、那個離左邊 22，單獨看看不出來，放在一起就是歪的。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用做簡報的經驗帶出「靠眼睛對齊」的問題，再連回第一章那個沒解釋的 X 24。</p>
+    <p><b>對應講義</b>：故事／第一個問題。</p>
+    <p><b>接下一張</b>：第二個問題：寬的畫面怎麼分。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b11 CH02-R0#b12 CH02-R0#b13">
+  <div class="frame">
+    <div class="kicker">開場｜故事</div>
+    <h2 class="h-xl">第二個問題：寬的畫面，不知道怎麼分</h2>
+    <div class="body">
+      <div class="split">
+        <div class="card-box">
+          <div class="h-md">購物網站，用電腦打開</div>
+          <p class="body-zh">左邊一排篩選條件（價格、品牌），右邊一排擺好幾個商品。</p>
+        </div>
+        <div class="card-box">
+          <div class="h-md">同一個網站，用手機打開</div>
+          <p class="body-zh">篩選條件收進一個按鈕，商品一排只剩兩個。</p>
+        </div>
+      </div>
+      <ul class="pts">
+        <li>這不是憑感覺重排，是設計師事先決定好的：畫面寬的時候分成哪幾塊、每一塊多寬；畫面變窄的時候，哪一塊先出現、哪一塊往後放。</li>
+        <li>工作室的 App 也要決定：桌面畫面那麼寬，待處理的工作要佔多寬？其他資訊放哪裡？換回窄窄的手機，誰排在前面？</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用購物網站的電腦版與手機版對照，說明寬窄畫面的排法是事先設計的決定，再把同樣三個問題丟回工作室的 App。</p>
+    <p><b>對應講義</b>：故事／第二個問題。這三個問題就是本章後半段（桌面分區、手機順序）要回答的。</p>
+    <p><b>接下一張</b>：兩個問題的解法是同一個想法：格線。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b14 CH02-R0#b15 CH02-R0#b16 CH02-R0#b17">
+  <div class="frame">
+    <div class="kicker">開場｜這一章在學什麼</div>
+    <h2 class="h-xl">格線：把「放在哪裡」也變成規則</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>第一章遇到「顏色每次憑感覺挑，做到後來會對不起來」，解法是顏色變數：先把規則定好，之後照規則用。</li>
+        <li>這一章是同一個想法，只是要定的是位置的規則。這套位置規則，在設計上叫做<b>格線</b>。</li>
+        <li>你的手機主畫面就有一套格線：把 App 圖示拖到別的位置放開，它會自己跳進最近的一格。</li>
+        <li>所以主畫面總是整整齊齊：每一排一樣多個，最外圈留一樣寬的空白，圖示之間的縫也一樣寬。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：把格線類比成第一章的顏色變數（先定規則再照用），再用手機主畫面說明格線的效果。</p>
+    <p><b>對應講義</b>：這一章在學什麼／格線，前兩段。</p>
+    <p><b>接下一張</b>：Figma 的格線由哪三個部分組成。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b18">
+  <div class="frame">
+    <div class="kicker">開場｜這一章在學什麼</div>
+    <h2 class="h-xl">格線的三個部分</h2>
+    <div class="body">
+      <p class="body-zh">Figma 的格線在畫面上畫出淡淡的直條，讓你知道東西要從哪裡開始、到哪裡結束。</p>
+      <table class="tb">
+        <tr><th>名稱</th><th>Figma 裡顯示</th><th>是什麼</th></tr>
+        <tr><td><b>邊界</b></td><td>Margin</td><td>畫面最左、最右留白的寬度，就像主畫面最外圈的空白，內容不放進去。</td></tr>
+        <tr><td><b>欄</b></td><td>Columns</td><td>畫面中間切出來的直條，東西對齊它們放。</td></tr>
+        <tr><td><b>溝槽</b></td><td>Gutter</td><td>欄和欄之間的縫，兩個東西並排時，中間就留這麼寬。</td></tr>
+      </table>
+      <p class="see">這一章的手機畫面：左右邊界各 24，切成 4 欄，溝槽 12。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：邊界、欄、溝槽三個名詞與對應的英文，接下來每一份都會用到；最後給出手機畫面的三個數字。</p>
+    <p><b>對應講義</b>：格線一節第三段。</p>
+    <p><b>接下一張</b>：在範例的手機畫面上看這三個部分。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b19 CH02-R0#b20 CH02-R0#b21">
+  <div class="frame">
+    <div class="kicker">開場｜這一章在學什麼</div>
+    <h2 class="h-xl">標題和卡片，共用同一條起跑線</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>這是第二章範例的手機畫面，粉紅色的直條就是欄。範例是第二章做完的樣子，所以標題已經移到卡片外面了。</li>
+          <li>標題「登入工作室」和白色卡片，左邊都貼在同一條線上：邊界和第一欄交界的地方。</li>
+          <li>大家共用同一條起跑線，就不會再有「這個 24、那個 22」的問題。</li>
+        </ul>
+        <p class="see">第一章那個沒說原因的 24，現在有答案了：它剛好就是邊界的寬度。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/R0-2-邊界欄溝槽.png" alt="手機畫面的邊界、欄、溝槽"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：在圖上說出邊界、欄、溝槽各在哪裡，再看標題和卡片的左邊對在同一條線上，解開第一章 X 24 的謎。</p>
+    <p><b>對應講義</b>：格線一節，範例手機畫面的圖與說明。</p>
+    <p><b>接下一張</b>：欄的第二個用處：量寬度。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b22 CH02-R0#b23">
+  <div class="frame">
+    <div class="kicker">開場｜這一章在學什麼</div>
+    <h2 class="h-xl">欄的第二個用處：量寬度</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>一塊區域要多寬，不說「大概一半」，而是說它<b>跨</b>幾欄：從第 1 欄一路排到第 8 欄，就叫跨 8 欄。</li>
+          <li>桌面畫面比較寬，這一章把它切成 12 欄。</li>
+          <li>左邊的<b>主區</b>跨 8 欄，放待處理清單；右邊的<b>側區</b>跨 4 欄，放今日提醒。</li>
+          <li>今日提醒是範例替桌面畫面多設計的一塊：當天要記得的事，一則只有短短一句。手機上它要排到哪裡，是這一章最後要決定的事。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch02/R0-3-桌面格線開.png" alt="桌面畫面，格線開著"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：介紹跨幾欄的說法，以及範例桌面畫面的主區、側區；今日提醒是新出現的內容，先交代它是什麼。</p>
+    <p><b>對應講義</b>：格線一節，欄還有第二個用處那一段與桌面畫面的圖。</p>
+    <p><b>接下一張</b>：為什麼清單拿 8 欄、提醒只拿 4 欄。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b24 CH02-R0#b25 CH02-R0#b26">
+  <div class="frame">
+    <div class="kicker">開場｜這一章在學什麼</div>
+    <h2 class="h-xl">為什麼清單拿 8 欄、提醒只拿 4 欄？</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>一件工作要寫標題、說明和期限，需要比較寬的地方；提醒都是短短一句，窄一點反而好讀。</li>
+          <li>這是範例做的判斷，不是唯一的答案。這一章要練的，就是說得出「這一塊為什麼跨這麼多欄」。</li>
+        </ul>
+        <p class="see">格線只是參考線，只存在設計檔裡。成員打開 App 時看不到粉紅色的直條；格線關掉，東西還是一樣整齊。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/R0-4-桌面格線關.png" alt="桌面畫面，格線關掉"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：跨欄是看內容做的判斷，重點是說得出理由；再用格線關掉的圖說明格線只是參考線。</p>
+    <p><b>對應講義</b>：格線一節最後兩段，與格線關掉的圖。</p>
+    <p><b>接下一張</b>：第二章的三段路線。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b27 CH02-R0#b28 CH02-R0#b29 CH02-R0#b30 CH02-R0#b31 CH02-R0#b32">
+  <div class="frame">
+    <div class="kicker">開場｜第二章怎麼走</div>
+    <h2 class="h-xl">三段路線</h2>
+    <div class="body">
+      <p class="body-zh">一份只做一件事，全部在你第一章的同一份檔案、同一個「主線」裡接著做，不用開新檔，也不會新增顏色和文字樣式。</p>
+      <div class="grid-3c">
+        <div class="card-box">
+          <div class="h-md">前三份：留在手機上</div>
+          <ul class="pts">
+            <li>替登入畫面加上四欄格線</li>
+            <li>把「登入工作室」移到卡片外面</li>
+            <li>算「跨 2 欄是多寬」並在畫面上驗證</li>
+          </ul>
+        </div>
+        <div class="card-box">
+          <div class="h-md">中間三份：換到桌面</div>
+          <ul class="pts">
+            <li>做桌面畫面、加上十二欄格線</li>
+            <li>分出主區和側區</li>
+            <li>放進待處理清單和今日提醒，寫下為什麼這樣跨欄</li>
+          </ul>
+        </div>
+        <div class="card-box">
+          <div class="h-md">最後兩份：把手機和桌面接起來</div>
+          <ul class="pts">
+            <li>主區和側區到了手機只能上下排，誰先出現？</li>
+            <li>畫面變寬時，標題和卡片跟著變寬，按鈕保持原本大小、待在中間</li>
+          </ul>
+        </div>
+      </div>
+      <p class="cap">每走完一段，都把數字和理由寫進第一章的規則表，規則表最後會多一區「格線與版面」。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：整章八份分成三段：手機、桌面、手機與桌面接起來。最後兩份回答前面購物網站的問題。</p>
+    <p><b>對應講義</b>：第二章怎麼走／三段路線。</p>
+    <p><b>接下一張</b>：打開第二章範例，親眼看看。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b33 CH02-R0#b34 CH02-R0#b35 CH02-R0#b36 CH02-R0#b37 CH02-R0#b38">
+  <div class="frame">
+    <div class="kicker">開場｜看範例</div>
+    <h2 class="h-xl">打開第二章範例</h2>
+    <div class="body split img-r">
+      <div>
+        <p><a class="btn" href="https://www.figma.com/design/me0KLYweUoHzHRFOEsYscH/" target="_blank" rel="noopener">打開第二章範例</a></p>
+        <ul class="pts">
+          <li>範例是第二章全部做完的樣子，只看不改。</li>
+          <li>打開時格線是關著的：在畫布上按 <b>Shift+G</b>，畫面下方出現「Layout guides visible」，粉紅色的欄就會出現。</li>
+          <li>找三個地方：① 手機畫面的四欄，標題和卡片從同一條線開始；② 桌面畫面的十二欄，待處理清單和今日提醒；③ 規則表最下面的「格線與版面」。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch02/R0-1-範例全貌.png" alt="第二章範例全貌"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：打開範例，先用 Shift+G 打開格線（只切換看不看得到，不會改到檔案），再照圖找三個地方。</p>
+    <p><b>對應講義</b>：看範例／打開第二章範例。</p>
+    <p><b>接下一張</b>：看範例時常見的困惑。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b39 CH02-R0#b40 CH02-R0#b41">
+  <div class="frame">
+    <div class="kicker">開場｜看範例</div>
+    <h2 class="h-xl">看範例時要知道的事</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>你打開時左邊有 Layers、右邊有設定，畫布比截圖窄。截圖是把左右兩邊收起來拍的，看起來不一樣是正常的。</li>
+        <li>找不到東西時，點右上角的百分比數字，選 <b>Zoom to fit</b>，整個主線會縮回畫面中央。</li>
+        <li>想看格線關掉的樣子，再按一次 <b>Shift+G</b>，畫面下方出現「Layout guides hidden」。</li>
+        <li>範例和你現在的檔案不一樣：標題在卡片外、卡片變矮、多了格線和桌面畫面、規則表變長。這些都是接下來要做的。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：預先回答看範例時最常見的三個疑問：畫面跟截圖不一樣、迷路、範例跟自己的檔案不同。</p>
+    <p><b>對應講義</b>：看範例一節的後三段。</p>
+    <p><b>接下一張</b>：讀完之後的自我檢查。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-R0#b42 CH02-R0#b43 CH02-R0#b44 CH02-R0#b45 CH02-R0#b46">
+  <div class="frame">
+    <div class="kicker">開場｜讀完之後</div>
+    <h2 class="h-xl">檢查自己懂了沒</h2>
+    <div class="body">
+      <p class="body-zh">試著不看講義，用自己的話回答：</p>
+      <ol class="pts big">
+        <li>第二章要解決哪兩個問題？各舉一個你自己遇過的例子。</li>
+        <li>邊界、欄、溝槽各是什麼？手機主畫面的哪裡像它們？</li>
+        <li>範例的桌面畫面，為什麼讓待處理清單跨 8 欄，今日提醒只跨 4 欄？</li>
+      </ol>
+    </div>
+    <p class="next">第 1 份回到你自己的檔案，替手機畫面 Screen / Login 加上四欄格線，檢查第一章的登入卡片是不是剛好落在邊界上。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三題自我檢查；答不出來的回到那一段再讀。</p>
+    <p><b>對應講義</b>：讀完之後／檢查自己懂了沒、接下來。</p>
+    <p><b>接下一張</b>：進入第 1 份，替手機畫面加上四欄格線。</p>
+  </aside>
+</section>
+
+<!-- ===== CH02-L1 ===== -->
+<section class="slide dark hero divider" data-source="CH02-L1#b01 CH02-L1#b02 CH02-L1#b03">
+  <div class="frame center-v">
+    <div class="kicker">第二章｜第 1 份</div>
+    <h1 class="h-hero">替手機畫面加上四欄格線</h1>
+    <p class="lead">第一章的登入卡片放在 X 24，答案是：24 剛好是邊界的寬度。現在回到你自己的檔案，替手機畫面加上同樣的四欄格線，親眼看看你的卡片落在哪裡。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：開場是看範例知道答案，這一份換成在自己的檔案裡親眼確認。</p>
+    <p><b>對應講義</b>：第 1 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼要先加格線，以及這一份學完會什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b04 CH02-L1#b05 CH02-L1#b06 CH02-L1#b07 CH02-L1#b08">
+  <div class="frame">
+    <div class="kicker">第 1 份｜為什麼先加格線</div>
+    <h2 class="h-xl">動手移東西之前，先在畫面上畫好線</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>接下來要開始移東西：先把「登入工作室」移到卡片外面，之後還要在桌面畫面上排清單和提醒。每移一個，都要知道它該對齊哪裡。</li>
+          <li>像寫生字簿：格子先印好，字寫在格子裡，整頁還是排得整整齊齊。格線就是 Figma 畫面上的格子。</li>
+          <li>它只是參考線，不會跟著 App 給成員看到。</li>
+        </ul>
+        <p class="see">數字照開場：左右邊界各 24，切成 4 欄，溝槽 12。整排放一個東西就是跨滿 4 欄；兩個對半放，就是各跨 2 欄。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">學完第 1 份，你會：</div>
+        <ul class="pts">
+          <li>替一張畫面加上欄格線，設定好欄數、邊界和溝槽</li>
+          <li>用格線檢查畫面上的東西，有沒有對齊邊界</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先說學習目標，再用生字簿的比喻說明格線的角色；手機切 4 欄就夠用。</p>
+    <p><b>對應講義</b>：學完第 1 份，你會；為什麼先加格線。</p>
+    <p><b>接下一張</b>：動手前先知道的三件事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b09 CH02-L1#b10 CH02-L1#b11">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl">動手前先知道三件事</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>事項</th><th>重點</th></tr>
+        <tr><td><b>要選整張手機畫面</b></td><td>點 Screen / Login，不是它底下的 Login / Card。點到卡片，格線就只會畫在卡片裡。</td></tr>
+        <tr><td><b>Layout guide</b></td><td>右側設定裡加格線的那一區。按 + 之後先給的是 Grid（方格）；我們要的是 Columns（直條），就是開場說的「欄」。</td></tr>
+        <tr><td><b>要改的三個欄位</b></td><td><b>Count</b> 是幾欄，<b>Margin</b> 是邊界，<b>Gutter</b> 是溝槽。Figma 先放的是 5 欄、邊界 0、溝槽 20，所以一開始最左最右沒有留白。Color、Type、Width 不用動。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三個容易出錯的地方：選錯對象、方格與直條、三個欄位的英文名稱與預設值。如果格線原本是關著的，按 + 時畫面下方會跳出 Layout guides visible 和 Hide 按鈕。</p>
+    <p><b>對應講義</b>：開始動手／動手前先知道三件事。</p>
+    <p><b>接下一張</b>：第 1 步，選手機畫面。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b12">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">1</span>選手機畫面 Screen / Login</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>打開你第一章的檔案。</li>
+          <li>在左邊 Layers 點 <b>Screen / Login</b> 這一行。</li>
+        </ul>
+        <p class="see">做完會看到：手機畫面外圍出現藍色框，右側設定最上面寫 Frame，W 是 402、H 是 874。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L1-1-選ScreenLogin.png" alt="在 Layers 選 Screen / Login，右側最上面寫 Frame，W 402、H 874"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：確認選到的是整張手機畫面，用右側的 Frame 與 W、H 驗證。</p>
+    <p><b>對應講義</b>：開始動手第 1 步。</p>
+    <p><b>接下一張</b>：點 Layout guide 的 +。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b13">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">2</span>點 Layout guide 的 +</h2>
+    <div class="body">
+      <ul class="pts">
+        <li>在右側設定的下面找到 <b>Layout guide</b>，看不到就把右側往下捲；點它右邊的 <b>+</b>。</li>
+        <li>畫面下方跳出「Layout guides visible」時，不要按旁邊的 Hide，等它自己消失。</li>
+      </ul>
+      <div class="pair">
+        <img src="assets/ch02/L1-2-找LayoutGuide.png" alt="右側設定最下面的 Layout guide，右邊有一個 +">
+        <img src="assets/ch02/L1-3-出現方格.png" alt="手機畫面鋪滿淡紅色方格，跳出小視窗，類型是 Grid">
+      </div>
+      <p class="see">做完會看到：手機畫面鋪滿淡紅色的小方格，旁邊跳出一個小視窗，左上角寫著 Grid。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先出現的是方格，不是我們要的直條，這是正常的；提醒不要按 Hide。</p>
+    <p><b>對應講義</b>：開始動手第 2 步。</p>
+    <p><b>接下一張</b>：把方格換成直條。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b14">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">3</span>把方格換成直條：選 Columns</h2>
+    <div class="body">
+      <ul class="pts">
+        <li>點小視窗左上角的 <b>Grid</b>，跳出三個選項：Grid、Columns、Rows。</li>
+        <li>點 <b>Columns</b>。</li>
+      </ul>
+      <div class="pair">
+        <img src="assets/ch02/L1-4-選Columns.png" alt="Grid 下拉選單，有 Grid、Columns、Rows 三個選項">
+        <img src="assets/ch02/L1-5-五欄預設.png" alt="手機畫面變成 5 條直條，小視窗出現 Count、Margin、Gutter 等欄位">
+      </div>
+      <p class="see">做完會看到：手機畫面變成 5 條粉紅色直條，最左和最右沒有留白。小視窗多了 Count、Margin、Gutter 等欄位。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：換成 Columns 後看到的是 Figma 的預設值，還不是我們要的四欄。</p>
+    <p><b>對應講義</b>：開始動手第 3 步。</p>
+    <p><b>接下一張</b>：填入我們的三個數字。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b15">
+  <div class="frame">
+    <div class="kicker">第 1 份｜開始動手</div>
+    <h2 class="h-xl"><span class="num">4</span>填入 4、24、12</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb">
+          <tr><th>欄位</th><th>原本</th><th>改成</th></tr>
+          <tr><td>Count</td><td>5</td><td><b>4</b></td></tr>
+          <tr><td>Margin</td><td>0</td><td><b>24</b></td></tr>
+          <tr><td>Gutter</td><td>20</td><td><b>12</b></td></tr>
+        </table>
+        <ul class="pts">
+          <li>每填一格按 Enter；欄位右邊的小箭頭不用點。</li>
+          <li>點小視窗右上角的 <b>×</b> 關掉。</li>
+        </ul>
+        <p class="see">做完會看到：4 條粉紅色直條，最左和最右各留一條空白（邊界），直條之間是細細的縫（溝槽）。Layout guide 那一列寫著 4 columns。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L1-6-填好四欄.png" alt="Count 4、Margin 24、Gutter 12，手機畫面變成四條直條"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三個欄位逐一填好，對照圖確認邊界與溝槽的位置。</p>
+    <p><b>對應講義</b>：開始動手第 4 步。</p>
+    <p><b>接下一張</b>：用格線檢查卡片落在哪裡。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b16 CH02-L1#b17 CH02-L1#b18 CH02-L1#b19">
+  <div class="frame">
+    <div class="kicker">第 1 份｜檢查：卡片落在哪裡</div>
+    <h2 class="h-xl"><span class="num">5</span>放大看卡片的左右兩邊</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>在 Layers 點 <b>Login / Card</b>，按 <b>Shift+2</b> 放大到卡片。</li>
+          <li>看卡片的左邊和右邊，各落在哪一條線上。卡片裡的字和按鈕跟著卡片排，沒有貼在欄線上是正常的。</li>
+        </ul>
+        <p class="see">做完會看到：卡片左邊貼著第 1 欄的左邊，右邊貼著第 4 欄的右邊。X 是 24，W 是 354。</p>
+        <div class="callout">卡片從 24 開始，寬 354，右邊停在 24 + 354 = 378。手機寬 402，扣掉右邊界 24，也是 378。卡片佔滿 4 欄，就是跨 4 欄。</div>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L1-7-卡片落在邊界.png" alt="放大後，卡片左邊貼著第 1 欄的左邊，右邊貼著第 4 欄的右邊；右側 X 24、W 354"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先用眼睛看卡片左右兩邊落在邊界上，再用數字算一次右邊的位置。第一章那個 24 不是隨便填的。</p>
+    <p><b>對應講義</b>：檢查：卡片落在哪裡，第 5 步與後面用數字對一次的那一段。</p>
+    <p><b>接下一張</b>：把格線關掉再打開。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b20 CH02-L1#b21 CH02-L1#b22">
+  <div class="frame">
+    <div class="kicker">第 1 份｜把格線關掉再打開</div>
+    <h2 class="h-xl"><span class="num">6</span>用 Shift+G 切換</h2>
+    <div class="body">
+      <p class="lead">Shift+G 只是切換你看不看得到格線，不會改到檔案。格線關掉時看到的，就是成員在 App 裡會看到的樣子。</p>
+      <ol class="pts big">
+        <li>按 <b>Shift+1</b>，畫面縮回整個作品（和 Zoom to fit 一樣）；點畫布空白處取消選取。</li>
+        <li>按 <b>Shift+G</b>：直條消失，下方出現「Layout guides hidden」，卡片還在原來的位置。</li>
+        <li>再按一次 <b>Shift+G</b>：直條回來，下方出現「Layout guides visible」。</li>
+      </ol>
+      <p class="see">做完會看到：格線是開著的。接下來幾份都要對著欄移東西，所以最後要讓它開著。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：格線開關只影響自己看不看得到；最後一定要停在開著的狀態。</p>
+    <p><b>對應講義</b>：把格線關掉再打開，第 6 步。</p>
+    <p><b>接下一張</b>：做完之後的檢查與常見問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b23 CH02-L1#b24 CH02-L1#b25 CH02-L1#b26 CH02-L1#b27 CH02-L1#b28">
+  <div class="frame">
+    <div class="kicker">第 1 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒・常見問題</h2>
+    <div class="body split">
+      <ol class="pts">
+        <li>點 Screen / Login，Layout guide 那一列寫著 4 columns。</li>
+        <li>點那一列左邊的小圖示：Columns，Count 4、Margin 24、Gutter 12。</li>
+        <li>點 Login / Card，Layout guide 是空的，只有一個 +：格線只加在手機畫面上。</li>
+        <li>格線開著：看得到 4 條粉紅色直條。</li>
+      </ol>
+      <table class="tb small">
+        <tr><th>狀況</th><th>怎麼辦</th></tr>
+        <tr><td>只有卡片裡出現直條</td><td>格線加到卡片上了。點 Login / Card，在 Layout guide 那一列點 −，再從第 1 步重做。</td></tr>
+        <tr><td>按了 + 看不到方格或直條</td><td>格線被關掉了。點畫布空白處，按 Shift+G。</td></tr>
+        <tr><td>小視窗關掉了，想再改數字</td><td>點 Screen / Login，點 Layout guide 那一列左邊的小圖示。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四項檢查，特別是第三項：確認格線沒有加到卡片上。常見問題多半是選錯對象或格線被關掉。</p>
+    <p><b>對應講義</b>：做完之後／檢查自己做對了沒、常見問題。</p>
+    <p><b>接下一張</b>：讀完之後的三題與下一份預告。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L1#b29 CH02-L1#b30 CH02-L1#b31">
+  <div class="frame">
+    <div class="kicker">第 1 份｜讀完之後</div>
+    <h2 class="h-xl">不看講義，用自己的話回答</h2>
+    <div class="body">
+      <ol class="pts big">
+        <li>加格線時，為什麼要點 Screen / Login，不是 Login / Card？</li>
+        <li>卡片的 X 24 和 W 354，和邊界、四欄有什麼關係？</li>
+        <li>按 Shift+G 把格線關掉，會不會改到你的檔案？成員打開 App 時看得到格線嗎？</li>
+      </ol>
+    </div>
+    <p class="next">第 2 份要把「登入工作室」從卡片裡移出來，變成整個手機畫面的標題。它要放在哪裡，就靠剛加上的格線決定。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三題自我檢查；講義要學員不看講義、用自己的話回答。</p>
+    <p><b>對應講義</b>：讀完之後、接下來。</p>
+    <p><b>接下一張</b>：進入第 2 份，把標題移出卡片。</p>
+  </aside>
+</section>
+
+<!-- ===== CH02-L2 ===== -->
+<section class="slide dark hero divider" data-source="CH02-L2#b01 CH02-L2#b02 CH02-L2#b03">
+  <div class="frame center-v">
+    <div class="kicker">第二章｜第 2 份</div>
+    <h1 class="h-hero">把標題移出卡片</h1>
+    <p class="lead">登入卡片的左右兩邊剛好停在邊界上，可是卡片裡的「登入工作室」沒有：它從卡片的邊往內縮了一段才開始。現在要把它搬到卡片外面，變成整個手機畫面的標題，和卡片站在同一條線上。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：接上一份的觀察：卡片對齊了邊界，標題還沒有。</p>
+    <p><b>對應講義</b>：第 2 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼標題該在卡片外面。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b04 CH02-L2#b05 CH02-L2#b06 CH02-L2#b07 CH02-L2#b08">
+  <div class="frame">
+    <div class="kicker">第 2 份｜為什麼要把標題搬出來</div>
+    <h2 class="h-xl">最上面那幾個字，回答「我現在在哪裡」</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>手機的「設定」：最上面是大大的「設定」，下面才是一組一組的選項。</li>
+          <li>LINE 點到聊天那一頁，最上面寫「聊天」；購物 App 點進購物車，最上面寫「購物車」；銀行 App 打開轉帳，最上面寫「轉帳」。</li>
+          <li>人很少從第一頁一路點進來：點了朋友傳來的連結、按了一則通知，一打開就落在某一頁。最上面那幾個字，讓你一眼確認自己沒走錯。</li>
+        </ul>
+      </div>
+      <div class="card-box">
+        <div class="h-md">學完第 2 份，你會：</div>
+        <ul class="pts">
+          <li>判斷一樣東西該放進卡片裡，還是放在卡片外面</li>
+          <li>把它搬到卡片外之後，讓它和卡片對齊同一條邊界</li>
+          <li>用一次選兩個的方法檢查有沒有對齊</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用學員每天用的 App 說明頁面標題的作用：先告訴你這一頁是什麼，下面才是要看、要按的東西。</p>
+    <p><b>對應講義</b>：學完第 2 份，你會；為什麼要把標題搬出來的前三段。</p>
+    <p><b>接下一張</b>：Apple 的設計規範怎麼說，以及示意圖。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b09 CH02-L2#b10">
+  <div class="frame">
+    <div class="kicker">第 2 份｜為什麼要把標題搬出來</div>
+    <h2 class="h-xl">Apple 的設計規範也這樣說</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>標題幫人在 App 裡點來點去時，確認自己在哪裡。</li>
+          <li>大標題在畫面捲回最上面時，提醒他現在的位置。</li>
+          <li>建議標題用一個詞或很短的一句話，說出這一頁是做什麼的。</li>
+        </ul>
+      </div>
+      <div class="demo">
+<figure data-kind="示意">
+<div style="display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start;">
+<div style="width:190px;">
+<div style="background:#F5F7FA;border:1px solid #CBD5E1;border-radius:8px;padding:30px 14px 18px;height:310px;box-sizing:border-box;">
+<div style="outline:2px dashed #245B45;outline-offset:4px;font-size:22px;font-weight:700;color:#1E293B;line-height:1.3;">設定</div>
+<div style="outline:2px dashed #94A3B8;outline-offset:4px;margin-top:20px;">
+<div style="background:#FFFFFF;border-radius:8px;padding:6px 10px;font-size:13px;color:#1E293B;line-height:2;">Wi-Fi<br>藍牙<br>行動網路</div>
+<div style="background:#FFFFFF;border-radius:8px;padding:6px 10px;font-size:13px;color:#1E293B;line-height:2;margin-top:10px;">通知<br>聲音<br>螢幕亮度</div>
+</div>
+</div>
+<div style="text-align:center;font-size:14px;color:#5F6C80;margin-top:8px;">手機的設定</div>
+</div>
+<div style="width:190px;">
+<div style="background:#F5F7FA;border:1px solid #CBD5E1;border-radius:8px;padding:30px 14px 18px;height:310px;box-sizing:border-box;">
+<div style="outline:2px dashed #245B45;outline-offset:4px;font-size:22px;font-weight:700;color:#1E293B;line-height:1.3;">登入工作室</div>
+<div style="outline:2px dashed #94A3B8;outline-offset:4px;margin-top:20px;background:#FFFFFF;border-radius:8px;padding:12px 10px;">
+<div style="font-size:12px;color:#1E293B;line-height:1.6;white-space:nowrap;">登入後檢視待處理的任務。</div>
+<div style="font-size:12px;color:#5F6C80;line-height:1.6;margin-top:8px;">請輸入工作室帳號</div>
+<div style="background:#245B45;color:#FFFFFF;border-radius:6px;text-align:center;font-size:13px;line-height:32px;margin-top:10px;">登入</div>
+</div>
+</div>
+<div style="text-align:center;font-size:14px;color:#5F6C80;margin-top:8px;">標題搬出來之後的登入畫面</div>
+</div>
+</div>
+<figcaption>示意圖。綠色虛線框：告訴你這一頁是什麼；灰色虛線框：要看、要按的東西。</figcaption>
+</figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用外部依據（Apple 寫給設計師的規範）支持前面的觀察；示意圖對照手機設定與搬完後的登入畫面，綠框是告訴你這一頁是什麼，灰框是要看、要按的東西。</p>
+    <p><b>對應講義</b>：為什麼要把標題搬出來，Apple 設計規範那一段與示意圖。</p>
+    <p><b>接下一張</b>：回到工作室的登入畫面。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b11 CH02-L2#b12 CH02-L2#b13">
+  <div class="frame">
+    <div class="kicker">第 2 份｜為什麼要把標題搬出來</div>
+    <h2 class="h-xl">回到工作室的登入畫面</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>「登入工作室」說的是這整個畫面在做什麼；卡片裡的說明、提示和按鈕，才是登入時要看、要按的內容。</li>
+        <li>第一章為了先把卡片做出來，把標題一起放進了卡片；現在讓它回到卡片外面的上方，屬於整個手機畫面。</li>
+        <li>還有一個好處：標題在卡片裡，換算到手機畫面上從 40 開始；卡片從 24 開始，左邊差了 16。搬出來放在 24，就從同一條起跑線出發。</li>
+        <li>標題搬走，卡片最上面會空出一塊，最後還要把剩下的三樣東西往上移、把卡片改矮。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩個搬出來的理由：意思上它屬於整個畫面；位置上可以和卡片對齊同一條線。再預告這一份的兩段工作。</p>
+    <p><b>對應講義</b>：為什麼要把標題搬出來，最後三段。</p>
+    <p><b>接下一張</b>：第一段，把標題拖出卡片。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b14 CH02-L2#b15 CH02-L2#b16">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第一段：把標題拖出卡片</div>
+    <h2 class="h-xl"><span class="num">1</span>找到卡片裡的 Title</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="lead">Title 現在在卡片裡，它的 X、Y 是從卡片的左上角量的。拖出卡片後，起點換成手機畫面的左上角：字不會動，右側的數字會變。</p>
+        <ul class="pts">
+          <li>在 Layers 找到 <b>Login / Card</b>，必要時點小箭頭展開。</li>
+          <li>點 <b>Title</b>，它就是「登入工作室」這段字。</li>
+        </ul>
+        <p class="see">做完會看到：X 16、Y 16，Resizing 選中的是 Auto width。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L2-1-Title在卡片裡.png" alt="Layers 裡 Title 縮排在 Login / Card 底下，右側 X 16、Y 16，Resizing 選的是 Auto width"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先預告數字會變的原因（量的起點換了），再選到 Title，記下現在的 X 16、Y 16。</p>
+    <p><b>對應講義</b>：第一段的動手前先知道，與第 1 步。</p>
+    <p><b>接下一張</b>：把 Title 拖到 Screen / Login 上。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b17 CH02-L2#b18">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第一段：把標題拖出卡片</div>
+    <h2 class="h-xl"><span class="num">2</span>拖到 Screen / Login 那一行上</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>在 Layers 按住 <b>Title</b>，往上拖到 <b>Screen / Login</b> 那一行上放開。</li>
+        </ul>
+        <p class="see">做完會看到：Title 跑到 Login / Card 上面，縮排一樣深。畫面上的字沒有動，右側卻變成 X 40、Y 136。</p>
+        <div class="callout">卡片本身在 X 24、Y 120，所以 24 + 16 = 40，120 + 16 = 136。這個 40，和卡片的 24 差了 16。</div>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L2-2-拖出卡片.png" alt="Title 移到 Screen / Login 底下，縮排和 Login / Card 一樣，右側 X 40、Y 136"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：拖完之後用縮排確認它直接放在手機畫面裡；數字變成 40 和 136，是因為量的起點換了。</p>
+    <p><b>對應講義</b>：第 2 步與後面字沒動、數字為什麼變了那一段。</p>
+    <p><b>接下一張</b>：改名，並放到邊界上。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b19 CH02-L2#b20 CH02-L2#b21 CH02-L2#b22">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第一段：把標題拖出卡片</div>
+    <h2 class="h-xl"><span class="num">3</span><span class="num">4</span>改名，放到邊界上：X 24、Y 64</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>在 Layers 雙擊 Title，改名為：</li>
+        </ul>
+        <div class="copy">Screen / Heading</div>
+        <ul class="pts">
+          <li>Heading 是標題的意思；看名字就知道它是放在手機畫面上的標題。</li>
+          <li>Position 填 <b>X 24</b>（邊界，和卡片一樣）、<b>Y 64</b>（避開最上面顯示時間、電量的那一條）。</li>
+          <li>標題高 32，從 64 排到 96；卡片從 120 開始，中間剛好留 24，和邊界一樣寬。</li>
+        </ul>
+        <p class="see">做完會看到：「登入工作室」跑到白色卡片上面，左邊和卡片對齊；卡片裡最上面空了一塊。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L2-3-標題移到上方.png" alt="標題移到卡片外面的上方，左邊和卡片對齊；卡片裡最上面空出一塊"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：為什麼要改名、X 24 與 Y 64 各自的理由。名字太長時 Layers 會顯示成 Screen / Headi…，沒有關係。</p>
+    <p><b>對應講義</b>：第 3、4 步與前面的說明段落。</p>
+    <p><b>接下一張</b>：讓標題和卡片一樣寬。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b23 CH02-L2#b24 CH02-L2#b25">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第一段：把標題拖出卡片</div>
+    <h2 class="h-xl"><span class="num">5</span>讓標題和卡片一樣寬：Auto height、W 354</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb small">
+          <tr><th>Resizing</th><th>像什麼</th><th>寬度</th></tr>
+          <tr><td>Auto width</td><td>一條紙條</td><td>由字決定，五個字只有 120 寬，定不了 354</td></tr>
+          <tr><td>Fixed size</td><td>固定大小的便利貼</td><td>寫不下的字會跑到框外</td></tr>
+          <tr><td><b>Auto height</b></td><td>固定寬度的筆記本</td><td>寫到邊就換下一行</td></tr>
+        </table>
+        <ul class="pts">
+          <li>標題以後如果變長，換行比跑出框外好，所以選 <b>Auto height</b>，W 填 <b>354</b>。</li>
+        </ul>
+        <p class="see">做完會看到：字沒有變，外面的框從左邊界拉到右邊界，和卡片一樣寬。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L2-4-標題寬354.png" alt="Resizing 選 Auto height，W 354；標題框從左邊界拉到右邊界"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回到第一章長句測試留下的問題：卡片上的 Title 用 Auto width 會不會有問題？現在要定寬度跨滿 4 欄，所以要換。三種 Resizing 用紙條、便利貼、筆記本比喻。</p>
+    <p><b>對應講義</b>：第 5 步與前面兩段說明。</p>
+    <p><b>接下一張</b>：第二段，把卡片收緊。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b26 CH02-L2#b27 CH02-L2#b28">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第二段：把卡片收緊</div>
+    <h2 class="h-xl"><span class="num">6</span>卡片裡三樣東西各往上移 48</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="body-zh">標題本來在卡片裡從 16 排到 48，下一樣東西從 64 開始。標題搬走後上面空出 48，剩下三樣都往上移 48；X 維持 16。</p>
+        <table class="tb">
+          <tr><th>圖層</th><th>Y 原本</th><th>Y 改成</th></tr>
+          <tr><td>Message</td><td>64</td><td><b>16</b></td></tr>
+          <tr><td>Hint</td><td>104</td><td><b>56</b></td></tr>
+          <tr><td>Button / Draft</td><td>142</td><td><b>94</b></td></tr>
+        </table>
+        <p class="see">做完會看到：說明、提示和按鈕排在卡片上半部，彼此距離不變；卡片最下面空了一塊。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L2-6-卡片下方留白.png" alt="三樣東西移到卡片裡的上半部，卡片裡最下面空出一塊"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：為什麼是 48：標題的 Y 加上它的高度。三樣東西都減 48，彼此的距離就不變。</p>
+    <p><b>對應講義</b>：第二段的動手前先知道與第 6 步。</p>
+    <p><b>接下一張</b>：卡片也跟著改矮。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b27 CH02-L2#b29">
+  <div class="frame">
+    <div class="kicker">第 2 份｜第二段：把卡片收緊</div>
+    <h2 class="h-xl"><span class="num">7</span>卡片改矮：H 160</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts big">
+          <li>卡片原本 H 208，少掉 48，就是 160。</li>
+          <li>在 Layers 點 <b>Login / Card</b>，Dimensions 的 <b>H</b> 改成 <b>160</b>。</li>
+        </ul>
+        <p class="see">做完會看到：卡片下緣在按鈕下面一點點，和原本按鈕到卡片底的距離一樣。W 354、H 160。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L2-7-卡片H160.png" alt="卡片 H 160，下緣緊緊包住按鈕"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：卡片高度也減 48，下緣的留白就和原本一樣。</p>
+    <p><b>對應講義</b>：第 7 步。</p>
+    <p><b>接下一張</b>：檢查標題和卡片是不是同一條線。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b30 CH02-L2#b31 CH02-L2#b32 CH02-L2#b33 CH02-L2#b34 CH02-L2#b35">
+  <div class="frame">
+    <div class="kicker">第 2 份｜檢查：標題和卡片是不是同一條線</div>
+    <h2 class="h-xl"><span class="num">8</span>一起選起來，看 X 和 W</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="body-zh">一次選好幾個東西時，右側只有大家的數字都一樣才顯示數字，不一樣就顯示 <b>Mixed</b>。</p>
+        <ul class="pts">
+          <li>點 <b>Screen / Heading</b>，按住 Shift 再點 <b>Login / Card</b>，按 <b>Shift+2</b>。</li>
+          <li>X 24、W 354 顯示得出數字：從同一個地方開始、一樣寬。</li>
+          <li>Y 和 H 是 Mixed：一個在上、一個在下，本來就不同。</li>
+          <li>藍框下方的 354 × 216 是兩個合起來量的大小，不是卡片變高了。</li>
+        </ul>
+        <p class="cap">看完按 Shift+1 縮回整個作品，點空白處取消選取。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L2-8-同一條起跑線.png" alt="同時選標題和卡片，右側 X 24、W 354，Y 和 H 顯示 Mixed"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：一次選兩個的檢查法，不用一個一個點開比對；這個方法後面幾份還會再用。</p>
+    <p><b>對應講義</b>：檢查一節的動手前先知道、第 8 步與後面的說明。</p>
+    <p><b>接下一張</b>：做完之後的檢查與常見問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b36 CH02-L2#b37 CH02-L2#b38 CH02-L2#b39 CH02-L2#b40 CH02-L2#b41 CH02-L2#b42">
+  <div class="frame">
+    <div class="kicker">第 2 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒・常見問題</h2>
+    <div class="body split">
+      <div>
+        <ol class="pts">
+          <li>Screen / Login 底下：Screen / Heading 和 Login / Card；卡片底下剩 Button / Draft、Hint、Message。</li>
+          <li>Screen / Heading：X 24、Y 64，Auto height，W 354。</li>
+          <li>Login / Card：X 24、Y 120，W 354、H 160。</li>
+          <li>卡片裡：Message Y 16、Hint Y 56、Button / Draft Y 94，X 都是 16。</li>
+        </ol>
+        <p><a class="btn" href="https://www.figma.com/design/me0KLYweUoHzHRFOEsYscH/" target="_blank" rel="noopener">打開第二章範例對照</a></p>
+      </div>
+      <table class="tb small">
+        <tr><th>狀況</th><th>怎麼辦</th></tr>
+        <tr><td>拖完之後，Title 還縮排在 Login / Card 底下</td><td>放開的位置不對，再拖一次，放在 Screen / Login 那一行的字上面。</td></tr>
+        <tr><td>Title 的縮排比 Login / Card 還淺</td><td>它被拖到手機畫面外面了。拖回 Screen / Login 那一行上，再重填 X 24、Y 64。</td></tr>
+        <tr><td>W 是灰色的，改不了</td><td>Resizing 還是 Auto width。先點第二個圖示 Auto height。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四項檢查數字；做完的樣子和範例的手機畫面一樣，可以打開範例比 X、Y、W、H（範例格線是關的，按 Shift+G 打開）。</p>
+    <p><b>對應講義</b>：做完之後、常見問題。</p>
+    <p><b>接下一張</b>：讀完之後的三題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L2#b43 CH02-L2#b44 CH02-L2#b45">
+  <div class="frame">
+    <div class="kicker">第 2 份｜讀完之後</div>
+    <h2 class="h-xl">不看講義，用自己的話回答</h2>
+    <div class="body">
+      <ol class="pts big">
+        <li>為什麼「登入工作室」要放在卡片外面，而說明、提示和按鈕留在卡片裡？</li>
+        <li>Title 拖出卡片後，畫面上沒有動，X 卻從 16 變成 40，為什麼？</li>
+        <li>一次選起標題和卡片，右側 X 顯示 24、Y 顯示 Mixed，各代表什麼？</li>
+      </ol>
+    </div>
+    <p class="next">標題和卡片都跨滿 4 欄。如果兩個東西要並排、各佔一半，一半是多寬？第 3 份用欄算出這個數字，並在手機畫面上驗證。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三題自我檢查。</p>
+    <p><b>對應講義</b>：讀完之後、接下來。</p>
+    <p><b>接下一張</b>：進入第 3 份，算出跨欄的寬度。</p>
+  </aside>
+</section>
+
+<!-- ===== CH02-L3 ===== -->
+<section class="slide dark hero divider" data-source="CH02-L3#b01 CH02-L3#b02 CH02-L3#b03">
+  <div class="frame center-v">
+    <div class="kicker">第二章｜第 3 份</div>
+    <h1 class="h-hero">算出跨欄的寬度</h1>
+    <p class="lead">標題和卡片都從左邊界排到右邊界，跨滿 4 欄，寬 354。可是畫面上不會每樣東西都這麼寬。兩個東西要並排、各佔一半時，一半是多寬？</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這一份先算、再到畫面上親手驗證。</p>
+    <p><b>對應講義</b>：第 3 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼不能直接拿手機寬度除以二。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b04 CH02-L3#b05 CH02-L3#b06 CH02-L3#b07 CH02-L3#b08">
+  <div class="frame">
+    <div class="kicker">第 3 份｜為什麼要算</div>
+    <h2 class="h-xl">格線是一把大家共用的尺</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>不能拿手機的寬度直接除：直接把 402 除以 2，等於當作邊界和間隔都不存在。</li>
+          <li>每一塊多寬也是設計的決定：確認框的「取消」和「確定」一樣寬，看的人只要讀字就能選；想讓某一顆顯眼，也可以刻意讓它寬一點。</li>
+          <li>不管一樣寬還是故意不一樣，都需要一把共用的尺，不然只能憑感覺拉。</li>
+          <li>扣掉左右邊界，剩下的切成幾欄；切成 N 欄，中間就有 N − 1 條溝槽。</li>
+        </ul>
+      </div>
+      <div class="card-box">
+        <div class="h-md">學完第 3 份，你會：</div>
+        <ul class="pts">
+          <li>用欄算出一塊東西跨幾欄時有多寬</li>
+          <li>算出它從哪裡開始、到哪裡結束</li>
+          <li>到畫面上驗證算得對不對</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩個理由：邊界和間隔要整個畫面一致；寬度本身也是設計決定（確認框兩顆按鈕的例子）。格線讓寬度可以用跨幾欄來說。</p>
+    <p><b>對應講義</b>：學完第 3 份，你會；為什麼要算。</p>
+    <p><b>接下一張</b>：先算一欄多寬。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b09 CH02-L3#b10 CH02-L3#b11 CH02-L3#b12 CH02-L3#b13">
+  <div class="frame">
+    <div class="kicker">第 3 份｜先算一欄多寬</div>
+    <h2 class="h-xl">手機寬 402，一欄多寬？</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>左右邊界各 24，一共扣掉 48。</li>
+          <li>4 欄之間有幾條溝槽？伸出一隻手，四根手指之間只有 3 個縫，所以溝槽是 3 條，一共扣掉 36。</li>
+          <li>剩下的 318 平分給 4 欄：</li>
+        </ul>
+        <div class="formula">402 − 24 × 2 − 12 × 3 = 318<br>318 ÷ 4 = 79.5（每欄的寬）</div>
+        <p class="cap">79.5 不是整數沒有關係。Figma 照這個寬度畫欄，東西只要對齊欄線就好。</p>
+      </div>
+      <div class="demo">
+<figure data-kind="示意">
+<div style="max-width:620px;margin:0 auto;font-size:12px;color:#1E293B;">
+<div style="text-align:center;color:#5F6C80;margin-bottom:4px;">手機畫面寬 402</div>
+<div style="display:flex;height:44px;border:1px solid #CBD5E1;background:#F5F7FA;">
+<div style="width:5.97%;"></div>
+<div style="width:19.78%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">79.5</div>
+<div style="width:2.99%;"></div>
+<div style="width:19.78%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">79.5</div>
+<div style="width:2.99%;"></div>
+<div style="width:19.78%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">79.5</div>
+<div style="width:2.99%;"></div>
+<div style="width:19.78%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">79.5</div>
+<div style="width:5.97%;"></div>
+</div>
+<div style="display:flex;color:#5F6C80;margin-top:4px;line-height:1.3;white-space:nowrap;">
+<div style="width:5.97%;text-align:center;">24</div>
+<div style="width:19.78%;text-align:center;">第 1 欄</div>
+<div style="width:2.99%;text-align:center;">12</div>
+<div style="width:19.78%;text-align:center;">第 2 欄</div>
+<div style="width:2.99%;text-align:center;">12</div>
+<div style="width:19.78%;text-align:center;">第 3 欄</div>
+<div style="width:2.99%;text-align:center;">12</div>
+<div style="width:19.78%;text-align:center;">第 4 欄</div>
+<div style="width:5.97%;text-align:center;">24</div>
+</div>
+<div style="display:flex;height:36px;margin-top:14px;">
+<div style="width:5.97%;"></div>
+<div style="width:42.54%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 2 欄：171</div>
+<div style="width:2.99%;"></div>
+<div style="width:42.54%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 2 欄：171</div>
+<div style="width:5.97%;"></div>
+</div>
+<div style="position:relative;height:16px;color:#5F6C80;white-space:nowrap;">
+<span style="position:absolute;left:5.97%;transform:translateX(-50%);">24</span>
+<span style="position:absolute;left:48.51%;transform:translateX(-100%);">195</span>
+<span style="position:absolute;left:51.49%;">207</span>
+<span style="position:absolute;left:94.03%;transform:translateX(-50%);">378</span>
+</div>
+<div style="display:flex;height:36px;margin-top:10px;">
+<div style="width:5.97%;"></div>
+<div style="width:88.06%;background:#FFFFFF;border:1px solid #CBD5E1;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 4 欄：354（卡片和標題的寬度）</div>
+<div style="width:5.97%;"></div>
+</div>
+</div>
+<figcaption>示意圖，照比例畫。上面是手機畫面 402 的切法：粉紅色是欄，中間的空白是溝槽，最左最右是邊界。下面是用欄量出來的寬度，小字是每一塊開始和結束的位置。</figcaption>
+</figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：一步一步扣：邊界、溝槽，再平分。用手指的比喻說明溝槽數比欄數少一。</p>
+    <p><b>對應講義</b>：先算一欄多寬，示意圖與第一組算式。</p>
+    <p><b>接下一張</b>：有了每欄的寬，算跨幾欄。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b14 CH02-L3#b15 CH02-L3#b16 CH02-L3#b17">
+  <div class="frame">
+    <div class="kicker">第 3 份｜先算一欄多寬</div>
+    <h2 class="h-xl">跨幾欄＝那幾欄的寬＋中間的溝槽</h2>
+    <div class="body">
+      <div class="formula">跨 2 欄：79.5 × 2 + 12 = 171<br>跨 4 欄：79.5 × 4 + 12 × 3 = 354</div>
+      <ul class="pts big">
+        <li>跨 4 欄算出來是 354，正好是卡片和標題的寬度。前兩份一直在用的 354，原來就是「跨滿 4 欄」。</li>
+        <li>兩塊並排各跨 2 欄：第一塊從 24 開始，寬 171，停在 195；隔一條溝槽 12，第二塊從 207 開始，寬 171，停在 378，剛好是右邊界。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：跨 2 欄是 2 欄加 1 條溝槽，跨 4 欄是 4 欄加 3 條溝槽；354 的身分揭曉。再算出兩塊並排時的位置，下一步就要拿這些數字去驗證。</p>
+    <p><b>對應講義</b>：先算一欄多寬，第二組算式與後兩段。</p>
+    <p><b>接下一張</b>：到手機畫面上驗證。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b18 CH02-L3#b19 CH02-L3#b20 CH02-L3#b21">
+  <div class="frame">
+    <div class="kicker">第 3 份｜在手機畫面上驗證</div>
+    <h2 class="h-xl">做兩個暫時的方塊，看它們落在哪</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>名字用 <b>Reference / Half</b>：Reference 是「參考」，表示它是對照用的；Half 是「一半」。驗證完會刪掉。</li>
+        <li><b>位置和大小</b>：X 和 W 是剛才算的；Y 320、H 120 只是放在卡片下面、夠大看得清楚。</li>
+        <li><b>顏色</b>：新拉的框沒有顏色，先點 Fill 的 + 再換成 Muted。暫時借用它的灰色，是為了在淺灰底上看得清楚；真正放進畫面的東西，顏色要照用途選。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：交代方塊的名字、數字和顏色的來由；特別說明借用 Muted 只是暫時的，因為第一章說過顏色變數的名字寫的是用途。</p>
+    <p><b>對應講義</b>：在手機畫面上驗證，前兩段與動手前先知道兩件事。</p>
+    <p><b>接下一張</b>：第 1 步，做第一個方塊。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b22">
+  <div class="frame">
+    <div class="kicker">第 3 份｜在手機畫面上驗證</div>
+    <h2 class="h-xl"><span class="num">1</span>做第一個方塊：Reference / Half 1</h2>
+    <div class="body split img-r">
+      <div>
+        <ol class="pts">
+          <li>Frame 工具，在卡片下面的空白處拉一個框；確認縮排在 <b>Screen / Login</b> 底下。</li>
+          <li>改名：</li>
+        </ol>
+        <div class="copy">Reference / Half 1</div>
+        <ol class="pts" start="3">
+          <li>X 24、Y 320；W 171、H 120。</li>
+          <li>Fill 的 + → 關掉調色盤 → 四點圖示選 <b>Muted</b>。</li>
+        </ol>
+        <p class="see">做完會看到：灰色方塊左邊貼著第 1 欄的左邊，右邊貼著第 2 欄的右邊，剛好蓋住兩欄和中間那條溝槽。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L3-1-半寬方塊一.png" alt="灰色方塊 Reference / Half 1，X 24、Y 320、W 171、H 120，蓋住第 1、2 欄"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：照算出來的數字填，看方塊是不是剛好蓋住兩欄。</p>
+    <p><b>對應講義</b>：在手機畫面上驗證第 1 步。</p>
+    <p><b>接下一張</b>：做第二個方塊。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b23">
+  <div class="frame">
+    <div class="kicker">第 3 份｜在手機畫面上驗證</div>
+    <h2 class="h-xl"><span class="num">2</span>做第二個方塊：Reference / Half 2</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>從第一塊<b>右邊的空白處</b>開始拉框。不要從第一塊上面開始拉，不然新的框會跑進第一塊裡面。</li>
+          <li>確認縮排在 Screen / Login 底下，和 Reference / Half 1 一樣深。</li>
+          <li>改名 Reference / Half 2；X 207、Y 320；W 171、H 120；Fill 選 Muted。</li>
+        </ul>
+        <p class="see">做完會看到：第二塊蓋住第 3、4 欄，右邊停在右邊界上，兩塊中間留著一條細縫。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L3-2-兩塊方塊.png" alt="兩塊灰色方塊，Half 1 蓋住第 1、2 欄，Half 2 蓋住第 3、4 欄；Layers 裡兩個都在 Screen / Login 底下"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：重點是拉框的起點，以及 X 207 是怎麼來的（195 再加一條溝槽）。</p>
+    <p><b>對應講義</b>：在手機畫面上驗證第 2 步。</p>
+    <p><b>接下一張</b>：兩塊一起選起來檢查。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b24 CH02-L3#b25 CH02-L3#b26">
+  <div class="frame">
+    <div class="kicker">第 3 份｜在手機畫面上驗證</div>
+    <h2 class="h-xl"><span class="num">3</span>一起選起來檢查</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>點 Reference / Half 1，按住 Shift 再點 Reference / Half 2。</li>
+          <li>一次選好幾個東西時，Dimensions 下面會多出 <b>Spacing</b>，是它們之間的距離。</li>
+        </ul>
+        <p class="see">做完會看到：W 是 171，X 是 Mixed；Spacing 是 12；藍框下方寫著 354 × 120。</p>
+        <div class="callout">Spacing 12：兩塊中間的縫剛好是一條溝槽。171 + 12 + 171 = 354，和卡片一樣寬。</div>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L3-3-兩塊合起來.png" alt="同時選兩個方塊，畫布顯示 354 × 120，右側 W 171、Spacing 12"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用 Spacing 和合起來的寬度，證明兩個半寬加一條溝槽剛好等於跨滿 4 欄。</p>
+    <p><b>對應講義</b>：第 3 步與前後的說明。</p>
+    <p><b>接下一張</b>：驗證完刪掉，接著把數字寫進規則表。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b27 CH02-L3#b28 CH02-L3#b29 CH02-L3#b30 CH02-L3#b31 CH02-L3#b32">
+  <div class="frame">
+    <div class="kicker">第 3 份｜把數字寫進規則表</div>
+    <h2 class="h-xl"><span class="num">4</span>刪掉方塊，準備寫規則表</h2>
+    <div class="body">
+      <ul class="pts">
+        <li>兩個方塊還選著，按 Delete。算法學會了，以後要並排時照同樣的方法算就好。</li>
+        <li>規則表最下面要加一區「格線與版面」，這一章一共寫五行，現在先寫第 1 行。</li>
+      </ul>
+      <table class="tb">
+        <tr><th>為什麼</th><th>理由</th></tr>
+        <tr><td>規則表一次加長到 1720</td><td>先把五行說明的位置留好，之後只要在同一段文字後面加一行，不用再改高度。</td></tr>
+        <tr><td>第 1 行用 Auto height、W 536</td><td>規則表寬 600，左右各留 32，能寫字的寬度是 536；字太長就換行，不會超出規則表。和替標題選 Auto height 是同一個理由。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：刪方塊後，說明為什麼要把格線數字寫進規則表：之後做新畫面或別人接手，翻規則表就知道。再交代兩個數字的理由。</p>
+    <p><b>對應講義</b>：第 4 步；把數字寫進規則表的說明與動手前先知道兩件事。</p>
+    <p><b>接下一張</b>：加長規則表、打小標題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b33 CH02-L3#b34">
+  <div class="frame">
+    <div class="kicker">第 3 份｜把數字寫進規則表</div>
+    <h2 class="h-xl"><span class="num">5</span><span class="num">6</span>加長規則表，打小標題</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>點 <b>Rules</b>，H 從 1480 改成 <b>1720</b>，按 Shift+2 看整張規則表。</li>
+          <li>文字工具 T，在新空白處左上方點一下，打：</li>
+        </ul>
+        <div class="copy">格線與版面</div>
+        <ul class="pts">
+          <li>樣式 <b>Section title</b>，Fill <b>Text</b>，X 32、Y 1444。</li>
+        </ul>
+        <p class="see">做完會看到：分隔線下面一行粗體小標題，和上面「狀態與邊框」一樣大、一樣顏色。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L3-4-規則表加長.png" alt="Rules H 1720，規則表最下面多出一塊空白"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩步合在一起：先留空間，再放小標題，樣式沿用規則表其他區的小標題。</p>
+    <p><b>對應講義</b>：把數字寫進規則表第 5、6 步。</p>
+    <p><b>接下一張</b>：寫第 1 行手機格線。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b35">
+  <div class="frame">
+    <div class="kicker">第 3 份｜把數字寫進規則表</div>
+    <h2 class="h-xl"><span class="num">7</span>寫第 1 行：手機格線</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>文字工具 T，在小標題下方點一下，貼上這一行：</li>
+        </ul>
+        <div class="copy">手機格線　4 欄｜邊界 24｜溝槽 12｜每欄 79.5｜跨 2 欄 171｜跨 4 欄 354</div>
+        <ul class="pts">
+          <li>樣式 <b>Body</b>，Fill <b>Text</b>。</li>
+          <li>Resizing 選 <b>Auto height</b>，W <b>536</b>。</li>
+          <li>X 32、Y 1480。</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L3-5-格線與版面第一行.png" alt="規則表最下面：小標題格線與版面，下面一行手機格線的數字；右側 X 32、Y 1480、Auto height、W 536、Body、Text"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這一行就是這一份算出的六個數字；直接複製比較不會打錯。</p>
+    <p><b>對應講義</b>：第 7 步。</p>
+    <p><b>接下一張</b>：做完之後的檢查與常見問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b36 CH02-L3#b37 CH02-L3#b38 CH02-L3#b39 CH02-L3#b40 CH02-L3#b41 CH02-L3#b42">
+  <div class="frame">
+    <div class="kicker">第 3 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒・常見問題</h2>
+    <div class="body split">
+      <ol class="pts">
+        <li>Screen / Login 底下只有 Screen / Heading 和 Login / Card，方塊已經刪掉。</li>
+        <li>Rules 的 H 是 1720。</li>
+        <li>小標題「格線與版面」：Section title、Text，X 32、Y 1444。</li>
+        <li>第 1 行手機格線：Body、Text，Auto height、W 536，X 32、Y 1480。</li>
+      </ol>
+      <table class="tb small">
+        <tr><th>狀況</th><th>怎麼辦</th></tr>
+        <tr><td>方塊沒有縮排在 Screen / Login 底下</td><td>拉框起點在手機畫面外面。拖到 Screen / Login 那一行上，重新填 X、Y。</td></tr>
+        <tr><td>第二個方塊縮排在 Reference / Half 1 底下</td><td>從第一塊上面開始拉了。拖到 Screen / Login 那一行上，重新填 X 207、Y 320。</td></tr>
+        <tr><td>方塊是白色的</td><td>Fill 還是剛加上時的白色。四點圖示選 Muted。</td></tr>
+        <tr><td>小標題或第 1 行不在規則表裡</td><td>點到規則表外面了。拖到 Rules 那一行上，重新填 X、Y。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：四項檢查；常見問題多半是拉框或點文字的起點不對，解法都是在 Layers 拖回正確的上一層再重填位置。</p>
+    <p><b>對應講義</b>：做完之後、常見問題。</p>
+    <p><b>接下一張</b>：讀完之後的三題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L3#b43 CH02-L3#b44 CH02-L3#b45">
+  <div class="frame">
+    <div class="kicker">第 3 份｜讀完之後</div>
+    <h2 class="h-xl">不看講義，用自己的話回答</h2>
+    <div class="body">
+      <ol class="pts big">
+        <li>手機寬 402，為什麼一半不是 201？</li>
+        <li>4 欄之間為什麼只有 3 條溝槽？跨 2 欄的 171 是怎麼來的？</li>
+        <li>第二個方塊的 X 為什麼是 207？</li>
+      </ol>
+    </div>
+    <p class="next">第 4 份換到電腦螢幕：做一張寬 1440 的桌面畫面，切成 12 欄，算出每欄多寬、跨 4 欄和跨 8 欄各是多少，寫進規則表第 2 行。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三題自我檢查，都是這一份的算法。</p>
+    <p><b>對應講義</b>：讀完之後、接下來。</p>
+    <p><b>接下一張</b>：進入第 4 份，桌面十二欄。</p>
+  </aside>
+</section>
+
+<!-- ===== CH02-L4 ===== -->
+<section class="slide dark hero divider" data-source="CH02-L4#b01 CH02-L4#b02 CH02-L4#b03">
+  <div class="frame center-v">
+    <div class="kicker">第二章｜第 4 份</div>
+    <h1 class="h-hero">做桌面畫面，切成 12 欄</h1>
+    <p class="lead">工作室裡有人整天坐在電腦前，所以 App 也要有在電腦螢幕上看的桌面畫面。現在換到桌面：做一張寬 1440 的畫面，切成 12 欄，再用上一份的方法算出它的數字，寫進規則表第 2 行。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：手機的格線已經算好也寫進規則表，這一份換到桌面，方法相同、數字不同。</p>
+    <p><b>對應講義</b>：第 4 份的標題與導言。</p>
+    <p><b>接下一張</b>：為什麼桌面要切 12 欄。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b04 CH02-L4#b05 CH02-L4#b06 CH02-L4#b07">
+  <div class="frame">
+    <div class="kicker">第 4 份｜為什麼桌面要切 12 欄</div>
+    <h2 class="h-xl">畫面一寬，分法就多了</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>手機很窄，一排頂多並排兩樣東西，4 欄就夠用。</li>
+          <li>電腦螢幕寬很多，一排可以放好幾塊：可能對半、分三塊，也可能一大一小。工作室的桌面畫面要分出放待處理清單的主區，和放今日提醒的側區。</li>
+          <li>12 可以平分成 2 份、3 份、4 份、6 份：對半各跨 6 欄，三塊各跨 4 欄，四塊各跨 3 欄，一大一小可以是跨 8 欄配跨 4 欄。</li>
+          <li>換成 10 欄就不行：10 欄分不出三塊一樣寬的。</li>
+        </ul>
+      </div>
+      <div class="card-box">
+        <div class="h-md">學完第 4 份，你會：</div>
+        <ul class="pts">
+          <li>替比手機寬很多的桌面畫面，決定要切幾欄、邊界和溝槽留多寬</li>
+          <li>用上一份的方法算出它的數字</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：欄數要能配合各種分法：12 可以平分成 2、3、4、6 份；10 欄分不出三塊一樣寬的。</p>
+    <p><b>對應講義</b>：學完第 4 份，你會；為什麼桌面要切 12 欄，前兩段。</p>
+    <p><b>接下一張</b>：示意圖：同一把尺的四種分法。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b08">
+  <div class="frame">
+    <div class="kicker">第 4 份｜為什麼桌面要切 12 欄</div>
+    <h2 class="h-xl">同一把尺，四種分法</h2>
+    <div class="body">
+      <div class="demo">
+<figure data-kind="示意">
+<div style="max-width:620px;margin:0 auto;font-size:12px;color:#1E293B;">
+<div style="text-align:center;color:#5F6C80;margin-bottom:4px;">桌面畫面寬 1440，切成 12 欄</div>
+<div style="display:flex;height:28px;border:1px solid #CBD5E1;background:#F5F7FA;font-size:10px;">
+<div style="width:8.333%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">1</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">2</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">3</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">4</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">5</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">6</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">7</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">8</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">9</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">10</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">11</div><div style="width:1.667%;"></div>
+<div style="width:5.417%;background:#F7D7DA;display:flex;align-items:center;justify-content:center;">12</div>
+<div style="width:8.333%;"></div>
+</div>
+<div style="color:#5F6C80;margin:12px 0 4px;">對半</div>
+<div style="display:flex;height:30px;white-space:nowrap;">
+<div style="width:8.333%;"></div>
+<div style="width:40.833%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 6 欄</div>
+<div style="width:1.667%;"></div>
+<div style="width:40.833%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 6 欄</div>
+<div style="width:8.333%;"></div>
+</div>
+<div style="color:#5F6C80;margin:10px 0 4px;">分三塊</div>
+<div style="display:flex;height:30px;white-space:nowrap;">
+<div style="width:8.333%;"></div>
+<div style="width:26.667%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 4 欄</div>
+<div style="width:1.667%;"></div>
+<div style="width:26.667%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 4 欄</div>
+<div style="width:1.667%;"></div>
+<div style="width:26.667%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 4 欄</div>
+<div style="width:8.333%;"></div>
+</div>
+<div style="color:#5F6C80;margin:10px 0 4px;">分四塊</div>
+<div style="display:flex;height:30px;white-space:nowrap;">
+<div style="width:8.333%;"></div>
+<div style="width:19.583%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 3 欄</div>
+<div style="width:1.667%;"></div>
+<div style="width:19.583%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 3 欄</div>
+<div style="width:1.667%;"></div>
+<div style="width:19.583%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 3 欄</div>
+<div style="width:1.667%;"></div>
+<div style="width:19.583%;background:#5F6C80;color:#FFFFFF;display:flex;align-items:center;justify-content:center;border-radius:4px;">跨 3 欄</div>
+<div style="width:8.333%;"></div>
+</div>
+<div style="color:#5F6C80;margin:10px 0 4px;">一大一小（工作室的桌面畫面）</div>
+<div style="display:flex;height:30px;white-space:nowrap;">
+<div style="width:8.333%;"></div>
+<div style="width:55%;background:#FFFFFF;border:1px solid #CBD5E1;display:flex;align-items:center;justify-content:center;border-radius:4px;">主區：跨 8 欄</div>
+<div style="width:1.667%;"></div>
+<div style="width:26.667%;background:#FFFFFF;border:1px solid #CBD5E1;display:flex;align-items:center;justify-content:center;border-radius:4px;">側區：跨 4 欄</div>
+<div style="width:8.333%;"></div>
+</div>
+</div>
+<figcaption>示意圖，照比例畫。最上面是桌面畫面的 12 欄，左右兩邊空白的是邊界。下面四排是同一把尺的四種分法，每一塊都剛好從一欄的左邊開始、在一欄的右邊結束。</figcaption>
+</figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：圖上看：每一種分法的每一塊，都剛好從一欄的左邊開始、在一欄的右邊結束；最後一排就是工作室要用的一大一小。</p>
+    <p><b>對應講義</b>：為什麼桌面要切 12 欄的示意圖。</p>
+    <p><b>接下一張</b>：邊界和溝槽也跟著變大。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b09 CH02-L4#b10 CH02-L4#b11">
+  <div class="frame">
+    <div class="kicker">第 4 份｜為什麼桌面要切 12 欄</div>
+    <h2 class="h-xl">邊界和溝槽也跟著變大</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th></th><th>手機</th><th>桌面</th></tr>
+        <tr><td>欄數</td><td>4</td><td>12</td></tr>
+        <tr><td>邊界</td><td>24</td><td>120</td></tr>
+        <tr><td>溝槽</td><td>12</td><td>24</td></tr>
+      </table>
+      <ul class="pts">
+        <li>螢幕很寬，內容從最左排到最右，眼睛讀一行要左右掃很遠；兩邊各留 120，內容就集中在中間。</li>
+        <li>東西變大了，彼此隔開的距離也放大成 24。數字定下來之後，整張桌面畫面都照著用。</li>
+        <li>寬 1440 是設計電腦畫面時常用的寬度；高度先定 900，這一章在意的是寬度。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用對照表說明手機與桌面的四個數字，以及桌面邊界、溝槽變大的理由。</p>
+    <p><b>對應講義</b>：為什麼桌面要切 12 欄最後一段；做一張桌面畫面的第一段。</p>
+    <p><b>接下一張</b>：第 1 步，做桌面畫面。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b12 CH02-L4#b13 CH02-L4#b14">
+  <div class="frame">
+    <div class="kicker">第 4 份｜做一張桌面畫面</div>
+    <h2 class="h-xl"><span class="num">1</span>做桌面畫面：Screen / Desktop reference</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Frame 工具，在規則表右邊的空白處拉一個框；確認縮排在<b>主線</b>底下，和 Rules、Screen / Login 一樣深。</li>
+          <li>改名：</li>
+        </ul>
+        <div class="copy">Screen / Desktop reference</div>
+        <ul class="pts">
+          <li>X 1160、Y 0；W 1440、H 900；Fill 選 <b>Surface</b>。</li>
+        </ul>
+        <p class="cap">Screen / 表示一張完整的畫面；reference 是「參考」：用這張畫面排版面。X 1160 讓它和規則表之間空出 80；Y 0 讓三樣東西上緣切齊。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L4-1-桌面畫面.png" alt="規則表右邊一張淺灰色的桌面畫面；Layers 裡 Screen / Desktop reference 在主線底下；右側 X 1160、Y 0、W 1440、H 900、Fill Surface"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：名字與位置的由來；做完會看到規則表右邊多了一張很寬的淺灰色畫面，底色和手機畫面一樣。</p>
+    <p><b>對應講義</b>：做一張桌面畫面的動手前先知道兩件事與第 1 步。</p>
+    <p><b>接下一張</b>：加上 12 欄格線。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b15 CH02-L4#b16">
+  <div class="frame">
+    <div class="kicker">第 4 份｜做一張桌面畫面</div>
+    <h2 class="h-xl"><span class="num">2</span>加上 12 欄格線</h2>
+    <div class="body split img-r">
+      <div>
+        <p class="body-zh">做法和第 1 份替手機加格線一樣，只是數字不同。</p>
+        <table class="tb">
+          <tr><th>欄位</th><th>手機</th><th>桌面</th></tr>
+          <tr><td>Count</td><td>4</td><td><b>12</b></td></tr>
+          <tr><td>Margin</td><td>24</td><td><b>120</b></td></tr>
+          <tr><td>Gutter</td><td>12</td><td><b>24</b></td></tr>
+        </table>
+        <p class="see">做完會看到：12 條粉紅色直條，左右各空出一段。Layout guide 那一列寫著 12 columns。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L4-2-填好十二欄.png" alt="小視窗 Columns：Count 12、Margin 120、Gutter 24；桌面畫面上出現 12 條粉紅色直條，右側 Layout guide 顯示 12 columns"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：流程同第 1 份：Layout guide 的 +、Grid 換成 Columns、填三個數字、關掉小視窗。</p>
+    <p><b>對應講義</b>：第 2 步。</p>
+    <p><b>接下一張</b>：放大看清楚。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b17">
+  <div class="frame">
+    <div class="kicker">第 4 份｜做一張桌面畫面</div>
+    <h2 class="h-xl"><span class="num">3</span>放大看清楚</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts big">
+          <li>Screen / Desktop reference 還選著，按 <b>Shift+2</b>。</li>
+        </ul>
+        <p class="see">做完會看到：最左和最右各一段沒有粉紅色的地方，是邊界 120；中間 12 條粉紅色是欄；欄和欄之間細細的空白是溝槽 24。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L4-3-放大看十二欄.png" alt="放大後的桌面畫面：左右各一段邊界，中間 12 欄，欄和欄之間是溝槽"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：放大後辨認邊界 120、欄、溝槽 24 各在哪裡。</p>
+    <p><b>對應講義</b>：第 3 步。</p>
+    <p><b>接下一張</b>：算出桌面的數字。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b18 CH02-L4#b19 CH02-L4#b20 CH02-L4#b21 CH02-L4#b22 CH02-L4#b23">
+  <div class="frame">
+    <div class="kicker">第 4 份｜算出桌面的數字</div>
+    <h2 class="h-xl">一欄多寬？跨 4 欄、跨 8 欄各多寬？</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>左右邊界各 120，扣掉 240；N 欄中間有 N − 1 條溝槽，12 欄是 11 條，扣掉 264。</li>
+        </ul>
+        <div class="formula">1440 − 120 × 2 − 24 × 11 = 936<br>936 ÷ 12 = 78（每欄的寬）</div>
+        <div class="formula">跨 4 欄：78 × 4 + 24 × 3 = 384<br>跨 8 欄：78 × 8 + 24 × 7 = 792</div>
+      </div>
+      <div class="card-box">
+        <div class="h-md">對一次答案</div>
+        <p class="body-zh">主區 792，加中間一條溝槽 24，再加側區 384，等於 1200。</p>
+        <p class="body-zh">1440 扣掉左右兩段邊界，剩下的也正好是 1200。</p>
+        <p class="see">只要每一塊都說好跨幾欄，加起來一定對得上。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用上一份的方法套到桌面：先扣邊界、溝槽，再平分；跨幾欄是那幾欄的寬加中間的溝槽。最後用 1200 驗算，主區和側區並排剛好從左邊界排到右邊界。</p>
+    <p><b>對應講義</b>：算出桌面的數字，兩組算式與對答案的那一段。</p>
+    <p><b>接下一張</b>：把數字寫進規則表第 2 行。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b24 CH02-L4#b25 CH02-L4#b26 CH02-L4#b27 CH02-L4#b28">
+  <div class="frame">
+    <div class="kicker">第 4 份｜把數字寫進規則表</div>
+    <h2 class="h-xl"><span class="num">4</span>寫第 2 行：桌面格線</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li><b>雙擊會整段反白</b>：這時直接貼上會把第 1 行換掉。先在最後的「354」右邊點一下，讓反白消失（Mac 也可以按 Cmd+↓）。</li>
+          <li>按 Enter 換行，貼上：</li>
+        </ul>
+        <div class="copy">桌面格線　12 欄｜邊界 120｜溝槽 24｜每欄 78｜跨 4 欄 384｜跨 8 欄 792</div>
+        <ul class="pts">
+          <li><b>框會自己變高</b>：文字框是 Auto height，寬度固定 536，多一行就長高。</li>
+        </ul>
+        <p class="see">做完會看到：兩行在同一個文字框裡，W 還是 536，H 從 24 變成 48。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L4-4-規則表第二行.png" alt="規則表最下面：格線與版面下方兩行，第 2 行是桌面格線的數字；右側 W 536、H 48"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：在同一個文字框裡接著寫：展開 Rules、點手機格線那個文字框、Shift+2、雙擊、點最後面、Enter、貼上、Esc。最容易出錯的是反白時直接貼上。之後第三到第五行都用同樣的方法。</p>
+    <p><b>對應講義</b>：把數字寫進規則表，動手前先知道兩件事與第 4 步。</p>
+    <p><b>接下一張</b>：做完之後的檢查與常見問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b29 CH02-L4#b30 CH02-L4#b31 CH02-L4#b32 CH02-L4#b33 CH02-L4#b34 CH02-L4#b35">
+  <div class="frame">
+    <div class="kicker">第 4 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒・常見問題</h2>
+    <div class="body split">
+      <ol class="pts">
+        <li>主線底下有 Screen / Desktop reference：X 1160、Y 0，W 1440、H 900，Fill 是 Surface。</li>
+        <li>Layout guide 是 12 columns：Count 12、Margin 120、Gutter 24。</li>
+        <li>規則表第 2 行是桌面格線，和第 1 行在同一個文字框裡。</li>
+      </ol>
+      <table class="tb small">
+        <tr><th>狀況</th><th>怎麼辦</th></tr>
+        <tr><td>桌面畫面沒有縮排在主線底下</td><td>拖到主線那一行上，和 Rules 一樣深，再重填 X 1160、Y 0。</td></tr>
+        <tr><td>格線加到了規則表或手機畫面上</td><td>到加錯的那一個點 − 拿掉，再選 Screen / Desktop reference 重加。</td></tr>
+        <tr><td>第 1 行不見了，只剩第 2 行</td><td>反白時就貼上了。Cmd+Z（Windows 是 Ctrl+Z）復原，先點「354」右邊再貼。</td></tr>
+        <tr><td>第 2 行變成另一個文字框</td><td>用文字工具另外點了新框。刪掉它，再照第 4 步雙擊第 1 行。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項檢查；常見問題的後兩個都和在同一個文字框接著寫有關，後面幾份還會遇到。</p>
+    <p><b>對應講義</b>：做完之後、常見問題。</p>
+    <p><b>接下一張</b>：讀完之後的三題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L4#b36 CH02-L4#b37 CH02-L4#b38">
+  <div class="frame">
+    <div class="kicker">第 4 份｜讀完之後</div>
+    <h2 class="h-xl">不看講義，用自己的話回答</h2>
+    <div class="body">
+      <ol class="pts big">
+        <li>手機切 4 欄就夠，為什麼桌面畫面要切成 12 欄？</li>
+        <li>桌面每欄 78 是怎麼算出來的？12 欄之間為什麼是 11 條溝槽？</li>
+        <li>主區跨 8 欄、側區跨 4 欄，加上中間的溝槽，為什麼剛好是 1200？</li>
+      </ol>
+    </div>
+    <p class="next">第 5 份在桌面畫面上做出主區和側區：主區跨 8 欄、寬 792，側區跨 4 欄、寬 384，各放一個小標題。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三題自我檢查。</p>
+    <p><b>對應講義</b>：讀完之後、接下來。</p>
+    <p><b>接下一張</b>：進入第 5 份，主區與側區。</p>
+  </aside>
+</section>
+
+<!-- ===== CH02-L5 ===== -->
+<section class="slide dark hero divider" data-source="CH02-L5#b01 CH02-L5#b02 CH02-L5#b03">
+  <div class="frame center-v">
+    <div class="kicker">第二章｜第 5 份</div>
+    <h1 class="h-hero">在桌面畫面分出主區和側區</h1>
+    <p class="lead">用上一份算出的跨 8 欄寬 792、跨 4 欄寬 384，把桌面畫面分成兩塊：左邊放待處理清單的主區，右邊放今日提醒的側區，再替兩塊各放一個小標題。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：上一份只有格線和數字，這一份開始在桌面畫面上分區。</p>
+    <p><b>對應講義</b>：第 5 份的標題與導言。</p>
+    <p><b>接下一張</b>：什麼是主區、什麼是側區。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b04 CH02-L5#b05 CH02-L5#b06 CH02-L5#b07">
+  <div class="frame">
+    <div class="kicker">第 5 份｜主區和側區</div>
+    <h2 class="h-xl">很多網站都分成一大一小、並排的兩塊</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>用電腦收信：左邊一窄排是資料夾，右邊一大塊是信件清單。</li>
+          <li>在電腦上看影片：左邊一大塊是正在播的影片，右邊一窄排是接下來可以看的影片。</li>
+          <li>購物網站：左邊一窄排是篩選條件，右邊一大塊擺商品。</li>
+        </ul>
+        <div class="card-box">
+          <div class="h-md">學完第 5 份，你會：</div>
+          <ul class="pts">
+            <li>把一張寬的畫面分成主區和側區，說得出哪一塊該當主區</li>
+            <li>用算好的寬度，算出每一區從哪裡開始、到哪裡結束</li>
+          </ul>
+        </div>
+      </div>
+      <div class="demo">
+<figure data-kind="示意">
+<div style="max-width:620px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:#1E293B;">
+<div style="flex:1 1 260px;">
+<div style="display:flex;gap:4px;height:84px;padding:6px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:4px;">
+<div style="width:30%;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">側區<br>資料夾</div>
+<div style="flex:1;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">主區<br>信件清單</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">用電腦收信</div>
+</div>
+<div style="flex:1 1 260px;">
+<div style="display:flex;gap:4px;height:84px;padding:6px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:4px;">
+<div style="flex:1;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">主區<br>正在播的影片</div>
+<div style="width:30%;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">側區<br>接下來的影片</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">在電腦上看影片</div>
+</div>
+<div style="flex:1 1 260px;">
+<div style="display:flex;gap:4px;height:84px;padding:6px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:4px;">
+<div style="width:30%;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">側區<br>篩選條件</div>
+<div style="flex:1;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">主區<br>商品</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">購物網站</div>
+</div>
+<div style="flex:1 1 260px;">
+<div style="display:flex;gap:4px;height:84px;padding:6px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:4px;">
+<div style="flex:1;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">主區<br>待處理清單</div>
+<div style="width:30%;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">側區<br>今日提醒</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">工作室的桌面畫面</div>
+</div>
+</div>
+<figcaption>示意圖，不照比例。深色是主區，白色是側區。側區有時在左、有時在右，主區都是放打開這個畫面要做的事。</figcaption>
+</figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用三個學員熟悉的網站帶出一大一小的版面，最後一格就是工作室的桌面畫面。</p>
+    <p><b>對應講義</b>：學完第 5 份，你會；主區和側區的第一段與示意圖。</p>
+    <p><b>接下一張</b>：大的那一塊和窄的那一塊各叫什麼、差在哪。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b08 CH02-L5#b09 CH02-L5#b10 CH02-L5#b11">
+  <div class="frame">
+    <div class="kicker">第 5 份｜主區和側區</div>
+    <h2 class="h-xl">決定哪一塊是主區的，是它放什麼</h2>
+    <div class="body split">
+      <div class="card-box">
+        <div class="h-md">主區</div>
+        <p class="body-zh">放你打開這個畫面要做的事：讀信、看影片、挑商品。</p>
+      </div>
+      <div class="card-box">
+        <div class="h-md">側區</div>
+        <p class="body-zh">在旁邊幫忙：換資料夾、找下一部影片、縮小商品範圍；不看它也能把事情做完。</p>
+      </div>
+    </div>
+    <ul class="pts">
+      <li>側區有時在左、有時在右；決定哪一塊是主區的，是它放什麼，不是它在哪一邊。</li>
+      <li>畫面一打開，眼睛通常先落在最大的那一塊。主區放對了，一眼就找到要做的事。</li>
+      <li>主管最在意「用手機能很快找到待處理的工作」，坐在電腦前的成員也是為了處理工作，所以主區放待處理清單，今日提醒放在側區。</li>
+    </ul>
+    <p class="see">現在先做兩個空的區：區是用來排版的，看的人看不到它的框。區放在對的欄上，裡面的東西貼齊區的左邊，就自動對齊格線。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：主區與側區的定義，以及判斷依據是內容不是位置。放反了（信件清單擠在窄窄一排、資料夾佔掉大半個畫面），看的人得先在畫面上找一下。主區為什麼跨 8 欄的理由，第 6 份才寫進規則表。</p>
+    <p><b>對應講義</b>：主區和側區的後四段。</p>
+    <p><b>接下一張</b>：算出兩區的位置。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b12 CH02-L5#b13 CH02-L5#b14 CH02-L5#b15 CH02-L5#b16 CH02-L5#b17">
+  <div class="frame">
+    <div class="kicker">第 5 份｜算出兩區的位置</div>
+    <h2 class="h-xl">W 已經算好，現在算 X</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>主區跨 8 欄、寬 792，側區跨 4 欄、寬 384，就是兩區的 W。</li>
+          <li>左邊界是 0 到 120 這一段，左邊界結束的地方就是第 1 欄開始的地方。</li>
+        </ul>
+        <div class="formula">主區的 X：120<br>主區結束在：120 + 792 = 912<br>側區的 X：912 + 24 = 936</div>
+      </div>
+      <div class="card-box">
+        <div class="h-md">檢查有沒有排對</div>
+        <p class="body-zh">側區結束在 936 + 384 = 1320；右邊界從 1440 − 120 = 1320 開始。</p>
+        <p class="body-zh">兩個數字一樣：兩區合起來剛好從左邊界排到右邊界。</p>
+        <p class="cap">上下：兩區的 Y 都是 120，和左右邊界一樣寬；高度先定 540，這一章在意的是寬度。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：W 是上一份的答案，X 要從左邊界推過去；側區的 X 是主區結束再加一條溝槽。最後用 1320 驗算，也就是上一份的 792 + 24 + 384 = 1200。</p>
+    <p><b>對應講義</b>：算出兩區的位置。</p>
+    <p><b>接下一張</b>：動手前先知道的兩件事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b18 CH02-L5#b19 CH02-L5#b20 CH02-L5#b21">
+  <div class="frame">
+    <div class="kicker">第 5 份｜做出主區和側區</div>
+    <h2 class="h-xl"><span class="num">1</span>做主區：Desktop / Main</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li><b>名字</b>：Desktop 表示在桌面畫面上；Main 是「主要」，Aside 是「在旁邊」，設計上常用來稱呼側區。</li>
+          <li><b>看不到框</b>：Fill 是空的，點別處就看不到它，這是正常的；在 Layers 點名字就會再看到。</li>
+        </ul>
+        <ol class="pts">
+          <li>點 Screen / Desktop reference，Shift+2；Frame 工具在左半邊拉框，確認縮排在它底下。</li>
+          <li>改名 <code>Desktop / Main</code>；X 120、Y 120；W 792、H 540。</li>
+        </ol>
+        <p class="see">做完會看到：藍色外框的左邊對齊第 1 欄的左邊，右邊對齊第 8 欄的右邊。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L5-1-主區.png" alt="桌面畫面上的主區，左邊從第 1 欄開始、右邊到第 8 欄結束；Layers 裡 Desktop / Main 在 Screen / Desktop reference 底下；右側 X 120、Y 120、W 792、H 540，Fill 是空的"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先交代名字和看不到框的原因，再做主區。X、Y 都從桌面畫面的左上角量。</p>
+    <p><b>對應講義</b>：做出主區和側區的兩段說明與第 1 步。</p>
+    <p><b>接下一張</b>：做側區。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b22">
+  <div class="frame">
+    <div class="kicker">第 5 份｜做出主區和側區</div>
+    <h2 class="h-xl"><span class="num">2</span>做側區：Desktop / Aside</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>Frame 工具，從第 9 欄裡面開始往右下拉框。起點不要落在主區裡。</li>
+          <li>確認縮排在 Screen / Desktop reference 底下，和 Desktop / Main 一樣深。</li>
+          <li>改名 <code>Desktop / Aside</code>；X 936、Y 120；W 384、H 540。</li>
+        </ul>
+        <p class="see">做完會看到：外框從第 9 欄的左邊開始，到第 12 欄的右邊結束，貼齊右邊界。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L5-2-側區.png" alt="桌面畫面上的側區，從第 9 欄開始、到第 12 欄結束；Layers 裡 Desktop / Aside 排在 Desktop / Main 上面；右側 X 936、Y 120、W 384、H 540"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：拉框的起點決定它放進哪一層；起點落在主區裡，側區就會跑進主區。</p>
+    <p><b>對應講義</b>：第 2 步。</p>
+    <p><b>接下一張</b>：替兩區放小標題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b23 CH02-L5#b24 CH02-L5#b25 CH02-L5#b26">
+  <div class="frame">
+    <div class="kicker">第 5 份｜替兩區放小標題</div>
+    <h2 class="h-xl">小標題說的是這一塊是什麼</h2>
+    <div class="body">
+      <p class="lead">和第 2 份的畫面標題同一個道理，只是範圍小一點：畫面標題說現在在哪一頁，小標題說這一塊是什麼。樣式用 Section title。</p>
+      <table class="tb">
+        <tr><th>動手前先知道</th><th>重點</th></tr>
+        <tr><td><b>X 0、Y 16 從哪裡量</b></td><td>從區的左上角量。X 0 貼齊區的左邊，主區的左邊就是左邊界，所以自己就對齊了格線。Y 16 和登入卡片裡第一行字離上緣的距離一樣。</td></tr>
+        <tr><td><b>名字</b></td><td>打完字，名字會是那段字本身；改成 Main / Title、Aside / Title，寫的是用途。</td></tr>
+        <tr><td><b>文字樣式</b></td><td>Figma 會沿用上一次的樣式，打完字先看一眼 Typography。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：連回第 2 份的畫面標題；重點在 X、Y 是從所在的框量的，所以 X 0 就是區的左邊。</p>
+    <p><b>對應講義</b>：替兩區放小標題的說明與動手前先知道三件事。</p>
+    <p><b>接下一張</b>：做兩個小標題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b27 CH02-L5#b28">
+  <div class="frame">
+    <div class="kicker">第 5 份｜替兩區放小標題</div>
+    <h2 class="h-xl"><span class="num">3</span><span class="num">4</span>Main / Title 與 Aside / Title</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb small">
+          <tr><th></th><th>主區</th><th>側區</th></tr>
+          <tr><td>先選</td><td>Desktop / Main</td><td>Desktop / Aside</td></tr>
+          <tr><td>打的字</td><td>待處理清單</td><td>今日提醒</td></tr>
+          <tr><td>樣式、顏色</td><td colspan="2">Section title、Text</td></tr>
+          <tr><td>位置</td><td colspan="2">X 0、Y 16</td></tr>
+          <tr><td>名字</td><td>Main / Title</td><td>Aside / Title</td></tr>
+        </table>
+        <ul class="pts">
+          <li>Shift+2 放大到該區，文字工具 T 在左上方點一下，打字後按 Esc。</li>
+          <li>確認這段字縮排在該區底下。</li>
+        </ul>
+        <p class="see">做完會看到：「待處理清單」左邊和第 1 欄切齊；「今日提醒」左邊和第 9 欄切齊。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L5-3-主區標題.png" alt="主區左上角的小標題「待處理清單」；Layers 裡 Main / Title 縮排在 Desktop / Main 底下；右側 X 0、Y 16、Type/Section title、Fill Text"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩個小標題做法相同，只差選哪一區、打什麼字、取什麼名字。</p>
+    <p><b>對應講義</b>：第 3、4 步。</p>
+    <p><b>接下一張</b>：一次選兩區檢查。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b29 CH02-L5#b30 CH02-L5#b31">
+  <div class="frame">
+    <div class="kicker">第 5 份｜檢查兩區有沒有排好</div>
+    <h2 class="h-xl"><span class="num">5</span>一次選兩區</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>點 Desktop / Aside，按住 Shift 再點 Desktop / Main，Shift+2。</li>
+          <li>上緣切齊、一樣高：Y 和 H 只顯示一個數字。</li>
+          <li>起點和寬度本來就不同：X 和 W 是 Mixed。</li>
+        </ul>
+        <p class="see">做完會看到：畫布上兩區合起來是 1200 × 540；Y 120、H 540；Spacing 是 24，就是兩區之間的那一條溝槽。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L5-4-兩區一起選.png" alt="一次選取主區和側區：畫布上 1200 × 540；右側 Y 120、H 540，X 與 W 是 Mixed，Spacing 24"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：再用一次第 2 份學過的 Mixed 檢查法，加上 Spacing 確認中間剛好一條溝槽。</p>
+    <p><b>對應講義</b>：檢查兩區有沒有排好，第 5 步。</p>
+    <p><b>接下一張</b>：做完之後的檢查與常見問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b32 CH02-L5#b33 CH02-L5#b34 CH02-L5#b35 CH02-L5#b36 CH02-L5#b37">
+  <div class="frame">
+    <div class="kicker">第 5 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒・常見問題</h2>
+    <div class="body split">
+      <ol class="pts">
+        <li>Desktop / Main（X 120、Y 120，W 792、H 540）和 Desktop / Aside（X 936、Y 120，W 384、H 540），一樣深。</li>
+        <li>Main / Title「待處理清單」、Aside / Title「今日提醒」：Section title、Text、X 0、Y 16。</li>
+        <li>一次選兩區，Spacing 24，畫布上 1200 × 540。</li>
+      </ol>
+      <table class="tb small">
+        <tr><th>狀況</th><th>怎麼辦</th></tr>
+        <tr><td>Desktop / Aside 縮排在 Desktop / Main 底下</td><td>起點在主區裡。拖到 Screen / Desktop reference 那一行上，再重填 X 936、Y 120。</td></tr>
+        <tr><td>小標題跑到桌面畫面的左上角</td><td>字沒有在區裡。拖到該區那一行上，再重填 X 0、Y 16。</td></tr>
+        <tr><td>主區或側區看不到</td><td>區沒有填顏色，本來就看不到。在 Layers 點名字。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項檢查；常見問題都和所在的那一層有關。</p>
+    <p><b>對應講義</b>：做完之後、常見問題。</p>
+    <p><b>接下一張</b>：讀完之後的三題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L5#b38 CH02-L5#b39 CH02-L5#b40">
+  <div class="frame">
+    <div class="kicker">第 5 份｜讀完之後</div>
+    <h2 class="h-xl">不看講義，用自己的話回答</h2>
+    <div class="body">
+      <ol class="pts big">
+        <li>主區和側區差在哪裡？工作室的桌面畫面，為什麼待處理清單放在主區？</li>
+        <li>側區的 X 為什麼是 936？</li>
+        <li>主區的小標題 X 填 0，為什麼就會對齊左邊界？</li>
+      </ol>
+    </div>
+    <p class="next">第 6 份把內容放進去：主區放清單卡和詳情卡，側區放兩則提醒；也把主區為什麼跨 8 欄、側區為什麼跨 4 欄，寫進規則表第 3 行。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三題自我檢查。</p>
+    <p><b>對應講義</b>：讀完之後、接下來。</p>
+    <p><b>接下一張</b>：進入第 6 份，看內容決定跨幾欄。</p>
+  </aside>
+</section>
+
+<!-- ===== CH02-L6 ===== -->
+<section class="slide dark hero divider" data-source="CH02-L6#b01 CH02-L6#b02 CH02-L6#b03">
+  <div class="frame center-v">
+    <div class="kicker">第二章｜第 6 份</div>
+    <h1 class="h-hero">看內容決定跨幾欄</h1>
+    <p class="lead">主區放一張清單卡、一張詳情卡，側區放兩則今日提醒。真正要學的，是放進去之前的判斷：每一塊要跨幾欄，看它放什麼內容。最後把這個判斷寫進規則表第 3 行。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：上一份的兩區還只有小標題；這一份的重點不在操作，而在判斷。</p>
+    <p><b>對應講義</b>：第 6 份的標題與導言。</p>
+    <p><b>接下一張</b>：清單和詳情。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b04 CH02-L6#b05 CH02-L6#b06 CH02-L6#b07">
+  <div class="frame">
+    <div class="kicker">第 6 份｜清單和詳情</div>
+    <h2 class="h-xl">同一件事，兩種樣子</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th></th><th>清單</th><th>詳情</th></tr>
+        <tr><td>用手機收信</td><td>一行一封，只寫寄件人和主旨</td><td>點開才看到整封信的內容</td></tr>
+        <tr><td>外送 App</td><td>一張卡片只有店名、評分和大概多久送到</td><td>點進店家才看到整份菜單</td></tr>
+        <tr><td>用途</td><td>從很多件裡挑出要處理的那一件</td><td>把挑中的那一件完整攤開</td></tr>
+        <tr><td>要放的東西</td><td>幾個短短的字，認得出是哪一件就好</td><td>完整的說明，常常是一整段話</td></tr>
+      </table>
+      <div class="card-box">
+        <div class="h-md">學完第 6 份，你會：</div>
+        <p class="body-zh">看一塊東西要放什麼內容，決定它跨幾欄，並把這個判斷寫成一句跨欄決策。</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用收信和外送兩個例子定義清單與詳情；重點落在最後一列：東西多寡不同，需要的寬度也就不同。</p>
+    <p><b>對應講義</b>：學完第 6 份，你會；清單和詳情的前兩段。</p>
+    <p><b>接下一張</b>：工作室的清單卡和詳情卡。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b08 CH02-L6#b09">
+  <div class="frame">
+    <div class="kicker">第 6 份｜清單和詳情</div>
+    <h2 class="h-xl">工作室的清單卡和詳情卡</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li><b>清單卡</b>：一件工作的標題和期限，例如「整理交付包」「週五 18:00 前交給客戶」。</li>
+        <li><b>詳情卡</b>：同一件工作的標題，和一整段說明要做什麼。</li>
+        <li>一件工作要寫標題、說明和期限，需要比較寬的地方，所以主區跨 8 欄；側區的今日提醒，每則只有短短一句。</li>
+        <li>手機窄，清單和詳情通常分成兩頁；桌面寬，範例把兩張卡放在同一個主區：清單在上面，詳情在下面。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：把清單與詳情套到工作室；呼應開場說過的跨 8 欄理由。有些信箱用電腦打開時也是這樣，選了一封信，內容就直接顯示在清單旁邊。</p>
+    <p><b>對應講義</b>：清單和詳情的第三、四段。</p>
+    <p><b>接下一張</b>：詳情卡如果只跨 4 欄會怎樣。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b10 CH02-L6#b11 CH02-L6#b12">
+  <div class="frame">
+    <div class="kicker">第 6 份｜清單和詳情</div>
+    <h2 class="h-xl">詳情卡如果只跨 4 欄？</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>卡片寬 384，扣掉左右各留的 16，字只剩 352 寬，一段說明被擠成四行；右半邊空著。</li>
+          <li>給它跨 8 欄，同一段說明兩行就排完。</li>
+          <li>清單卡只有兩行短字，跨 4 欄就放得下；工作多了，一排還放得下兩張。</li>
+          <li>今日提醒每則只有一句，放在跨 4 欄的側區剛好。</li>
+        </ul>
+        <p class="see">先看這一塊要放什麼，放得下、排得開就好，不是越寬越好。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L6-0-詳情放進窄卡片.png" alt="詳情卡暫時改成跨 4 欄，一段說明被擠成四行"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用反例說明判斷方法。圖是把詳情卡暫時改成跨 4 欄的示意，學員不用做。</p>
+    <p><b>對應講義</b>：清單和詳情，詳情放進窄卡片的示意與後面那一段。</p>
+    <p><b>接下一張</b>：判斷做完要寫下來，以及放內容前要知道的事。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b13 CH02-L6#b14 CH02-L6#b15 CH02-L6#b16 CH02-L6#b17">
+  <div class="frame">
+    <div class="kicker">第 6 份｜把內容放進去</div>
+    <h2 class="h-xl">動手前先知道四件事</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li><b>用的都是學過的方法</b>：在區裡拉框、打字套樣式、X 和 Y 從所在的框量。</li>
+          <li><b>名字</b>：Reference 表示示範用；這兩張不刪。List 清單、Detail 詳情、Card 卡片；Task 工作、Due 期限、Reminder 提醒。</li>
+          <li><b>數字</b>：384、792 是跨 4 欄、跨 8 欄；卡片裡的字從 X 16 開始。</li>
+          <li><b>長段的字</b>：Auto width 會排成長長一行跑出卡片（右圖）。改 Auto height 再填寬度：詳情內文 792 − 16 × 2 = 760，提醒是 384。</li>
+        </ul>
+        <p class="cap">判斷做完要寫下來：規則表第 3 行寫的就是跨欄決策。之後要多放一塊，翻規則表就知道當初怎麼想的。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L6-3-內文跑出卡片.png" alt="內文剛打完，是 Auto width，排成一行跑出詳情卡外面"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這一份的操作都學過，所以講義只列名字和數字；最需要提醒的是長段文字要改 Auto height，和第 2 份替標題選 Auto height 同一個道理。</p>
+    <p><b>對應講義</b>：清單和詳情最後一段；把內容放進去的動手前先知道四件事與圖。</p>
+    <p><b>接下一張</b>：第 1 步，做兩張卡片。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b18">
+  <div class="frame">
+    <div class="kicker">第 6 份｜把內容放進去</div>
+    <h2 class="h-xl"><span class="num">1</span>做兩張卡片</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb small">
+          <tr><th>卡片</th><th>名字</th><th>位置與大小</th><th>跨幾欄</th></tr>
+          <tr><td>清單卡</td><td>Reference / List Card</td><td>X 0、Y 56、W 384、H 120</td><td>4</td></tr>
+          <tr><td>詳情卡</td><td>Reference / Detail Card</td><td>X 0、Y 200、W 792、H 320</td><td>8</td></tr>
+        </table>
+        <ul class="pts">
+          <li>點 Desktop / Main，Shift+2；Frame 工具在主區空白處拉框。做詳情卡時，起點不要落在清單卡裡。</li>
+          <li>Corner radius 填 <b>8</b>；Fill 的 + → 關掉調色盤 → 選 <b>Card</b>。</li>
+        </ul>
+        <p class="see">做完會看到：清單卡從第 1 欄排到第 4 欄，詳情卡從第 1 欄排到第 8 欄，左邊切齊。卡片偏粉紅，是因為格線畫在卡片上面。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L6-1-清單卡.png" alt="主區裡的清單卡，從第 1 欄排到第 4 欄；右側 X 0、Y 56、W 384、H 120、圓角 8、Fill Card"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：兩張卡片做法相同，照表填；先做清單卡再做詳情卡，兩張都要縮排在 Desktop / Main 底下。</p>
+    <p><b>對應講義</b>：把內容放進去第 1 步。</p>
+    <p><b>接下一張</b>：放進六段字。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b19">
+  <div class="frame">
+    <div class="kicker">第 6 份｜把內容放進去</div>
+    <h2 class="h-xl"><span class="num">2</span>放進字</h2>
+    <div class="body">
+      <table class="tb small">
+        <tr><th>字</th><th>放在</th><th>樣式、顏色</th><th>位置</th><th>名字</th></tr>
+        <tr><td>整理交付包</td><td>清單卡</td><td>Body、Text</td><td>X 16、Y 16</td><td>Task</td></tr>
+        <tr><td>週五 18:00 前交給客戶</td><td>清單卡</td><td>Supporting、Muted</td><td>X 16、Y 48</td><td>Due</td></tr>
+        <tr><td>整理交付包</td><td>詳情卡</td><td>Section title、Text</td><td>X 16、Y 16</td><td>Detail / Title</td></tr>
+        <tr><td>一段說明</td><td>詳情卡</td><td>Body、Text</td><td>X 16、Y 56、W 760</td><td>Detail / Body</td></tr>
+        <tr><td>10:00 和客戶確認交付時間</td><td>側區</td><td>Body、Text</td><td>X 0、Y 56、W 384</td><td>Reminder / 1</td></tr>
+        <tr><td>下班前把交付包上傳到雲端</td><td>側區</td><td>Body、Text</td><td>X 0、Y 92、W 384</td><td>Reminder / 2</td></tr>
+      </table>
+      <ul class="pts">
+        <li>文字工具 T 在上一段字下面的空白處點一下；不要點在已經有的字上。</li>
+        <li>表上有寫 W 的：先把 Resizing 改成 <b>Auto height</b>，再填 W。</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：六段字做法相同，照表填內容、位置、樣式和名字；長的內容從講義的複製框貼上。放側區前，先點 Desktop / Aside 按 Shift+2，畫面才看得到側區。</p>
+    <p><b>對應講義</b>：把內容放進去第 2 步與對照表。</p>
+    <p><b>接下一張</b>：放完的樣子。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b19">
+  <div class="frame">
+    <div class="kicker">第 6 份｜把內容放進去</div>
+    <h2 class="h-xl"><span class="num">2</span>放完的樣子</h2>
+    <div class="body">
+      <div class="grid-3c">
+        <figure class="shot"><img src="assets/ch02/L6-2-清單卡的字.png" alt="清單卡裡兩行字：整理交付包、週五 18:00 前交給客戶；右側 X 16、Y 48、Supporting、Muted"><figcaption>清單卡：標題和一行比較小、比較淡的期限</figcaption></figure>
+        <figure class="shot"><img src="assets/ch02/L6-4-詳情卡內文.png" alt="詳情卡的內文折成兩行；右側 X 16、Y 56、Auto height、W 760、Body、Text"><figcaption>詳情卡：粗體標題，說明折成兩行，都在卡片裡</figcaption></figure>
+        <figure class="shot"><img src="assets/ch02/L6-5-兩則提醒.png" alt="側區小標題下兩則提醒；右側 X 0、Y 92、Auto height、W 384、Body、Text"><figcaption>側區：兩則提醒，左邊和小標題切齊</figcaption></figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三張圖對照放完的樣子，特別看詳情的說明有沒有折成兩行、留在卡片裡。</p>
+    <p><b>對應講義</b>：第 2 步的圖與做完會看到。</p>
+    <p><b>接下一張</b>：寫下跨欄決策。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b20 CH02-L6#b21 CH02-L6#b22 CH02-L6#b23">
+  <div class="frame">
+    <div class="kicker">第 6 份｜寫下跨欄決策</div>
+    <h2 class="h-xl"><span class="num">3</span>寫第 3 行：跨欄決策</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>這一行的「待處理清單」指整個主區：清單卡和詳情卡合起來，放的就是一件工作的標題、說明和期限，所以主區跨 8 欄。</li>
+          <li>清單卡跨 4 欄、詳情卡跨 8 欄，是主區裡面再照內容分的。</li>
+          <li>做法和寫第 2 行一樣，這次接在第 2 行的「792」後面：</li>
+        </ul>
+        <div class="copy">跨欄決策：待處理清單要放標題、說明和期限，放主區跨 8 欄；今日提醒只有短句，放側區跨 4 欄</div>
+        <p class="see">做完會看到：在 536 寬裡折成兩行，H 從 48 變成 96。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L6-6-規則表第三行.png" alt="規則表格線與版面下三行，第 3 行是跨欄決策，折成兩行；右側 W 536、H 96"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先釐清這一行寫的是主區與側區的層級，卡片的跨欄是主區內的再細分；再照第 4 份的方法接著寫。</p>
+    <p><b>對應講義</b>：寫下跨欄決策，兩段說明與第 3 步。</p>
+    <p><b>接下一張</b>：做完之後的全貌與檢查。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b24 CH02-L6#b25 CH02-L6#b26">
+  <div class="frame">
+    <div class="kicker">第 6 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒</h2>
+    <div class="body split img-r">
+      <ol class="pts">
+        <li>Desktop / Main 底下有 Reference / List Card（X 0、Y 56，W 384、H 120）和 Reference / Detail Card（X 0、Y 200，W 792、H 320），Fill Card、圓角 8。</li>
+        <li>六段字都縮排在表上寫的地方底下，名字、樣式、顏色和位置照表；詳情內文和兩則提醒是 Auto height。</li>
+        <li>規則表「格線與版面」下面有三行，第 3 行是跨欄決策。</li>
+      </ol>
+      <figure class="shot"><img src="assets/ch02/L6-7-桌面全貌.png" alt="做完的桌面畫面：主區有清單卡和詳情卡，側區有今日提醒"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：對照桌面全貌，確認三項檢查。</p>
+    <p><b>對應講義</b>：做完之後的圖與檢查自己做對了沒。</p>
+    <p><b>接下一張</b>：常見問題與讀完之後。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L6#b27 CH02-L6#b28 CH02-L6#b29 CH02-L6#b30 CH02-L6#b31 CH02-L6#b32 CH02-L6#b33 CH02-L6#b34">
+  <div class="frame">
+    <div class="kicker">第 6 份｜常見問題・讀完之後</div>
+    <h2 class="h-xl">常見問題・用自己的話回答</h2>
+    <div class="body split">
+      <table class="tb small">
+        <tr><th>狀況</th><th>怎麼辦</th></tr>
+        <tr><td>卡片沒有縮排在 Desktop / Main 底下</td><td>拉框起點在主區外面。拖到 Desktop / Main 那一行上，重填 X、Y。</td></tr>
+        <tr><td>詳情卡縮排在清單卡底下</td><td>起點落在清單卡裡。拖到 Desktop / Main 那一行上，重填 X 0、Y 200。</td></tr>
+        <tr><td>字沒有縮排在該在的地方</td><td>拖到表上寫的卡片或 Desktop / Aside 那一行上，重填 X、Y。</td></tr>
+        <tr><td>W 是灰色的</td><td>Resizing 還是 Auto width。先點 Auto height。</td></tr>
+      </table>
+      <ol class="pts">
+        <li>清單和詳情差在哪裡？為什麼清單卡跨 4 欄就夠，詳情卡要跨 8 欄？</li>
+        <li>決定一塊東西跨幾欄時，先看什麼？為什麼不是越寬越好？</li>
+        <li>規則表第 3 行記的是什麼？之後畫面上要多放一塊東西時，它怎麼幫得上忙？</li>
+      </ol>
+    </div>
+    <p class="next">手機窄，桌面上左右並排的主區和側區，到了手機只能上下排。第 7 份回答開場的問題：換到手機時，誰先出現？</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：常見問題都是起點或 Resizing；三題自我檢查聚焦在判斷方法。</p>
+    <p><b>對應講義</b>：常見問題、讀完之後、接下來。</p>
+    <p><b>接下一張</b>：進入第 7 份，換到手機誰先出現。</p>
+  </aside>
+</section>
+
+<!-- ===== CH02-L7 ===== -->
+<section class="slide dark hero divider" data-source="CH02-L7#b01 CH02-L7#b02 CH02-L7#b03">
+  <div class="frame center-v">
+    <div class="kicker">第二章｜第 7 份</div>
+    <h1 class="h-hero">換到手機，誰先出現</h1>
+    <p class="lead">主管最在意的是手機，而手機很窄。桌面上左右並排的兩區，放到手機上要怎麼排？要學兩個判斷：為什麼要改成上下排，還有上下排的時候，誰排在前面。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：這一份不做新畫面，學的是判斷，最後把順序和理由寫進規則表第 4 行。</p>
+    <p><b>對應講義</b>：第 7 份的標題與導言。</p>
+    <p><b>接下一張</b>：兩種直覺的做法為什麼行不通。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b04 CH02-L7#b05 CH02-L7#b06 CH02-L7#b07 CH02-L7#b08 CH02-L7#b09">
+  <div class="frame">
+    <div class="kicker">第 7 份｜手機放不下左右兩區</div>
+    <h2 class="h-xl">第一種：整張縮小</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>桌面畫面寬 1440，手機畫面寬 402，不到桌面的三分之一。</li>
+          <li>右圖左邊是登入畫面，右邊是桌面畫面整張縮到和手機一樣寬。</li>
+          <li>寬度縮成原來的 402 ÷ 1440，不到十分之三。第一章定的 16 的字，縮完不到 5，看不清楚，手指也點不準。</li>
+        </ul>
+        <div class="card-box">
+          <div class="h-md">學完第 7 份，你會：</div>
+          <ul class="pts">
+            <li>說得出兩區換到手機時，為什麼要改成上下排</li>
+            <li>用「打開這個畫面要做什麼」決定誰先出現</li>
+            <li>把順序和理由寫成一句</li>
+          </ul>
+        </div>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L7-0-桌面整張縮進手機.png" alt="左邊是手機的登入畫面，字看得清楚；右邊是桌面畫面整張縮到手機寬，字小到看不清楚"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先看圖：整張縮小的後果，再用數字說明：字縮到不到 5。</p>
+    <p><b>對應講義</b>：學完第 7 份，你會；手機放不下左右兩區的前三段與圖。</p>
+    <p><b>接下一張</b>：第二種，照樣左右排。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b10 CH02-L7#b11 CH02-L7#b12">
+  <div class="frame">
+    <div class="kicker">第 7 份｜手機放不下左右兩區</div>
+    <h2 class="h-xl">第二種：照樣左右排？每一塊都太窄</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>手機扣掉左右邊界，能放東西的只有 354（跨 4 欄）。</li>
+          <li>照桌面 8 比 4 分，側區只剩 114 左右，一行放不到 8 個字，「10:00 和客戶確認交付時間」也要折成兩行；主區只剩兩百出頭。</li>
+        </ul>
+        <p class="see">所以手機上改成上下排：每一塊都跨滿 4 欄、寬 354；一塊排完，下一塊接在下面，手指往下滑就看得到。字維持原本大小。</p>
+      </div>
+      <div class="demo">
+<figure data-kind="示意">
+<div style="max-width:520px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:16px;font-size:11px;color:#1E293B;">
+<div style="flex:0 0 140px;">
+<div style="height:220px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;">
+<div style="display:flex;gap:2px;height:34px;padding:2px;border:1px solid #CBD5E1;background:#F5F7FA;">
+<div style="flex:2;background:#5F6C80;"></div>
+<div style="flex:1;background:#FFFFFF;border:1px solid #CBD5E1;"></div>
+</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">整張縮小：字看不清楚</div>
+</div>
+<div style="flex:0 0 140px;">
+<div style="height:220px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;display:flex;gap:4px;">
+<div style="flex:2;height:120px;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">主區</div>
+<div style="flex:1;height:120px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">側區</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">照樣左右排：每一塊都太窄</div>
+</div>
+<div style="flex:0 0 140px;">
+<div style="height:220px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;display:flex;flex-direction:column;gap:4px;">
+<div style="height:110px;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">主區</div>
+<div style="height:56px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">側區</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">上下排：每塊用滿寬度</div>
+</div>
+</div>
+<figcaption>示意圖，不照比例。深色是主區，白色是側區。外框是手機畫面。</figcaption>
+</figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：不縮字、照比例分寬度也行不通；結論是上下排，第一章定好的文字樣式不用改。示意圖把三種做法並排比較。</p>
+    <p><b>對應講義</b>：手機放不下左右兩區的第四、五段與示意圖。</p>
+    <p><b>接下一張</b>：上下排多出的新問題：順序。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b13 CH02-L7#b14 CH02-L7#b15 CH02-L7#b16">
+  <div class="frame">
+    <div class="kicker">第 7 份｜上下排，誰先出現</div>
+    <h2 class="h-xl">上下排，就多了順序的問題</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>桌面上兩區同時看得到；手機一次只看得到最上面一段，排在最前面的，就是第一眼看到的東西。</li>
+          <li>用手機收信：一打開就是信件清單，資料夾收進左上角的選單按鈕。</li>
+          <li>用手機看影片：影片排在最上面，「接下來的影片」排到影片下面。</li>
+          <li>購物網站：一打開就是商品，篩選條件收進一個「篩選」按鈕。</li>
+        </ul>
+      </div>
+      <div class="demo">
+<figure data-kind="示意">
+<div style="max-width:520px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:16px;font-size:11px;color:#1E293B;">
+<div style="flex:0 0 140px;">
+<div style="height:220px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;display:flex;flex-direction:column;gap:4px;">
+<div style="align-self:flex-start;padding:2px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;">資料夾</div>
+<div style="flex:1;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">信件清單</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">用手機收信</div>
+</div>
+<div style="flex:0 0 140px;">
+<div style="height:220px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;display:flex;flex-direction:column;gap:4px;">
+<div style="height:80px;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">正在播的影片</div>
+<div style="flex:1;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">接下來的影片</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">用手機看影片</div>
+</div>
+<div style="flex:0 0 140px;">
+<div style="height:220px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;display:flex;flex-direction:column;gap:4px;">
+<div style="align-self:flex-start;padding:2px 8px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;">篩選</div>
+<div style="flex:1;background:#5F6C80;color:#FFFFFF;border-radius:3px;display:flex;align-items:center;justify-content:center;text-align:center;">商品</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">用手機逛購物網站</div>
+</div>
+</div>
+<figcaption>示意圖，不照比例。深色是主區，白色是側區。到了手機，主區都排在最前面；側區排到後面，或是收成一個小按鈕，點了才打開。</figcaption>
+</figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回到第 5 份的三個例子，換成用手機打開，看誰排在最前面。</p>
+    <p><b>對應講義</b>：上下排，誰先出現，前兩段與示意圖。</p>
+    <p><b>接下一張</b>：三個例子的共同規律。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b17 CH02-L7#b18">
+  <div class="frame">
+    <div class="kicker">第 7 份｜上下排，誰先出現</div>
+    <h2 class="h-xl">手機上先出現的，都是主區</h2>
+    <div class="body">
+      <p class="lead">收信是為了看信，看影片是為了看那一支，逛購物網站是為了看商品。第 5 份判斷主區時問的「打開這個畫面要做什麼」，到了手機，就成了排順序的依據。</p>
+      <div class="split">
+        <div class="card-box">
+          <div class="h-md">收成一個按鈕</div>
+          <p class="body-zh">資料夾、篩選條件：一長串選項，又不是每次都用，排在前面會把主要的東西擠到很下面。</p>
+        </div>
+        <div class="card-box">
+          <div class="h-md">排到後面</div>
+          <p class="body-zh">接下來的影片：看完這一支才要挑，排在下面剛好。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：歸納規律，並說明側區排到後面或收進按鈕，也是看它的內容決定。</p>
+    <p><b>對應講義</b>：上下排，誰先出現，最後兩段。</p>
+    <p><b>接下一張</b>：回到工作室：先清單，後提醒。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b19 CH02-L7#b20 CH02-L7#b21 CH02-L7#b22 CH02-L7#b23">
+  <div class="frame">
+    <div class="kicker">第 7 份｜工作室：先清單，後提醒</div>
+    <h2 class="h-xl">成員打開這個畫面要做什麼？</h2>
+    <div class="body split">
+      <div>
+        <div class="callout q">「我最在意的是：用手機能很快找到待處理的工作。」</div>
+        <ul class="pts">
+          <li>待處理清單排第一，打開就看到；今日提醒是幫忙記事的，接在清單後面。</li>
+          <li>提醒只有兩則短句，排在清單下面不佔多少位置；收進按鈕反而要多點一下。</li>
+          <li>詳情卡：手機上清單和詳情通常分成兩頁，所以這一頁是清單卡，接著今日提醒；詳情是另一頁。</li>
+        </ul>
+      </div>
+      <div class="demo">
+<figure data-kind="示意">
+<div style="max-width:560px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;font-size:11px;color:#1E293B;">
+<div style="flex:0 0 280px;">
+<div style="display:flex;gap:6px;height:150px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:4px;">
+<div style="flex:2;display:flex;flex-direction:column;gap:4px;">
+<div>待處理清單</div>
+<div style="width:48%;height:26px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;padding:2px 4px;">清單卡</div>
+<div style="flex:1;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;padding:2px 4px;">詳情卡</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+<div>今日提醒</div>
+<div style="height:6px;background:#CBD5E1;border-radius:2px;"></div>
+<div style="height:6px;width:80%;background:#CBD5E1;border-radius:2px;"></div>
+</div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">桌面：左右並排</div>
+</div>
+<div style="flex:0 0 140px;">
+<div style="height:220px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;display:flex;flex-direction:column;gap:4px;">
+<div>① 待處理清單</div>
+<div style="height:40px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:3px;padding:2px 4px;">清單卡</div>
+<div style="margin-top:8px;">② 今日提醒</div>
+<div style="height:6px;background:#CBD5E1;border-radius:2px;"></div>
+<div style="height:6px;width:80%;background:#CBD5E1;border-radius:2px;"></div>
+</div>
+<div style="text-align:center;color:#5F6C80;margin-top:4px;">換到手機：上下排</div>
+</div>
+</div>
+<figcaption>示意圖，不照比例。手機上先排待處理清單，再排今日提醒；詳情卡不在這一頁，點了清單卡才打開。</figcaption>
+</figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：同一個問題套到工作室：剛到客戶現場的成員拿出手機，是為了知道自己現在要做哪一件。提醒多到一長串時，再考慮收起來。</p>
+    <p><b>對應講義</b>：工作室：先清單，後提醒，前三段與示意圖。</p>
+    <p><b>接下一張</b>：這是範例的判斷，不是唯一的答案。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b24 CH02-L7#b25">
+  <div class="frame">
+    <div class="kicker">第 7 份｜工作室：先清單，後提醒</div>
+    <h2 class="h-xl">換了 App，答案會變，問的問題不變</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>這是範例的判斷，不是唯一的答案。</li>
+        <li>如果大家打開一個 App 就是為了看今天有哪些事要記得，例如行事曆，提醒就是主區，該排在最前面。</li>
+        <li>問的問題不變：打開這個畫面要做什麼。</li>
+      </ul>
+      <p class="see">你的檔案裡不用做手機版的待處理清單畫面。要學的是判斷，還有把判斷寫下來；真正的手機畫面後面的章節才會做，到時候照規則表上的順序排。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用行事曆的反例說明判斷依據是使用目的，不是固定答案；提醒學員這一份不用做手機畫面。</p>
+    <p><b>對應講義</b>：工作室：先清單，後提醒，最後兩段。</p>
+    <p><b>接下一張</b>：把順序和理由寫進規則表第 4 行。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b26 CH02-L7#b27 CH02-L7#b28 CH02-L7#b29">
+  <div class="frame">
+    <div class="kicker">第 7 份｜寫下手機閱讀順序</div>
+    <h2 class="h-xl"><span class="num">1</span>寫第 4 行：手機閱讀順序</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>這一行的「清單」指主區裡的待處理清單；「任務」就是待處理的工作。</li>
+          <li>順序和理由要一起寫：之後要多放一塊，先問它和「處理任務」是什麼關係，就知道它該排在哪裡。</li>
+          <li>做法和寫第 3 行一樣，這次接在第 3 行最後的「4 欄」後面：</li>
+        </ul>
+        <div class="copy">手機閱讀順序：先清單、後提醒，因為成員打開畫面是為了處理任務，提醒是輔助</div>
+        <p class="see">做完會看到：折成兩行，W 還是 536，H 從 96 變成 144。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L7-1-規則表第四行.png" alt="規則表格線與版面下四行，第 4 行是手機閱讀順序，折成兩行；右側 W 536、H 144"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：解釋這一行的用詞，以及為什麼理由要和順序一起寫；操作和前兩份相同。</p>
+    <p><b>對應講義</b>：寫下手機閱讀順序，兩段說明與第 1 步。</p>
+    <p><b>接下一張</b>：做完之後的檢查。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b30 CH02-L7#b31 CH02-L7#b32 CH02-L7#b33 CH02-L7#b34">
+  <div class="frame">
+    <div class="kicker">第 7 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒・常見問題</h2>
+    <div class="body split">
+      <ol class="pts">
+        <li>規則表「格線與版面」下面有四行，第 4 行是手機閱讀順序。</li>
+        <li>這個文字框的 W 是 536、H 是 144。</li>
+        <li>按 <b>Shift+1</b> 看整個主線，再按 <b>Shift+G</b> 關掉格線：手機的標題和卡片、桌面的兩張卡片，左邊還是切齊；兩個小標題還是一樣高。看完再按一次 Shift+G 打開。</li>
+      </ol>
+      <table class="tb small">
+        <tr><th>狀況</th><th>怎麼辦</th></tr>
+        <tr><td>貼上之後，整段字只剩新的這一行</td><td>反白時就貼上了。Cmd+Z（Windows 是 Ctrl+Z）復原，先點「4 欄」右邊再貼。</td></tr>
+        <tr><td>新的一行接在「4 欄」後面，沒有換行</td><td>少按了 Enter。在「手機閱讀順序」前面點一下，按 Enter。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：第三項檢查是整章到目前為止的總檢查：格線只是參考線，關掉後東西不會移動。</p>
+    <p><b>對應講義</b>：做完之後、常見問題。</p>
+    <p><b>接下一張</b>：讀完之後的三題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L7#b35 CH02-L7#b36 CH02-L7#b37">
+  <div class="frame">
+    <div class="kicker">第 7 份｜讀完之後</div>
+    <h2 class="h-xl">不看講義，用自己的話回答</h2>
+    <div class="body">
+      <ol class="pts big">
+        <li>桌面上並排的兩區換到手機，為什麼不整張縮小，也不照樣左右排？</li>
+        <li>決定手機上誰先出現，要問什麼問題？工作室為什麼先清單、後提醒？</li>
+        <li>側區到了手機，什麼時候排到後面，什麼時候收進一個按鈕？</li>
+      </ol>
+    </div>
+    <p class="next">手機也有寬有窄。第 8 份回答開場預告的最後一件事：畫面變寬時，標題和卡片跟著變寬，按鈕保持原本大小、待在中間，要怎麼設定？</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三題自我檢查。</p>
+    <p><b>對應講義</b>：讀完之後、接下來。</p>
+    <p><b>接下一張</b>：進入第 8 份，畫面變寬東西跟著變。</p>
+  </aside>
+</section>
+
+<!-- ===== CH02-L8 ===== -->
+<section class="slide dark hero divider" data-source="CH02-L8#b01 CH02-L8#b02 CH02-L8#b03">
+  <div class="frame center-v">
+    <div class="kicker">第二章｜第 8 份</div>
+    <h1 class="h-hero">畫面變寬，東西跟著變</h1>
+    <p class="lead">手機不只一種寬度。畫面變寬時，標題和卡片跟著變寬，按鈕保持原本大小、待在中間，要怎麼讓 Figma 照這個意思做？要學的是 Constraints，以及「拉寬再改回來」的檢查方法。</p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：第二章的最後一份，回答開場預告的最後一件事；最後把設定寫進規則表第 5 行。</p>
+    <p><b>對應講義</b>：第 8 份的標題與導言。</p>
+    <p><b>接下一張</b>：手機不只一種寬度。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b04 CH02-L8#b05 CH02-L8#b06 CH02-L8#b07">
+  <div class="frame">
+    <div class="kicker">第 8 份｜手機不只一種寬度</div>
+    <h2 class="h-xl">設計檔只能畫一種寬度</h2>
+    <div class="body split">
+      <div>
+        <ul class="pts">
+          <li>第一章的手機畫面寬 402，是一支常見手機螢幕的寬；成員的手機有大有小。</li>
+          <li>設計師要先說好：畫面變寬時，每個東西怎麼辦。</li>
+          <li>你天天看到：把瀏覽器視窗拖窄，最上面那一條跟著縮短，有些按鈕停在原處；手機橫過來看影片，影片跟著放大，按鈕還是一樣大。</li>
+          <li>哪些跟著變、哪些不變，都是設計時決定好的。</li>
+        </ul>
+      </div>
+      <div class="card-box">
+        <div class="h-md">學完第 8 份，你會：</div>
+        <ul class="pts">
+          <li>決定畫面變寬時，每個東西要跟著拉寬、待在原處，還是保持大小待在中間</li>
+          <li>用 Constraints 設定</li>
+          <li>把畫面拉寬、改回來，檢查有沒有照設定變</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用瀏覽器和橫向看影片的經驗，說明變寬時的行為是設計出來的。</p>
+    <p><b>對應講義</b>：學完第 8 份，你會；手機不只一種寬度。</p>
+    <p><b>接下一張</b>：不設定會怎樣。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b08 CH02-L8#b09 CH02-L8#b10 CH02-L8#b11">
+  <div class="frame">
+    <div class="kicker">第 8 份｜格線會跟著變，東西不會</div>
+    <h2 class="h-xl">把手機畫面從 402 改成 440</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>440 是大一號手機的寬。</li>
+          <li>欄跟著變寬：格線的 Type 是 Stretch，邊界 24、溝槽 12 不變，多出來的寬度由四欄平分。</li>
+        </ul>
+        <div class="formula">(440 − 24 × 2 − 12 × 3) ÷ 4 = 89</div>
+        <ul class="pts">
+          <li>可是標題和卡片還是 354 寬，右邊沒有到右邊的邊界。</li>
+        </ul>
+        <p class="see">格線只是參考線，它跟著畫面變，東西不會跟著它變。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L8-1-拉寬沒設定.png" alt="手機畫面改成寬 440，粉紅色的欄跟著變寬，標題和卡片還是原本的寬度，右邊沒有到邊界"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先看不設定的結果。第 1 份加格線時 Type 沒動，維持 Stretch，所以每欄從 79.5 變成 89；但東西沒有跟著變。</p>
+    <p><b>對應講義</b>：格線會跟著變，東西不會，前兩段與圖。</p>
+    <p><b>接下一張</b>：Constraints 是什麼。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b12 CH02-L8#b13 CH02-L8#b14 CH02-L8#b15">
+  <div class="frame">
+    <div class="kicker">第 8 份｜格線會跟著變，東西不會</div>
+    <h2 class="h-xl">Constraints（約束）：所在的框變寬時，它要怎麼動</h2>
+    <div class="body split">
+      <div>
+        <p class="body-zh">跟著的是所在的那一個框：標題和卡片跟著手機畫面；按鈕跟著卡片。這和 X、Y 從所在的框量，是同一個道理。</p>
+        <table class="tb small">
+          <tr><th>水平選項</th><th>框變寬時</th></tr>
+          <tr><td><b>Left</b></td><td>和左邊的距離不變，寬度也不變（預設）</td></tr>
+          <tr><td>Right</td><td>和右邊的距離不變，寬度不變，往右移</td></tr>
+          <tr><td><b>Left + Right</b></td><td>左右兩邊的距離都不變，跟著變寬</td></tr>
+          <tr><td><b>Center</b></td><td>寬度不變，一直待在中間</td></tr>
+          <tr><td>Scale</td><td>位置和大小照比例一起變，這一章用不到</td></tr>
+        </table>
+      </div>
+      <div class="demo">
+<figure data-kind="示意">
+<div style="max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:12px;font-size:11px;color:#1E293B;">
+<div style="display:flex;align-items:center;gap:8px;">
+<div style="flex:0 0 84px;">Left</div>
+<div style="flex:0 0 100px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;"><div style="width:70%;height:14px;background:#5F6C80;border-radius:2px;"></div></div>
+<div style="flex:0 0 130px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;"><div style="width:52%;height:14px;background:#5F6C80;border-radius:2px;"></div></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;">
+<div style="flex:0 0 84px;">Left + Right</div>
+<div style="flex:0 0 100px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;"><div style="height:14px;background:#5F6C80;border-radius:2px;"></div></div>
+<div style="flex:0 0 130px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;"><div style="height:14px;background:#5F6C80;border-radius:2px;"></div></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;">
+<div style="flex:0 0 84px;">Center</div>
+<div style="flex:0 0 100px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;"><div style="width:70%;height:14px;margin:0 auto;background:#5F6C80;border-radius:2px;"></div></div>
+<div style="flex:0 0 130px;padding:8px;border:1px solid #CBD5E1;background:#F5F7FA;border-radius:8px;"><div style="width:52%;height:14px;margin:0 auto;background:#5F6C80;border-radius:2px;"></div></div>
+</div>
+<div style="display:flex;gap:8px;color:#5F6C80;">
+<div style="flex:0 0 84px;"></div>
+<div style="flex:0 0 100px;text-align:center;">原本</div>
+<div style="flex:0 0 130px;text-align:center;">框變寬後</div>
+</div>
+</div>
+<figcaption>示意圖，不照比例。外框是所在的框，深色長條是裡面的東西。Left 停在原處、寬度不變；Left + Right 跟著變寬；Center 寬度不變、待在中間。</figcaption>
+</figure>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：水平方向五個選項，這一章只用 Left、Left + Right、Center 三個；用示意圖對照原本與框變寬後。</p>
+    <p><b>對應講義</b>：格線會跟著變，東西不會，Constraints 的說明、五個選項與示意圖。</p>
+    <p><b>接下一張</b>：標題、卡片和按鈕各選哪一個。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b16 CH02-L8#b17 CH02-L8#b18">
+  <div class="frame">
+    <div class="kicker">第 8 份｜標題、卡片和按鈕各跟著誰</div>
+    <h2 class="h-xl">標題和卡片：Left + Right</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>它們本來就從左邊界排到右邊界，跨滿 4 欄。畫面變寬時，左右兩邊和畫面邊緣的距離都維持 24，就還是跨滿 4 欄。</li>
+      </ul>
+      <div class="formula">寬度：354 → 440 − 24 × 2 = 392<br>新的 4 欄：89 × 4 + 12 × 3 = 392</div>
+      <p class="see">不變的是規則「跨滿 4 欄、邊界 24」，數字跟著畫面變。標題的文字框跟著變寬，長一點的標題也有地方排。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：用兩條算式說明 392 同時符合兩件事：邊界維持 24，也剛好是新的 4 欄寬。</p>
+    <p><b>對應講義</b>：標題、卡片和按鈕各跟著誰，前兩段。</p>
+    <p><b>接下一張</b>：按鈕、說明和提示。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b19 CH02-L8#b20 CH02-L8#b21">
+  <div class="frame">
+    <div class="kicker">第 8 份｜標題、卡片和按鈕各跟著誰</div>
+    <h2 class="h-xl">按鈕：Center，跟著它所在的卡片</h2>
+    <div class="body">
+      <ul class="pts big">
+        <li>按鈕保持原本的寬度 322，卡片變寬時待在卡片中間。按鈕上只有「登入」兩個字，原本的寬度已經放得下、手指也按得到。</li>
+        <li>這不是唯一的做法：很多 App 的按鈕會跟著拉滿整個寬度，那就選 Left + Right。重要的是先決定，再照決定設定。</li>
+        <li>卡片裡的說明和提示維持預設的 Left，所以拉寬後按鈕的左邊和它們差了 19。這一章先接受，下一章再處理。</li>
+      </ul>
+      <p class="see">上下方向不用動。設定完把畫面拉寬檢查，再改回 402：數字都回到原本的樣子，表示設定沒有把東西弄亂。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：按鈕選 Center 的理由，以及另一種合理做法；預告說明和提示不再切齊的小問題留到下一章。</p>
+    <p><b>對應講義</b>：標題、卡片和按鈕各跟著誰，後三段。</p>
+    <p><b>接下一張</b>：設定和檢查，第 1 步先拉寬看看。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b22 CH02-L8#b23 CH02-L8#b24 CH02-L8#b25">
+  <div class="frame">
+    <div class="kicker">第 8 份｜設定和檢查</div>
+    <h2 class="h-xl"><span class="num">1</span>先拉寬看看</h2>
+    <div class="body">
+      <table class="tb">
+        <tr><th>動手前先知道</th><th>重點</th></tr>
+        <tr><td><b>Constraints 在哪裡</b></td><td>右側 Position 的 X、Y 下面，兩個下拉：上面是水平（一開始是 Left），下面是垂直（Top）；右邊小圖亮起來的線表示跟著哪一邊。</td></tr>
+        <tr><td><b>改寬度</b></td><td>改的是整張手機畫面 Screen / Login 的 W，不是卡片的 W。</td></tr>
+      </table>
+      <ol class="pts big">
+        <li>點 <b>Screen / Login</b>，Shift+2；W 填 <b>440</b>，按 Enter。</li>
+        <li>看畫面：欄變寬了，標題和卡片沒變。</li>
+        <li>W 填回 <b>402</b>。</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：先親手重現前面那張圖的問題，再開始設定；確認學員改的是手機畫面的 W。</p>
+    <p><b>對應講義</b>：設定和檢查的動手前先知道兩件事與第 1 步。</p>
+    <p><b>接下一張</b>：標題設成 Left + Right。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b26">
+  <div class="frame">
+    <div class="kicker">第 8 份｜設定和檢查</div>
+    <h2 class="h-xl"><span class="num">2</span>標題設成 Left + Right</h2>
+    <div class="body">
+      <ul class="pts">
+        <li>點 <b>Screen / Heading</b> → Constraints 水平的下拉（顯示 Left 的那一個）→ <b>Left + Right</b>。</li>
+      </ul>
+      <div class="pair">
+        <img src="assets/ch02/L8-2-Constraints選單.png" alt="Constraints 水平下拉打開，選項依序是 Left、Right、Left + Right、Center、Scale">
+        <img src="assets/ch02/L8-3-標題LR.png" alt="標題選取中，Constraints 水平顯示 L + R，右邊小圖左右兩條線亮起">
+      </div>
+      <p class="see">做完會看到：下拉顯示縮寫 <b>L + R</b>，小圖左右兩條線亮起來。畫面上的標題沒有動，要等畫面變寬才看得出差別。</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：設定後畫面不會馬上變，這是正常的；看下拉的縮寫和小圖確認。</p>
+    <p><b>對應講義</b>：第 2 步。</p>
+    <p><b>接下一張</b>：卡片和按鈕。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b27">
+  <div class="frame">
+    <div class="kicker">第 8 份｜設定和檢查</div>
+    <h2 class="h-xl"><span class="num">3</span>卡片設成 Left + Right，按鈕設成 Center</h2>
+    <div class="body split img-r">
+      <div>
+        <ol class="pts">
+          <li>點 <b>Login / Card</b>，水平選 <b>Left + Right</b>。</li>
+          <li>展開 Login / Card，點 <b>Button / Draft</b>，水平選 <b>Center</b>。</li>
+        </ol>
+        <p class="see">做完會看到：選按鈕時，下拉顯示 Center（字可能被切成「Cente」），小圖中間那條線亮起來。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L8-4-按鈕Center.png" alt="按鈕選取中，Constraints 水平顯示 Center，右邊小圖中間的線亮起"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：卡片跟著手機畫面，按鈕跟著卡片；兩個設定在不同層。</p>
+    <p><b>對應講義</b>：第 3 步。</p>
+    <p><b>接下一張</b>：拉寬檢查，再改回來。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b28">
+  <div class="frame">
+    <div class="kicker">第 8 份｜設定和檢查</div>
+    <h2 class="h-xl"><span class="num">4</span>拉寬檢查，再改回來</h2>
+    <div class="body split img-r">
+      <div>
+        <table class="tb">
+          <tr><th></th><th>W 440</th><th>改回 402</th></tr>
+          <tr><td>Screen / Heading</td><td>W 392</td><td>W 354</td></tr>
+          <tr><td>Login / Card</td><td>W 392</td><td>W 354</td></tr>
+          <tr><td>Button / Draft</td><td>W 322，X 35</td><td>X 16</td></tr>
+        </table>
+        <ul class="pts">
+          <li>點 Screen / Login，W 填 440；依序點三個東西看 W 和 X。</li>
+          <li>再把 W 填回 402，再看一次。</li>
+        </ul>
+        <p class="see">寬 440 時，卡片延伸到右邊的邊界，按鈕移到卡片中間。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L8-5-設定後拉寬.png" alt="手機畫面寬 440，標題和卡片延伸到右邊的邊界，按鈕保持原本寬度移到卡片中間"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：拉寬與改回各看一次數字；按鈕寬度不變、X 從 16 變成 35，就是待在中間。</p>
+    <p><b>對應講義</b>：第 4 步。</p>
+    <p><b>接下一張</b>：寫下拉寬檢查。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b29 CH02-L8#b30 CH02-L8#b31">
+  <div class="frame">
+    <div class="kicker">第 8 份｜寫下拉寬檢查</div>
+    <h2 class="h-xl"><span class="num">5</span>寫第 5 行：拉寬檢查</h2>
+    <div class="body split img-r">
+      <div>
+        <ul class="pts">
+          <li>之後畫面上多了新東西，翻規則表就知道誰該跟著拉寬、誰該待在中間，也知道要用哪兩個寬度檢查。</li>
+          <li>做法和寫第 4 行一樣，這次接在第 4 行最後的「輔助」後面：</li>
+        </ul>
+        <div class="copy">拉寬檢查：Screen / Heading、Login / Card 用 Left + Right；Button / Draft 用 Center；402 → 440 → 402 檢查過</div>
+        <p class="see">做完會看到：折成兩行，W 還是 536，H 從 144 變成 192。</p>
+      </div>
+      <figure class="shot"><img src="assets/ch02/L8-6-規則表第五行.png" alt="規則表格線與版面下五行，第 5 行是拉寬檢查，折成兩行；右側 W 536、H 192"></figure>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：規則表最後一行記下設定和檢查過的寬度；操作與前幾份相同。</p>
+    <p><b>對應講義</b>：寫下拉寬檢查，說明與第 5 步。</p>
+    <p><b>接下一張</b>：做完之後的檢查與常見問題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b32 CH02-L8#b33 CH02-L8#b34 CH02-L8#b35 CH02-L8#b36 CH02-L8#b37">
+  <div class="frame">
+    <div class="kicker">第 8 份｜做完之後</div>
+    <h2 class="h-xl">檢查自己做對了沒・常見問題</h2>
+    <div class="body split">
+      <ol class="pts">
+        <li>Screen / Heading 和 Login / Card 的水平是 L + R；Button / Draft 是 Center。</li>
+        <li>Screen / Login 的 W 是 402，卡片 W 354、按鈕 X 16，和設定前一樣。</li>
+        <li>規則表「格線與版面」下面有五行，第 5 行是拉寬檢查。</li>
+      </ol>
+      <table class="tb small">
+        <tr><th>狀況</th><th>怎麼辦</th></tr>
+        <tr><td>改了 W，標題和卡片還是沒變寬</td><td>先看水平是不是 L + R；再看改的是不是 Screen / Login 的 W。</td></tr>
+        <tr><td>拉寬後，標題的文字框沒有變成 392</td><td>Resizing 可能還是 Auto width。W 改回 402，標題改 Auto height、W 354，再重新拉寬。</td></tr>
+        <tr><td>改回 402 後，數字和原本不一樣</td><td>Cmd+Z（Windows 是 Ctrl+Z）復原到拉寬之前，確認三個 Constraints，再重做第 4 步。</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三項檢查；第二個常見問題連回第 2 份的 Auto height。</p>
+    <p><b>對應講義</b>：做完之後、常見問題。</p>
+    <p><b>接下一張</b>：讀完之後的三題。</p>
+  </aside>
+</section>
+
+<section class="slide light" data-source="CH02-L8#b38">
+  <div class="frame">
+    <div class="kicker">第 8 份｜讀完之後</div>
+    <h2 class="h-xl">不看講義，用自己的話回答</h2>
+    <div class="body">
+      <ol class="pts big">
+        <li>手機畫面變寬時，格線跟著變了，為什麼標題和卡片沒有跟著變？</li>
+        <li>Left + Right 和 Center 差在哪裡？為什麼範例的標題、卡片選 Left + Right，按鈕選 Center？</li>
+        <li>拉寬檢查為什麼要再改回 402？</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：三題自我檢查。</p>
+    <p><b>對應講義</b>：讀完之後。</p>
+    <p><b>接下一張</b>：第二章完成。</p>
+  </aside>
+</section>
+
+<section class="slide dark hero" data-source="CH02-L8#b39 CH02-L8#b40 CH02-L8#b41 CH02-L8#b42 CH02-L8#b43 CH02-L8#b44">
+  <div class="frame center-v">
+    <div class="kicker">第二章完成</div>
+    <h2 class="h-xl">開場的兩個問題，都有了答案</h2>
+    <ul class="pts big done-list">
+      <li>加了四欄格線的手機登入畫面，標題移到卡片外面，標題和卡片會跟著畫面變寬。</li>
+      <li>一張十二欄的桌面畫面，分成主區和側區，放了清單卡、詳情卡和今日提醒。</li>
+      <li>規則表最下面的「格線與版面」，五行寫著這一章的數字和理由。</li>
+    </ul>
+    <p class="lead">這一章管的是寬度。下一章處理另一個方向：文字變長、東西變多時，卡片要跟著長高，按鈕要自己往下排。</p>
+    <p><a class="btn" href="https://www.figma.com/design/me0KLYweUoHzHRFOEsYscH/" target="_blank" rel="noopener">打開第二章範例對照</a></p>
+  </div>
+  <aside class="notes">
+    <p><b>講什麼</b>：回到開場的兩個問題：靠眼睛對齊總是差一點，寬的畫面不知道怎麼分。格線讓每樣東西從同一條邊界開始；寬的畫面先分主區和側區，再看內容決定跨幾欄；換到手機用「打開這個畫面要做什麼」決定誰先出現；畫面變寬用 Constraints 決定誰跟著變。想對照的話，打開範例，自己的檔案應該和它一樣。</p>
+    <p><b>對應講義</b>：第二章完成。第一章規則表記過「長句會蓋到提示」，加上這一份拉寬時按鈕和說明不再切齊，都留到下一章解決。</p>
+    <p><b>接下一張</b>：本章結束。</p>
+  </aside>
+</section>
+
+</div>
+
+<script>
+(function(){
+if(matchMedia('(max-width: 768px), (max-width: 1100px) and (max-height: 520px)').matches)return;
+/* =============== WebGL 双背景 ===============
+   深色页：Holographic Dispersion（全息色散 · 钛金暗流）—— 彩虹微扰、鼠标径向涟漪
+   浅色页：Spiral Vortex（旋转涡流 · 银色珍珠）—— domain-warp 流动、无中心
+   修改风格请参考 references/webgl-backgrounds.md
+*/
+const VS = `attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+
+const FS_DARK = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){
+    p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;
+    p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;
+  }
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);
+  vec3 b=vec3(0.03,0.04,0.05);
+  vec3 c=vec3(1.0,1.0,1.0);
+  vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;
+  col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);
+  col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);
+  col=mix(base,col,0.85);
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const FS_LIGHT = `precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);
+  float a=hash(i),b=hash(i+vec2(1,0));
+  float c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  vec2 u=f*f*(3.0-2.0*f);
+  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;
+}
+float fbm(vec2 p){
+  float v=0.0,a=0.5;
+  mat2 m=mat2(0.80,0.60,-0.60,0.80);
+  for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}
+  return v;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;
+  vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;
+  vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),
+              fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 silverDark=vec3(0.86,0.85,0.84);
+  vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);
+  float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;
+  col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);
+  col+=hl*0.06;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+
+function bootGL(canvasId, fsSrc){
+  const canvas=document.getElementById(canvasId);
+  const gl=canvas.getContext('webgl',{alpha:false,antialias:true});
+  if(!gl) return ()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));
+  gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lRes=gl.getUniformLocation(prog,'u_resolution');
+  const lT=gl.getUniformLocation(prog,'u_time');
+  const lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{
+    const d=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=innerWidth*d;canvas.height=innerHeight*d;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  };
+  addEventListener('resize',resize);resize();
+  return (tSec)=>{
+    gl.uniform2f(lRes,canvas.width,canvas.height);
+    gl.uniform1f(lT,tSec);
+    gl.uniform2f(lM,mouse.x,1-mouse.y);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    return true;
+  };
+}
+const drawDark=bootGL('bg-dark',FS_DARK);
+const drawLight=bootGL('bg-light',FS_LIGHT);
+const t0=Date.now();
+(function loop(){
+  const t=(Date.now()-t0)/1000;
+  drawDark(t);drawLight(t);
+  requestAnimationFrame(loop);
+})();
+})();
+
+// 導航：鍵盤 / 滾輪 / 觸控；頁碼與篇代號放在投影片外的固定框
+const deck=document.getElementById('deck');
+const slides=[...deck.querySelectorAll(':scope > section')];
+const total=slides.length;
+const pager=document.getElementById('pager');
+const part=document.getElementById('part');
+let idx=0,lock=false;
+deck.style.width=(total*100)+'vw';
+function partOf(s){const src=(s.dataset.source||'').split(/\s+/)[0]||'';return src.split('#')[0];}
+function go(n,instant){
+  idx=Math.max(0,Math.min(total-1,n));
+  if(instant){deck.style.transition='none';}
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  if(instant){void deck.offsetWidth;deck.style.transition='';}
+  const s=slides[idx];
+  document.body.classList.toggle('light-bg',s.classList.contains('light'));
+  pager.textContent=(idx+1)+' / '+total;
+  part.textContent=partOf(s);
+  history.replaceState(null,'','#'+(idx+1));
+}
+function step(d){if(lock)return;go(idx+d);lock=true;setTimeout(()=>lock=false,350);}
+addEventListener('keydown',e=>{
+  if(document.documentElement.classList.contains('mobile-reader'))return;
+  if(document.body.classList.contains('show-index')&&e.key!=='Escape')return;
+  if(['ArrowRight','PageDown',' ','ArrowDown'].includes(e.key)){e.preventDefault();step(1);}
+  else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();step(-1);}
+  else if(e.key==='Home'){go(0);}
+  else if(e.key==='End'){go(total-1);}
+  else if(e.key==='n'||e.key==='N'){document.body.classList.toggle('show-notes');}
+  else if(e.key==='Escape'){toggleIndex();}
+});
+let wheelAcc=0,wheelTO=null;
+addEventListener('wheel',e=>{
+  if(document.documentElement.classList.contains('mobile-reader'))return;
+  if(e.target.closest&&e.target.closest('aside.notes'))return;
+  if(document.body.classList.contains('show-index'))return;
+  wheelAcc+=e.deltaY+e.deltaX;
+  if(Math.abs(wheelAcc)>60){step(wheelAcc>0?1:-1);wheelAcc=0;}
+  clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,160);
+},{passive:true});
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{
+  if(document.documentElement.classList.contains('mobile-reader'))return;
+  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))step(dx<0?1:-1);
+},{passive:true});
+// 篇目：每篇第一張投影片
+const idxList=document.querySelector('#index ol');
+const starts=[];
+slides.forEach((s,i)=>{const p=partOf(s);if(!starts.length||starts[starts.length-1].p!==p)starts.push({p,i});});
+starts.forEach(({p,i})=>{
+  const s=(slides[i].classList.contains('cover')&&slides[i+1]&&partOf(slides[i+1])===p)?slides[i+1]:slides[i];
+  const li=document.createElement('li');const b=document.createElement('button');
+  const k=document.createElement('span');k.className='k';k.textContent=p;
+  const t=document.createElement('span');t.textContent=(s.querySelector('h1')||s.querySelector('h2')).textContent;
+  b.append(k,t);b.onclick=()=>{toggleIndex(false);go(i);};
+  li.append(b);idxList.append(li);
+});
+function toggleIndex(force){
+  const on=document.body.classList.toggle('show-index',force);
+  if(on){const cur=partOf(slides[idx]);idxList.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('cur',starts[j].p===cur));}
+}
+document.getElementById('notes-toggle').addEventListener('click',()=>document.body.classList.toggle('show-notes'));
+
+// 手機閱讀模式（窄螢幕直向捲動；網址加 ?deck=1 可強制翻頁模式）
+(function(){
+  const force=new URL(location.href).searchParams.get('deck')==='1';
+  const mq=matchMedia('(max-width: 768px), (max-width: 1100px) and (max-height: 520px)');
+  function apply(){document.documentElement.classList.toggle('mobile-reader',!force&&mq.matches);}
+  apply();
+  mq.addEventListener?mq.addEventListener('change',apply):mq.addListener(apply);
+})();
+
+const start=parseInt((location.hash||'').slice(1),10);
+go(Number.isFinite(start)?start-1:0,true);
+</script>
+</body>
+</html>
